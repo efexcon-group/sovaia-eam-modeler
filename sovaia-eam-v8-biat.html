@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solina EAM Modeller v8 — BIAT</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0f1a;--surface:#111827;--surface2:#1a2235;--border:#1f2d45;
+    --text:#e2e8f0;--text-muted:#64748b;--text-dim:#94a3b8;
+    --accent:#4f8ef7;--radius:6px;--mono:'DM Mono',monospace;--serif:'Fraunces',serif;
+    --arrow-cross:#f59e0b;--arrow-inner:#64748b;
+    --selected:#4f8ef7;--selected-glow:rgba(79,142,247,0.25);
+    /* BIAT layer colors */
+    --biat-business:#f59e0b;    --biat-business-bg:rgba(245,158,11,0.08);
+    --biat-information:#a78bfa; --biat-information-bg:rgba(167,139,250,0.08);
+    --biat-application:#22d3ee; --biat-application-bg:rgba(34,211,238,0.08);
+    --biat-swtech:#34d399;      --biat-swtech-bg:rgba(52,211,153,0.08);
+    --biat-hwtech:#fb923c;      --biat-hwtech-bg:rgba(251,146,60,0.08);
+    --biat-technology:#34d399;  --biat-technology-bg:rgba(52,211,153,0.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;min-height:100vh;overflow-x:hidden;}
+
+  header{display:flex;align-items:center;justify-content:space-between;padding:18px 32px 16px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100;}
+  .logo{display:flex;align-items:baseline;gap:10px;}
+  .logo-name{font-family:var(--serif);font-size:22px;font-weight:700;letter-spacing:-0.5px;}
+  .logo-tag{font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;padding:2px 7px;border:1px solid var(--accent);border-radius:3px;}
+  .logo-ver{font-size:10px;color:#f59e0b;letter-spacing:2px;text-transform:uppercase;padding:2px 7px;border:1px solid #f59e0b;border-radius:3px;}
+
+  /* View tabs */
+  .view-tabs{display:flex;gap:4px;background:var(--surface2);padding:3px;border-radius:7px;border:1px solid var(--border);}
+  .view-tab{padding:5px 14px;border-radius:5px;cursor:pointer;font-size:11px;color:var(--text-muted);transition:all .15s;user-select:none;}
+  .view-tab.active{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+
+  .controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 32px;background:var(--surface2);border-bottom:1px solid var(--border);}
+  .ctrl-group{display:flex;align-items:center;gap:8px;}
+  .ctrl-label{color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;}
+  .toggle-wrap{display:flex;align-items:center;gap:8px;}
+  .toggle{position:relative;width:44px;height:22px;cursor:pointer;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:11px;transition:background .2s;}
+  .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:var(--text-muted);border-radius:50%;transition:transform .2s,background .2s;}
+  .toggle input:checked+.toggle-slider{background:var(--accent);}
+  .toggle input:checked+.toggle-slider::before{transform:translateX(22px);background:#fff;}
+  .toggle-label{font-size:11px;color:var(--text-dim);}
+
+  /* ── TOGAF Matrix view (default) ── */
+  .view-togaf{display:block;}
+  .view-biat4{display:none;}
+  .view-biat5{display:none;}
+
+  .canvas-wrap{position:relative;padding:24px 32px 80px;}
+  #arrow-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;overflow:visible;}
+
+  /* Layer rows */
+  .layer-row{display:grid;grid-template-columns:200px 1fr;margin-bottom:8px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+  .layer-row.hidden{display:none;}
+  .layer-label{padding:14px 16px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border);position:relative;overflow:hidden;}
+  .layer-label-name{font-family:var(--serif);font-size:15px;font-weight:600;margin-bottom:3px;}
+  .layer-label-sub{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;}
+  .layer-label-order{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:28px;font-family:var(--serif);font-weight:700;opacity:0.06;color:#fff;}
+  .layer-objects{padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;align-content:flex-start;min-height:52px;}
+  .obj-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:4px;border:1px solid transparent;cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .15s;user-select:none;white-space:nowrap;}
+  .obj-chip:hover{transform:translateY(-1px);}
+  .obj-chip.selected{border-color:var(--selected)!important;box-shadow:0 0 0 2px var(--selected-glow);}
+  .obj-chip.connected-same{border-color:var(--arrow-inner)!important;}
+  .obj-chip.connected-cross{border-color:var(--arrow-cross)!important;}
+  .obj-chip.dimmed{opacity:0.2;}
+  .chip-icon{font-size:12px;line-height:1;}
+  .add-obj-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:4px;border:1px dashed var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .15s;}
+  .add-obj-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* ── BIAT View ── */
+  .biat-wrap{padding:24px 32px 80px;}
+  .biat-intro{font-size:11px;color:var(--text-muted);margin-bottom:20px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius);border-left:3px solid #f59e0b;}
+
+  /* BIAT layer block */
+  .biat-layer{margin-bottom:12px;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+  .biat-layer-header{
+    display:grid;grid-template-columns:220px 1fr;
+    border-bottom:1px solid var(--border);
+  }
+  .biat-layer-title{
+    padding:16px 20px;display:flex;flex-direction:column;justify-content:center;
+    border-right:1px solid var(--border);
+  }
+  .biat-layer-name{font-family:var(--serif);font-size:17px;font-weight:700;margin-bottom:4px;}
+  .biat-layer-sub{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);}
+  .biat-layer-desc{padding:14px 18px;font-size:11px;color:var(--text-dim);line-height:1.6;display:flex;align-items:center;}
+
+  /* BIAT object grid */
+  .biat-layer-body{padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;min-height:56px;}
+
+  /* BIAT chip: slightly larger, shows TOGAF source layer */
+  .biat-chip{
+    display:inline-flex;flex-direction:column;align-items:flex-start;
+    padding:6px 10px;border-radius:5px;border:1px solid transparent;
+    cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .15s;user-select:none;
+    min-width:120px;
+  }
+  .biat-chip:hover{transform:translateY(-1px);filter:brightness(1.1);}
+  .biat-chip.selected{box-shadow:0 0 0 2px var(--selected-glow)!important;border-color:var(--selected)!important;}
+  .biat-chip.dimmed{opacity:0.15;}
+  .biat-chip.connected{opacity:1;}
+  .biat-chip-name{font-size:11px;font-weight:500;margin-bottom:3px;}
+  .biat-chip-source{font-size:9px;letter-spacing:.5px;opacity:0.6;text-transform:uppercase;}
+
+  /* Mapping indicator: dashed line from TOGAF layer */
+  .biat-source-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+
+  /* BIAT mapping sidebar — shows TOGAF→BIAT mapping */
+  .biat-mapping-panel{
+    position:fixed;left:24px;bottom:56px;width:260px;
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;
+    z-index:200;box-shadow:0 8px 32px rgba(0,0,0,0.5);
+    font-size:11px;
+  }
+  .biat-mapping-title{font-family:var(--serif);font-size:14px;font-weight:600;margin-bottom:10px;color:#f59e0b;}
+  .biat-map-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:10px;color:var(--text-dim);}
+  .biat-map-arrow{color:var(--text-muted);}
+  .biat-map-src{padding:2px 6px;border-radius:3px;font-size:9px;}
+  .biat-map-tgt{padding:2px 6px;border-radius:3px;font-size:9px;font-weight:500;}
+
+  /* Info panel */
+  .info-panel{position:fixed;right:24px;bottom:24px;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,0.5);transform:translateX(360px);transition:transform .3s cubic-bezier(0.16,1,0.3,1);}
+  .info-panel.visible{transform:translateX(0);}
+  .info-panel-title{font-family:var(--serif);font-size:17px;font-weight:600;margin-bottom:12px;}
+  .info-section{margin-bottom:12px;}
+  .info-section-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:6px;}
+  .info-conn-list{display:flex;flex-direction:column;gap:4px;}
+  .info-conn-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-dim);padding:3px 0;}
+  .info-conn-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .close-panel{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;}
+  .info-biat-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:4px;font-size:10px;margin-top:4px;}
+
+  /* Modals */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;width:460px;max-width:95vw;}
+  .modal h3{font-family:var(--serif);font-size:18px;margin-bottom:18px;}
+  .modal-field{margin-bottom:14px;}
+  .modal-field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:5px;}
+  .modal-field input,.modal-field select,.modal-field textarea{width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .15s;}
+  .modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--accent);}
+  .modal-field select option{background:var(--surface2);}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+  .btn{padding:8px 18px;border-radius:var(--radius);border:none;cursor:pointer;font-family:var(--mono);font-size:12px;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#fff;} .btn-primary:hover{filter:brightness(1.1);}
+  .btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text-dim);} .btn-secondary:hover{border-color:var(--text-muted);color:var(--text);}
+  .btn-danger{background:#ef4444;color:#fff;}
+
+  .legend{display:flex;gap:16px;align-items:center;font-size:10px;color:var(--text-muted);}
+  .legend-item{display:flex;align-items:center;gap:5px;}
+  .legend-line{width:22px;height:2px;}
+  .legend-line.cross{background:var(--arrow-cross);}
+  .legend-line.inner{background:var(--arrow-inner);}
+  .status-bar{padding:8px 32px;border-top:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:16px;position:fixed;bottom:0;left:0;right:0;z-index:50;font-size:10px;color:var(--text-muted);}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:#34d399;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-name">Solina EAM Modeller</span>
+    <span class="logo-tag">TOGAF v10</span>
+    <span class="logo-ver">v8 · BIAT</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="view-tabs">
+      <div class="view-tab active" id="tab-togaf"   onclick="switchView('togaf')">TOGAF Layers</div>
+      <div class="view-tab"        id="tab-biat4"   onclick="switchView('biat4')">BIAT 4-Layer</div>
+      <div class="view-tab"        id="tab-biat5"   onclick="switchView('biat5')">BIAT 5-Layer</div>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-line cross"></span><span>Cross-Layer</span></span>
+      <span class="legend-item"><span class="legend-line inner"></span><span>Inner</span></span>
+    </div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <span class="ctrl-label">Verbindungen</span>
+    <div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="toggle-cross" checked><span class="toggle-slider"></span></label><span class="toggle-label">Layer-übergreifend</span></div>
+    <div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="toggle-inner" checked><span class="toggle-slider"></span></label><span class="toggle-label">Layer-intern</span></div>
+  </div>
+  <div class="ctrl-group" style="margin-left:auto;gap:8px;">
+    <button class="btn btn-secondary" onclick="openAddObjectModal(null)" style="font-size:11px;">+ Objekt</button>
+    <button class="btn btn-secondary" onclick="clearSelection()" style="font-size:11px;">✕ Auswahl</button>
+  </div>
+</div>
+
+<!-- ═══ TOGAF VIEW ═══ -->
+<div class="view-togaf" id="view-togaf">
+  <div class="canvas-wrap" id="canvas">
+    <svg id="arrow-svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-cross" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/></marker>
+        <marker id="arrow-inner" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+      </defs>
+    </svg>
+  </div>
+</div>
+
+<!-- ═══ BIAT 4-LAYER VIEW ═══ -->
+<div class="view-biat4" id="view-biat4">
+  <div class="biat-wrap">
+    <div class="biat-intro">
+      <strong style="color:#f59e0b;">BIAT 4-Layer</strong> — Business · Information · Application · Technology<br>
+      <span style="font-size:10px;">Industrie-Standard aus Automobilbranche &amp; Fertigungssektor. TOGAF-Objekte werden ihrem BIAT-Layer zugeordnet. Farbige Punkte zeigen die TOGAF-Herkunft.</span>
+    </div>
+    <div id="biat4-body"></div>
+  </div>
+  <div class="biat-mapping-panel">
+    <div class="biat-mapping-title">TOGAF → BIAT Mapping</div>
+    <div id="biat4-mapping-list"></div>
+  </div>
+</div>
+
+<!-- ═══ BIAT 5-LAYER VIEW ═══ -->
+<div class="view-biat5" id="view-biat5">
+  <div class="biat-wrap">
+    <div class="biat-intro">
+      <strong style="color:#fb923c;">BIAT 5-Layer</strong> — Business · Information · Application · Software-Technology · Hardware-Technology<br>
+      <span style="font-size:10px;">Erweiterte Variante: Technology-Layer aufgeteilt in Software- und Hardware-Technologie. Häufig in Automotive OEM-Architekturen (z.B. VDA-nah).</span>
+    </div>
+    <div id="biat5-body"></div>
+  </div>
+  <div class="biat-mapping-panel">
+    <div class="biat-mapping-title">TOGAF → BIAT 5 Mapping</div>
+    <div id="biat5-mapping-list"></div>
+  </div>
+</div>
+
+<!-- Info Panel -->
+<div class="info-panel" id="info-panel">
+  <button class="close-panel" onclick="clearSelection()">✕</button>
+  <div class="info-panel-title" id="info-title">—</div>
+  <div class="info-section">
+    <div class="info-section-label">TOGAF Layer</div>
+    <div id="info-layer" style="font-size:12px;"></div>
+  </div>
+  <div class="info-section" id="info-biat-section" style="display:none;">
+    <div class="info-section-label">BIAT Layer</div>
+    <div id="info-biat-layer"></div>
+  </div>
+  <div class="info-section"><div class="info-section-label">↕ Cross-Layer</div><div class="info-conn-list" id="info-cross-list"></div></div>
+  <div class="info-section"><div class="info-section-label">↔ Inner</div><div class="info-conn-list" id="info-inner-list"></div></div>
+  <div style="margin-top:14px;display:flex;gap:8px;">
+    <button class="btn btn-secondary" style="font-size:10px;" onclick="editSelectedObject()">✏ Umbenennen</button>
+    <button class="btn btn-danger"    style="font-size:10px;" onclick="deleteSelectedObject()">✕ Löschen</button>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="obj-modal">
+  <div class="modal">
+    <h3 id="modal-title">Objekt hinzufügen</h3>
+    <div class="modal-field"><label>Name</label><input type="text" id="modal-name"></div>
+    <div class="modal-field"><label>Layer</label><select id="modal-layer"></select></div>
+    <div class="modal-field"><label>Icon (Emoji)</label><input type="text" id="modal-icon" maxlength="2"></div>
+    <div class="modal-field"><label>Beschreibung</label><textarea id="modal-desc" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('obj-modal')">Abbrechen</button>
+      <button class="btn btn-primary"   onclick="saveObject()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span class="status-dot"></span>
+  <span id="status-text">TOGAF Layer Matrix · Tab wechseln für BIAT 4- oder 5-Layer Sicht</span>
+  <span style="margin-left:auto;">Solina EAM Modeller v8 · BIAT Framework</span>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// TOGAF LAYER CONFIG
+// ══════════════════════════════════════════════════════
+const TOGAF_LAYERS = [
+  {id:'strategy',   name:'Strategy',    sub:'Motivation & Direction',    color:'#fb923c', order:'01', bg:'rgba(251,146,60,0.06)'},
+  {id:'motivation', name:'Motivation',  sub:'Goals & Constraints',       color:'#f472b6', order:'02', bg:'rgba(244,114,182,0.06)'},
+  {id:'business',   name:'Business',    sub:'Processes & Value',         color:'#f59e0b', order:'03', bg:'rgba(245,158,11,0.06)'},
+  {id:'application',name:'Application', sub:'Services & Components',     color:'#22d3ee', order:'04', bg:'rgba(34,211,238,0.06)'},
+  {id:'data',       name:'Data',        sub:'Semantics & Structure',     color:'#a78bfa', order:'05', bg:'rgba(167,139,250,0.06)'},
+  {id:'technology', name:'Technology',  sub:'Infrastructure & Platforms',color:'#34d399', order:'06', bg:'rgba(52,211,153,0.06)'},
+];
+
+// ══════════════════════════════════════════════════════
+// BIAT 4-LAYER DEFINITION
+// Mapping: TOGAF layer(s) → BIAT layer
+// ══════════════════════════════════════════════════════
+const BIAT4_LAYERS = [
+  {
+    id:'business',
+    name:'Business',
+    sub:'Geschäftsarchitektur',
+    color:'#f59e0b', bg:'rgba(245,158,11,0.07)',
+    desc:'Geschäftsprozesse, Organisationsstrukturen, Ziele, Rollen und Wertschöpfungsketten. Definiert das WAS und WARUM des Unternehmens.',
+    togafSources:['strategy','motivation','business'],
+    icon:'🏢'
+  },
+  {
+    id:'information',
+    name:'Information',
+    sub:'Informationsarchitektur',
+    color:'#a78bfa', bg:'rgba(167,139,250,0.07)',
+    desc:'Datenmodelle, Informationsobjekte, Semantik, Ontologien und Datengovernance. Das WAS der Informationsversorgung.',
+    togafSources:['data'],
+    icon:'🗂️'
+  },
+  {
+    id:'application',
+    name:'Application',
+    sub:'Applikationsarchitektur',
+    color:'#22d3ee', bg:'rgba(34,211,238,0.07)',
+    desc:'Applikationskomponenten, Services, Integrationsschicht und Benutzeroberflächen. Das WIE der digitalen Unterstützung.',
+    togafSources:['application'],
+    icon:'🧩'
+  },
+  {
+    id:'technology',
+    name:'Technology',
+    sub:'Technologiearchitektur',
+    color:'#34d399', bg:'rgba(52,211,153,0.07)',
+    desc:'Infrastruktur, Plattformen, Datenbanken, Netzwerke und Betriebssysteme. Das WOMIT der technischen Umsetzung.',
+    togafSources:['technology'],
+    icon:'⚙️'
+  },
+];
+
+// ══════════════════════════════════════════════════════
+// BIAT 5-LAYER DEFINITION
+// Technology split into Software-Tech + Hardware-Tech
+// ══════════════════════════════════════════════════════
+const BIAT5_LAYERS = [
+  {
+    id:'business',
+    name:'Business',
+    sub:'Geschäftsarchitektur',
+    color:'#f59e0b', bg:'rgba(245,158,11,0.07)',
+    desc:'Geschäftsprozesse, Organisationsstrukturen, Ziele, Rollen und Wertschöpfungsketten.',
+    togafSources:['strategy','motivation','business'],
+    icon:'🏢'
+  },
+  {
+    id:'information',
+    name:'Information',
+    sub:'Informationsarchitektur',
+    color:'#a78bfa', bg:'rgba(167,139,250,0.07)',
+    desc:'Datenmodelle, Informationsobjekte, Semantik und Datengovernance.',
+    togafSources:['data'],
+    icon:'🗂️'
+  },
+  {
+    id:'application',
+    name:'Application',
+    sub:'Applikationsarchitektur',
+    color:'#22d3ee', bg:'rgba(34,211,238,0.07)',
+    desc:'Applikationskomponenten, Services, APIs und Integrationsschicht.',
+    togafSources:['application'],
+    icon:'🧩'
+  },
+  {
+    id:'swtech',
+    name:'Software-Technologie',
+    sub:'Software-Technologiearchitektur',
+    color:'#34d399', bg:'rgba(52,211,153,0.07)',
+    desc:'Middleware, Betriebssysteme, Container-Plattformen, Laufzeitumgebungen und Datenbanksoftware.',
+    togafSources:['technology'],
+    // Subset: software-oriented tech objects
+    objectFilter: ['t1','t2','t3','t4','t5','t6'],
+    icon:'💻'
+  },
+  {
+    id:'hwtech',
+    name:'Hardware-Technologie',
+    sub:'Hardware-Technologiearchitektur',
+    color:'#fb923c', bg:'rgba(251,146,60,0.07)',
+    desc:'Physische Server, Netzwerkinfrastruktur, Storage-Hardware, Rechenzentrum und Sicherheitshardware.',
+    togafSources:['technology'],
+    // Subset: hardware/network-oriented tech objects
+    objectFilter: ['t7'],
+    icon:'🖥️'
+  },
+];
+
+// Object → BIAT5 override mapping for technology split
+// true = software, false = hardware
+const TECH_SW_HW = {
+  't1': 'sw', // Datenbanken → SW (DBMS)
+  't2': 'sw', // Streams (Kafka) → SW
+  't3': 'sw', // Data Fabric → SW
+  't4': 'sw', // AI/ML Platforms → SW
+  't5': 'sw', // Container Platform → SW
+  't6': 'sw', // Object Storage → SW
+  't7': 'hw', // Netzwerk & Security → HW
+};
+
+// ══════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════
+let objects = [
+  {id:'s1',layer:'strategy',   name:'Vision & Mission',         icon:'🎯', desc:'Unternehmensausrichtung'},
+  {id:'s2',layer:'strategy',   name:'Strategische Ziele',       icon:'📌', desc:'OKRs, KPIs'},
+  {id:'s3',layer:'strategy',   name:'Capabilities',             icon:'💡', desc:'Business Capabilities Map'},
+  {id:'s4',layer:'strategy',   name:'Investitionsportfolio',    icon:'💼', desc:'Strategic Portfolios'},
+  {id:'m1',layer:'motivation', name:'Treiber',                  icon:'⚡', desc:'Business Driver'},
+  {id:'m2',layer:'motivation', name:'Anforderungen',            icon:'📋', desc:'Requirements'},
+  {id:'m3',layer:'motivation', name:'Compliance & Regulatorik', icon:'⚖️', desc:'GDPR, ISO, FINMA'},
+  {id:'m4',layer:'motivation', name:'Prinzipien',               icon:'🏛️', desc:'Architecture Principles'},
+  {id:'b1',layer:'business',   name:'Geschäftsobjekte',         icon:'📦', desc:'Business Objects'},
+  {id:'b2',layer:'business',   name:'Prozesse',                 icon:'🔄', desc:'Business Processes (BPMN)'},
+  {id:'b3',layer:'business',   name:'Value Streams',            icon:'🌊', desc:'End-to-End Wertschöpfung'},
+  {id:'b4',layer:'business',   name:'Rollen & Akteure',         icon:'👥', desc:'Stakeholder'},
+  {id:'b5',layer:'business',   name:'Produkte & Services',      icon:'🛍️', desc:'Business Services'},
+  {id:'b6',layer:'business',   name:'Contracts',                icon:'📄', desc:'Verträge & SLAs'},
+  {id:'a1',layer:'application',name:'Applikationskomponenten',  icon:'🧩', desc:'App Components'},
+  {id:'a2',layer:'application',name:'Application Services',     icon:'⚙️', desc:'APIs, Service Endpoints'},
+  {id:'a3',layer:'application',name:'Integration Layer',        icon:'🔗', desc:'ESB, iPaaS, MQ'},
+  {id:'a4',layer:'application',name:'Benutzeroberflächen',      icon:'🖥️', desc:'UI, Portale, Dashboards'},
+  {id:'a5',layer:'application',name:'Microservices',            icon:'🔲', desc:'Autonome Dienste'},
+  {id:'d1',layer:'data',       name:'Kanonische Datenobjekte',  icon:'🗂️', desc:'Canonical Data Model'},
+  {id:'d2',layer:'data',       name:'Semantik',                 icon:'🔤', desc:'Bedeutungsträger'},
+  {id:'d3',layer:'data',       name:'Ontologien',               icon:'🕸️', desc:'Knowledge Graphs'},
+  {id:'d4',layer:'data',       name:'Datenprodukte',            icon:'📊', desc:'Data Products / Data Mesh'},
+  {id:'d5',layer:'data',       name:'Masterdata Entities',      icon:'🏷️', desc:'MDM / Golden Records'},
+  {id:'d6',layer:'data',       name:'Data Policies',            icon:'🔒', desc:'Governance & Lineage'},
+  {id:'t1',layer:'technology', name:'Datenbanken',              icon:'🗄️', desc:'RDBMS, NoSQL, Columnar'},
+  {id:'t2',layer:'technology', name:'Streams',                  icon:'📡', desc:'Kafka, Event Mesh'},
+  {id:'t3',layer:'technology', name:'Data Fabric',              icon:'🌐', desc:'HPE Ezmeral, MapR'},
+  {id:'t4',layer:'technology', name:'AI/ML Platforms',          icon:'🤖', desc:'NVIDIA NIM, NeMo, DGX'},
+  {id:'t5',layer:'technology', name:'Container Platform',       icon:'📦', desc:'Kubernetes, ArgoCD'},
+  {id:'t6',layer:'technology', name:'Object Storage',           icon:'💾', desc:'MinIO, S3'},
+  {id:'t7',layer:'technology', name:'Netzwerk & Security',      icon:'🛡️', desc:'Zero Trust, WireGuard'},
+];
+
+let crossConnections = [
+  ['s2','m1','löst aus'],['s3','m2','definiert'],['s2','m4','leitet ab'],
+  ['s3','b3','realisiert'],['s3','b5','ermöglicht'],
+  ['m2','b2','spezifiziert'],['m3','b6','reguliert'],['m4','b1','definiert'],
+  ['b2','a1','unterstützt durch'],['b3','a2','realisiert durch'],['b5','a4','präsentiert in'],['b1','a3','integriert über'],['b4','a4','nutzt'],
+  ['b1','d1','abstrakt von'],['b1','d2','repräsentiert in'],['b1','d5','instanziiert als'],['b3','d4','produziert'],
+  ['a1','d1','liest/schreibt'],['a3','d4','verarbeitet'],['a5','d6','governed by'],
+  ['d1','t1','physisch in'],['d1','t3','verteilt über'],['d2','t4','trainiert in'],['d3','t4','ausgewertet in'],
+  ['d4','t2','gestreamt über'],['d4','t6','gespeichert in'],['d5','t1','persistiert in'],['d6','t3','enforced by'],
+];
+
+let innerConnections = [
+  ['s1','s2','erzeugt'],['s2','s3','benötigt'],['s4','s2','finanziert'],
+  ['m1','m2','erzeugt'],['m3','m2','erweitert'],['m4','m2','constraints'],
+  ['b1','b2','verarbeitet in'],['b2','b3','Teil von'],['b4','b2','führt aus'],['b5','b1','umfasst'],['b6','b5','regelt'],
+  ['a1','a2','exponiert'],['a2','a3','routing durch'],['a5','a2','implementiert'],['a4','a1','nutzt'],
+  ['d1','d2','beschrieben durch'],['d2','d3','eingebettet in'],['d5','d1','konform zu'],['d4','d1','basiert auf'],['d6','d4','governs'],
+  ['t1','t3','managed by'],['t2','t3','Teil von'],['t5','t3','orchestriert'],['t6','t1','backing store'],['t4','t5','deployed on'],['t7','t5','secures'],
+];
+
+let selectedId=null, hiddenLayers=new Set(), showCross=true, showInner=true, editingId=null;
+let currentView='togaf';
+
+// ══════════════════════════════════════════════════════
+// BIAT LAYER LOOKUP
+// ══════════════════════════════════════════════════════
+function getBiat4Layer(obj) {
+  return BIAT4_LAYERS.find(l => l.togafSources.includes(obj.layer)) || null;
+}
+
+function getBiat5Layer(obj) {
+  if (obj.layer === 'technology') {
+    const sw = TECH_SW_HW[obj.id];
+    return BIAT5_LAYERS.find(l => l.id === (sw === 'hw' ? 'hwtech' : 'swtech'));
+  }
+  return BIAT5_LAYERS.find(l => l.togafSources.includes(obj.layer)) || null;
+}
+
+// ══════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ══════════════════════════════════════════════════════
+function switchView(view) {
+  currentView = view;
+  ['togaf','biat4','biat5'].forEach(v => {
+    document.getElementById('view-'+v).style.display = v===view ? 'block' : 'none';
+    document.getElementById('tab-'+v).className = 'view-tab' + (v===view?' active':'');
+  });
+  clearSelection();
+  if (view === 'biat4') { renderBiat(BIAT4_LAYERS, 'biat4-body', 'biat4-mapping-list', getBiat4Layer); document.getElementById('status-text').textContent = 'BIAT 4-Layer · Business / Information / Application / Technology'; }
+  else if (view === 'biat5') { renderBiat(BIAT5_LAYERS, 'biat5-body', 'biat5-mapping-list', getBiat5Layer); document.getElementById('status-text').textContent = 'BIAT 5-Layer · + Software/Hardware-Technology Trennung'; }
+  else { document.getElementById('status-text').textContent = 'TOGAF Layer Matrix · Tab wechseln für BIAT-Sicht'; }
+}
+
+// ══════════════════════════════════════════════════════
+// BIAT RENDER
+// ══════════════════════════════════════════════════════
+function renderBiat(layerDef, bodyId, mappingId, lookupFn) {
+  const body = document.getElementById(bodyId);
+  body.innerHTML = '';
+
+  layerDef.forEach(bLayer => {
+    const block = document.createElement('div');
+    block.className = 'biat-layer';
+    block.id = 'biat-block-' + bLayer.id;
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'biat-layer-header';
+    header.style.background = bLayer.bg;
+    header.innerHTML = `
+      <div class="biat-layer-title" style="border-left:4px solid ${bLayer.color};background:${bLayer.bg}">
+        <div class="biat-layer-name" style="color:${bLayer.color}">${bLayer.icon} ${bLayer.name}</div>
+        <div class="biat-layer-sub">${bLayer.sub}</div>
+      </div>
+      <div class="biat-layer-desc" style="background:${bLayer.bg}">${bLayer.desc}</div>
+    `;
+    block.appendChild(header);
+
+    // Objects
+    const objArea = document.createElement('div');
+    objArea.className = 'biat-layer-body';
+    objArea.style.background = bLayer.bg;
+    objArea.id = 'biat-objs-' + bLayer.id;
+
+    // Filter objects belonging to this BIAT layer
+    const layerObjs = objects.filter(o => {
+      const bl = lookupFn(o);
+      return bl && bl.id === bLayer.id;
+    });
+
+    if (!layerObjs.length) {
+      objArea.innerHTML = '<span style="color:#475569;font-size:10px;padding:4px 0;">Keine Objekte zugeordnet</span>';
+    } else {
+      layerObjs.forEach(obj => {
+        const togafLayer = TOGAF_LAYERS.find(l => l.id === obj.layer);
+        const chip = document.createElement('div');
+        chip.className = 'biat-chip';
+        chip.id = 'biat-chip-' + bLayer.id + '-' + obj.id;
+        chip.dataset.objId = obj.id;
+        chip.style.background = bLayer.bg;
+        chip.style.color = bLayer.color;
+        chip.style.borderColor = bLayer.color + '55';
+        chip.innerHTML = `
+          <div class="biat-chip-name">${obj.icon||''} ${obj.name}</div>
+          <div class="biat-chip-source">
+            <span class="biat-source-dot" style="background:${togafLayer?.color||'#64748b'}"></span>
+            ${togafLayer?.name || obj.layer}
+          </div>
+        `;
+        chip.title = `${obj.desc || obj.name}\nTOGAF: ${togafLayer?.name || obj.layer}`;
+        chip.onclick = () => selectObjectBiat(obj.id, bLayer, lookupFn);
+        objArea.appendChild(chip);
+      });
+    }
+    block.appendChild(objArea);
+    body.appendChild(block);
+  });
+
+  // Render mapping legend
+  renderBiatMapping(layerDef, mappingId);
+}
+
+function renderBiatMapping(layerDef, mappingId) {
+  const list = document.getElementById(mappingId);
+  list.innerHTML = '';
+  layerDef.forEach(bLayer => {
+    bLayer.togafSources.forEach(src => {
+      const tl = TOGAF_LAYERS.find(l => l.id === src);
+      const row = document.createElement('div');
+      row.className = 'biat-map-row';
+      row.innerHTML = `
+        <span class="biat-map-src" style="background:${tl?.color||'#64748b'}22;color:${tl?.color||'#64748b'}">${tl?.name||src}</span>
+        <span class="biat-map-arrow">→</span>
+        <span class="biat-map-tgt" style="background:${bLayer.color}22;color:${bLayer.color}">${bLayer.name}</span>
+      `;
+      list.appendChild(row);
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// BIAT SELECTION
+// ══════════════════════════════════════════════════════
+function selectObjectBiat(id, bLayer, lookupFn) {
+  selectedId = id;
+  // Highlight in BIAT view
+  document.querySelectorAll('.biat-chip').forEach(c => c.classList.remove('selected','dimmed'));
+  const connCross = new Set(), connInner = new Set();
+  if (showCross) crossConnections.forEach(([f,t]) => { if(f===id)connCross.add(t); if(t===id)connCross.add(f); });
+  if (showInner) innerConnections.forEach(([f,t]) => { if(f===id)connInner.add(t); if(t===id)connInner.add(f); });
+  document.querySelectorAll('.biat-chip').forEach(c => {
+    const cid = c.dataset.objId;
+    if (!cid) return;
+    if (cid === id) c.classList.add('selected');
+    else if (connCross.has(cid) || connInner.has(cid)) c.classList.add('connected');
+    else c.classList.add('dimmed');
+  });
+  updateInfoPanelBiat(id, lookupFn);
+  document.getElementById('status-text').textContent = `"${objects.find(o=>o.id===id)?.name}" — ${connCross.size} cross, ${connInner.size} inner`;
+}
+
+function updateInfoPanelBiat(id, lookupFn) {
+  const obj = objects.find(o => o.id === id); if (!obj) return;
+  const togafLayer = TOGAF_LAYERS.find(l => l.id === obj.layer);
+  const biatLayer = lookupFn(obj);
+  document.getElementById('info-title').textContent = (obj.icon||'') + ' ' + obj.name;
+  document.getElementById('info-layer').innerHTML = `<span style="color:${togafLayer?.color}">${togafLayer?.name}</span> — ${togafLayer?.sub}`;
+  // BIAT badge
+  const biatSection = document.getElementById('info-biat-section');
+  if (biatLayer) {
+    biatSection.style.display = 'block';
+    document.getElementById('info-biat-layer').innerHTML = `
+      <div class="info-biat-badge" style="background:${biatLayer.color}18;color:${biatLayer.color};border:1px solid ${biatLayer.color}44;">
+        ${biatLayer.icon} ${biatLayer.name} — ${biatLayer.sub}
+      </div>
+    `;
+  } else { biatSection.style.display = 'none'; }
+  buildConnList('info-cross-list', crossConnections, id);
+  buildConnList('info-inner-list', innerConnections, id);
+  document.getElementById('info-panel').classList.add('visible');
+}
+
+function buildConnList(listId, conns, id) {
+  const list = document.getElementById(listId); list.innerHTML = '';
+  conns.forEach(([f,t,label]) => {
+    if (f!==id && t!==id) return;
+    const oid=f===id?t:f, other=objects.find(o=>o.id===oid), ol=other?TOGAF_LAYERS.find(l=>l.id===other.layer):null; if(!other||!ol) return;
+    const item=document.createElement('div'); item.className='info-conn-item';
+    item.innerHTML=`<span class="info-conn-dot" style="background:${ol.color}"></span><span style="color:#94a3b8">${f===id?'→':'←'}</span><span style="color:${ol.color}">${other.name}</span><span style="color:#475569;font-size:10px">(${label})</span>`;
+    list.appendChild(item);
+  });
+  if (!list.children.length) list.innerHTML='<span style="color:#475569;font-size:11px">Keine</span>';
+}
+
+// ══════════════════════════════════════════════════════
+// TOGAF RENDER (Matrix view)
+// ══════════════════════════════════════════════════════
+function render() {
+  const canvas = document.getElementById('canvas');
+  canvas.querySelectorAll('.layer-row').forEach(el => el.remove());
+  TOGAF_LAYERS.forEach(layer => {
+    const layerObjs = objects.filter(o => o.layer === layer.id);
+    const row = document.createElement('div');
+    row.className = 'layer-row' + (hiddenLayers.has(layer.id) ? ' hidden' : '');
+    row.id = 'layer-row-' + layer.id;
+    const label = document.createElement('div');
+    label.className = 'layer-label';
+    label.style.cssText = `background:${layer.bg};border-left:3px solid ${layer.color}`;
+    label.innerHTML = `<span class="layer-label-order">${layer.order}</span><div class="layer-label-name" style="color:${layer.color}">${layer.name}</div><div class="layer-label-sub">${layer.sub}</div>`;
+    const objs = document.createElement('div');
+    objs.className = 'layer-objects'; objs.style.background = layer.bg;
+    layerObjs.forEach(obj => {
+      const chip = document.createElement('div');
+      chip.className = 'obj-chip'; chip.id = 'chip-'+obj.id; chip.dataset.id = obj.id;
+      chip.style.background = layer.bg; chip.style.color = layer.color; chip.style.borderColor = layer.color+'44';
+      chip.innerHTML = `<span class="chip-icon">${obj.icon||'●'}</span><span>${obj.name}</span>`;
+      chip.onclick = () => selectObject(obj.id);
+      objs.appendChild(chip);
+    });
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-obj-btn'; addBtn.innerHTML = '+ Objekt'; addBtn.onclick = () => openAddObjectModal(layer.id);
+    objs.appendChild(addBtn);
+    row.appendChild(label); row.appendChild(objs); canvas.appendChild(row);
+  });
+  if (selectedId) applySelection(selectedId);
+}
+
+function selectObject(id) { selectedId=id; applySelection(id); updateInfoPanelBiat(id, getBiat4Layer); drawArrows(); }
+
+function applySelection(id) {
+  document.querySelectorAll('.obj-chip').forEach(c => c.classList.remove('selected','connected-cross','connected-same','dimmed'));
+  const chip = document.getElementById('chip-'+id); if (!chip) return; chip.classList.add('selected');
+  const connCross=new Set(), connInner=new Set();
+  if(showCross) crossConnections.forEach(([f,t])=>{if(f===id)connCross.add(t);if(t===id)connCross.add(f);});
+  if(showInner) innerConnections.forEach(([f,t])=>{if(f===id)connInner.add(t);if(t===id)connInner.add(f);});
+  document.querySelectorAll('.obj-chip').forEach(c=>{
+    const cid=c.dataset.id; if(cid===id) return;
+    if(connCross.has(cid)) c.classList.add('connected-cross');
+    else if(connInner.has(cid)) c.classList.add('connected-same');
+    else c.classList.add('dimmed');
+  });
+  document.getElementById('info-biat-section').style.display='block';
+  const bLayer = getBiat4Layer(objects.find(o=>o.id===id));
+  if (bLayer) document.getElementById('info-biat-layer').innerHTML=`<div class="info-biat-badge" style="background:${bLayer.color}18;color:${bLayer.color};border:1px solid ${bLayer.color}44;">${bLayer.icon} ${bLayer.name}</div>`;
+}
+
+function clearSelection() {
+  selectedId = null;
+  document.querySelectorAll('.obj-chip,.biat-chip').forEach(c => c.classList.remove('selected','connected-cross','connected-same','dimmed','connected'));
+  clearArrows();
+  document.getElementById('info-panel').classList.remove('visible');
+}
+
+function drawArrows() {
+  clearArrows(); if (!selectedId) return;
+  const id=selectedId, svg=document.getElementById('arrow-svg'), cr=document.getElementById('canvas').getBoundingClientRect();
+  function gc(cid){const el=document.getElementById('chip-'+cid);if(!el)return null;const r=el.getBoundingClientRect();return{x:r.left-cr.left+r.width/2,y:r.top-cr.top+r.height/2+window.scrollY};}
+  function dl(fId,tId,isCross){
+    if(!showCross&&isCross)return; if(!showInner&&!isCross)return;
+    const from=gc(fId),to=gc(tId); if(!from||!to)return;
+    const dx=to.x-from.x,dy=to.y-from.y,color=isCross?'#f59e0b':'#64748b';
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M ${from.x} ${from.y} C ${from.x+dx*0.2} ${from.y+dy*0.5}, ${to.x-dx*0.2} ${from.y+dy*0.5}, ${to.x} ${to.y}`);
+    path.setAttribute('stroke',color);path.setAttribute('stroke-width',isCross?'2':'1.5');path.setAttribute('fill','none');
+    path.setAttribute('marker-end',`url(#arrow-${isCross?'cross':'inner'})`);path.setAttribute('stroke-dasharray',isCross?'0':'4 3');path.setAttribute('opacity',isCross?'0.85':'0.7');
+    svg.appendChild(path);
+  }
+  crossConnections.forEach(([f,t])=>{if(f===id||t===id)dl(f,t,true);});
+  innerConnections.forEach(([f,t])=>{if(f===id||t===id)dl(f,t,false);});
+}
+function clearArrows(){document.getElementById('arrow-svg').querySelectorAll('path').forEach(p=>p.remove());}
+
+// ══════════════════════════════════════════════════════
+// OBJECT MODAL
+// ══════════════════════════════════════════════════════
+function openAddObjectModal(layerId) {
+  editingId=null; document.getElementById('modal-title').textContent='Objekt hinzufügen';
+  ['modal-name','modal-icon','modal-desc'].forEach(id=>document.getElementById(id).value='');
+  populateLayerSelect(layerId); document.getElementById('obj-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('modal-name').focus(),100);
+}
+function editSelectedObject() {
+  if(!selectedId)return; const obj=objects.find(o=>o.id===selectedId); if(!obj)return;
+  editingId=selectedId; document.getElementById('modal-title').textContent='Objekt bearbeiten';
+  document.getElementById('modal-name').value=obj.name; document.getElementById('modal-icon').value=obj.icon||''; document.getElementById('modal-desc').value=obj.desc||'';
+  populateLayerSelect(obj.layer); document.getElementById('obj-modal').classList.add('open');
+}
+function populateLayerSelect(sel) {
+  const s=document.getElementById('modal-layer'); s.innerHTML='';
+  TOGAF_LAYERS.forEach(l=>{const o=document.createElement('option');o.value=l.id;o.textContent=l.name;if(l.id===sel)o.selected=true;s.appendChild(o);});
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function saveObject() {
+  const name=document.getElementById('modal-name').value.trim(); if(!name)return;
+  const layerId=document.getElementById('modal-layer').value, icon=document.getElementById('modal-icon').value.trim()||'●', desc=document.getElementById('modal-desc').value.trim();
+  if(editingId){const obj=objects.find(o=>o.id===editingId);if(obj){obj.name=name;obj.layer=layerId;obj.icon=icon;obj.desc=desc;}}
+  else objects.push({id:'c_'+Date.now(),layer:layerId,name,icon,desc});
+  closeModal('obj-modal'); render();
+  if(currentView==='biat4') renderBiat(BIAT4_LAYERS,'biat4-body','biat4-mapping-list',getBiat4Layer);
+  if(currentView==='biat5') renderBiat(BIAT5_LAYERS,'biat5-body','biat5-mapping-list',getBiat5Layer);
+  if(selectedId) drawArrows();
+}
+function deleteSelectedObject() {
+  if(!selectedId)return; if(!confirm('Objekt löschen?'))return;
+  objects=objects.filter(o=>o.id!==selectedId);
+  crossConnections=crossConnections.filter(([f,t])=>f!==selectedId&&t!==selectedId);
+  innerConnections=innerConnections.filter(([f,t])=>f!==selectedId&&t!==selectedId);
+  clearSelection(); render();
+}
+
+document.getElementById('toggle-cross').addEventListener('change',e=>{showCross=e.target.checked;if(selectedId&&currentView==='togaf'){applySelection(selectedId);drawArrows();}});
+document.getElementById('toggle-inner').addEventListener('change',e=>{showInner=e.target.checked;if(selectedId&&currentView==='togaf'){applySelection(selectedId);drawArrows();}});
+window.addEventListener('scroll',()=>{if(selectedId&&currentView==='togaf')drawArrows();});
+window.addEventListener('resize',()=>{if(selectedId&&currentView==='togaf')drawArrows();});
+document.getElementById('obj-modal').addEventListener('click',e=>{if(e.target===document.getElementById('obj-modal'))closeModal('obj-modal');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){clearSelection();closeModal('obj-modal');}});
+
+render();
+</script>
+</body>
+</html>

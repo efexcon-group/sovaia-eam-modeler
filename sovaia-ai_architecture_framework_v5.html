@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Architecture Framework v5 — Fachliche Anwendungsfälle</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#fafaf9;color:#1a1a18;padding:1.5rem;font-size:13px;line-height:1.5}
+h1{font-size:16px;font-weight:500;margin-bottom:4px;color:#1a1a18}
+.subtitle{font-size:11px;color:#888;margin-bottom:1.25rem}
+.root{max-width:1400px;margin:0 auto}
+.top-split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.scen-head{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:8px}
+.scen-group{margin-bottom:11px}
+.scen-group-label{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:10px;margin-bottom:5px;display:inline-block}
+.sg-determ{background:#E6F1FB;color:#0C447C}
+.sg-ai{background:#EAF3DE;color:#27500A}
+.sg-caution{background:#FAECE7;color:#712B13}
+.scen-item{padding:8px 11px;border-radius:7px;border:0.5px solid #ddd;margin-bottom:5px;cursor:pointer;transition:border-color .15s,background .15s;background:#f5f5f3}
+.scen-item:hover{border-color:#aaa;background:#efefed}
+.scen-item.active{border-color:#534AB7;background:#EEEDFE}
+.scen-item.active-determ{border-color:#185FA5;background:#E6F1FB}
+.scen-item.active-caution{border-color:#D85A30;background:#FAECE7}
+.scen-title{font-size:12px;font-weight:500;color:#1a1a18;margin-bottom:2px}
+.scen-sub{font-size:10px;color:#666;line-height:1.4}
+.scen-badge{font-size:9px;padding:1px 6px;border-radius:8px;font-weight:500;margin-top:4px;display:inline-block}
+.badge-determ{background:#E6F1FB;color:#0C447C;border:0.5px solid #85B7EB}
+.badge-ai{background:#EAF3DE;color:#27500A;border:0.5px solid #97C459}
+.badge-caution{background:#FAECE7;color:#712B13;border:0.5px solid #F0997B}
+.badge-hybrid{background:#EEEDFE;color:#3C3489;border:0.5px solid #AFA9EC}
+.detail-col{}
+.detail-placeholder{display:flex;align-items:center;justify-content:center;min-height:220px;font-size:11px;color:#aaa;text-align:center;padding:1.5rem;background:#f5f5f3;border-radius:8px;border:0.5px solid #ddd}
+.detail-card{background:#f5f5f3;border-radius:8px;border:0.5px solid #ddd;padding:12px 14px;display:none}
+.dc-title{font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:3px}
+.dc-desc{font-size:11px;color:#555;line-height:1.5;margin-bottom:9px}
+.dc-section{margin-bottom:9px}
+.dc-label{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:4px}
+.tech-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 9px;border-radius:10px;font-weight:500;margin:2px}
+.tc-determ{background:#E6F1FB;color:#0C447C;border:0.5px solid #85B7EB}
+.tc-ml{background:#FAEEDA;color:#633806;border:0.5px solid #FAC775}
+.tc-nlp{background:#EEEDFE;color:#3C3489;border:0.5px solid #AFA9EC}
+.tc-genai{background:#EAF3DE;color:#27500A;border:0.5px solid #97C459}
+.tc-agentic{background:#F1EFE8;color:#444;border:0.5px solid #B4B2A9}
+.prereq-item{display:flex;gap:6px;margin-bottom:5px;align-items:flex-start}
+.pdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.prereq-text{font-size:11px;color:#1a1a18;line-height:1.45}
+.prereq-risk{font-size:10px;color:#666;margin-top:1px}
+.risk-tag{font-size:9px;padding:1px 5px;border-radius:5px;font-weight:500;margin-right:3px}
+.warn-box{background:#FAECE7;border-radius:6px;padding:8px 11px;font-size:11px;color:#712B13;line-height:1.5;margin-top:7px;border:0.5px solid #F0997B}
+.divider{height:0.5px;background:#e0e0de;margin:8px 0}
+.graph-section{border-top:0.5px solid #e0e0de;padding-top:13px;margin-top:4px}
+.graph-section-head{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:9px}
+.graph-placeholder-full{display:flex;align-items:center;justify-content:center;min-height:120px;font-size:11px;color:#aaa;text-align:center;background:#f5f5f3;border-radius:8px;border:0.5px solid #ddd;padding:1rem}
+.togaf-domain{font-size:9px;padding:1px 6px;border-radius:8px;font-weight:500;white-space:nowrap}
+.td-biz{background:#FAEEDA;color:#633806;border:0.5px solid #FAC775}
+.td-app{background:#EEEDFE;color:#3C3489;border:0.5px solid #AFA9EC}
+.td-data{background:#E1F5EE;color:#085041;border:0.5px solid #5DCAA5}
+.td-tech{background:#E6F1FB;color:#0C447C;border:0.5px solid #85B7EB}
+.adm-badge{font-size:9px;padding:1px 5px;border-radius:6px;border:0.5px solid #ccc;color:#888;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="root">
+<h1>AI Architecture Framework v5</h1>
+<p class="subtitle">Fachliche Anwendungsfälle → Technologie-Empfehlung → Dependency-Graph &nbsp;|&nbsp; TOGAF-Domains + ADM-Phasen &nbsp;|&nbsp; KIINNO / EFEXCON</p>
+
+<div class="top-split">
+  <div class="scen-col">
+    <div class="scen-head">Fachliche Anwendungsfälle</div>
+    <div class="scen-group">
+      <span class="scen-group-label sg-determ">Deterministisch — kein AI nötig</span>
+      <div class="scen-item" onclick="selectScenario('s_hiring')" id="si_s_hiring">
+        <div class="scen-title">Personal-Einstellung</div>
+        <div class="scen-sub">Stellenausschreibung, Bewerbungseingang, Weiterleitung, Vertragsworkflow</div>
+        <span class="scen-badge badge-determ">Workflow / BPMN</span>
+      </div>
+      <div class="scen-item" onclick="selectScenario('s_invoice')" id="si_s_invoice">
+        <div class="scen-title">Rechnungsverarbeitung</div>
+        <div class="scen-sub">Eingangsrechnung prüfen, buchen, freigeben — regelbasiert mit Audit-Trail</div>
+        <span class="scen-badge badge-determ">Workflow / RPA</span>
+      </div>
+      <div class="scen-item" onclick="selectScenario('s_compliance')" id="si_s_compliance">
+        <div class="scen-title">Compliance-Prüfung (reguliert)</div>
+        <div class="scen-sub">KYC, AML, DSGVO-Checks — Zero-Error, vollständige Auditierbarkeit</div>
+        <span class="scen-badge badge-determ">Regelmaschine + Ontologie</span>
+      </div>
+      <div class="scen-item" onclick="selectScenario('s_onboarding')" id="si_s_onboarding">
+        <div class="scen-title">IT-Onboarding neuer Mitarbeiter</div>
+        <div class="scen-sub">Account-Erstellung, Rollenauswahl, System-Zugang — definierte Regeln je Rolle</div>
+        <span class="scen-badge badge-determ">RBAC + Workflow</span>
+      </div>
+    </div>
+    <div class="scen-group">
+      <span class="scen-group-label sg-ai">AI sinnvoll einsetzbar</span>
+      <div class="scen-item" onclick="selectScenario('s_dictation')" id="si_s_dictation">
+        <div class="scen-title">Diktat / Arzt-Dokumentation</div>
+        <div class="scen-sub">Gesprochenes in strukturierte Befunddokumentation überführen</div>
+        <span class="scen-badge badge-ai">NLP / Speech-to-Text + LLM</span>
+      </div>
+      <div class="scen-item" onclick="selectScenario('s_churn')" id="si_s_churn">
+        <div class="scen-title">Kunden-Churn-Vorhersage</div>
+        <div class="scen-sub">Verhaltensauffälligkeiten erkennen, Abwanderungsrisiko scoren</div>
+        <span class="scen-badge badge-ai">ML / Klassifikation</span>
+      </div>
+      <div class="scen-item" onclick="selectScenario('s_contract_qa')" id="si_s_contract_qa">
+        <div class="scen-title">Vertragsanalyse / Q&amp;A</div>
+        <div class="scen-sub">Fragen an Vertragsdokumente, Klausel-Extraktion, Risikosummary</div>
+        <span class="scen-badge badge-ai">RAG + LLM</span>
+      </div>
+      <div class="scen-item" onclick="selectScenario('s_anomaly')" id="si_s_anomaly">
+        <div class="scen-title">Anomalieerkennung Logistik</div>
+        <div class="scen-sub">Ungewöhnliche Lieferkettenmuster, Sendungsabweichungen früh erkennen</div>
+        <span class="scen-badge badge-ai">ML / Anomaly Detection</span>
+      </div>
+      <div class="scen-item" onclick="selectScenario('s_support_agent')" id="si_s_support_agent">
+        <div class="scen-title">Autonomer Support-Agent</div>
+        <div class="scen-sub">Tickets klassifizieren, Wissensbasis abfragen, Antworten generieren, Eskalation</div>
+        <span class="scen-badge badge-ai">Agentic AI + RAG</span>
+      </div>
+    </div>
+    <div class="scen-group">
+      <span class="scen-group-label sg-caution">⚠ AI nur unter kontrollierten Bedingungen</span>
+      <div class="scen-item" onclick="selectScenario('s_medical_decision')" id="si_s_medical_decision">
+        <div class="scen-title">Medizinische Diagnose-Unterstützung</div>
+        <div class="scen-sub">AI als Assistenz — Entscheidung bleibt beim Arzt, Halluzinationsrisiko kritisch</div>
+        <span class="scen-badge badge-caution">GenAI + Human-in-the-Loop</span>
+      </div>
+      <div class="scen-item" onclick="selectScenario('s_legal_draft')" id="si_s_legal_draft">
+        <div class="scen-title">Rechtliche Dokumentenerstellung</div>
+        <div class="scen-sub">Vertragsentwürfe per LLM — nur mit Jurist-Review, keine autonome Freigabe</div>
+        <span class="scen-badge badge-caution">GenAI + Review-Gate</span>
+      </div>
+      <div class="scen-item" onclick="selectScenario('s_financial_advice')" id="si_s_financial_advice">
+        <div class="scen-title">Finanzberatung / Portfolio-Empfehlung</div>
+        <div class="scen-sub">Regulatorische Schranken (MiFID), Haftung — AI als Research-Assistenz</div>
+        <span class="scen-badge badge-caution">ML + GenAI assistiv</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-col" id="detail-col">
+    <div class="detail-placeholder" id="detail-placeholder">Anwendungsfall links auswählen →<br>Technologie-Empfehlung, Prerequisites<br>und Dependency-Graph erscheinen hier</div>
+    <div id="detail-card" class="detail-card"></div>
+  </div>
+</div>
+
+<div class="graph-section">
+  <div class="graph-section-head" id="graph-head">Dependency-Graph — Technologie-Stack für gewählten Anwendungsfall</div>
+  <div id="graph-full"><div class="graph-placeholder-full">Anwendungsfall auswählen → Graph zeigt den vollständigen Technologie-Stack mit Abhängigkeiten</div></div>
+</div>
+</div>
+
+<script>
+const O={
+  proc_process:{layer:1,label:"Geschäftsprozess",togaf:"biz",adm:"B",noai:false,prereqs:[{t:"Process Owner definiert",r:"Ohne Owner kein Scope",risk:"high"},{t:"Inputs/Outputs dokumentiert",r:"Prereq für jede Automatisierung",risk:"high"},{t:"SLA/KPIs messbar",r:"Ohne Ziele kein ROI",risk:"med"}],deps:{same:["proc_task","proc_trigger"],up:[],down:["sol_class"]}},
+  proc_task:{layer:1,label:"Atomare Aufgabe",togaf:"biz",adm:"B",noai:false,prereqs:[{t:"Aufgabe vollständig abgegrenzt",r:"Überlappungen erzeugen Lücken",risk:"med"},{t:"Akteur identifiziert",r:"Basis für Automatisierungsentscheidung",risk:"high"}],deps:{same:["proc_process","proc_trigger"],up:[],down:["sol_class","tech_determ"]}},
+  proc_trigger:{layer:1,label:"Trigger & Ereignis",togaf:"biz",adm:"B",noai:false,prereqs:[{t:"Ereignisquellen inventarisiert",r:"Unbekannte Trigger → Prozesslücken",risk:"med"},{t:"Format und Frequenz spezifiziert",r:"Basis für Event-Architektur",risk:"med"}],deps:{same:["proc_process","proc_task"],up:[],down:["tech_determ","tech_genai"]}},
+  sol_class:{layer:2,label:"Lösungsklasse",togaf:"biz",adm:"A",noai:true,prereqs:[{t:"Herausforderungstyp klassifiziert",r:"Ohne Klassifikation wird AI Default",risk:"high"},{t:"Fit-Kriterien evaluiert",r:"Deterministisch vs. stochastisch",risk:"high"},{t:"Business Case verglichen",r:"AI nur wenn klar überlegen",risk:"med"}],deps:{same:["proc_process"],up:[],down:["tech_determ","tech_ml","tech_nlp","tech_genai","tech_agentic"]}},
+  tech_determ:{layer:3,label:"Deterministisch/Workflow",togaf:"app",adm:"C",noai:true,prereqs:[{t:"Regelwerk vollständig und stabil",r:"Unvollständig → Automatisierungslücken",risk:"high"},{t:"Ausnahmen <5% spezifiziert",r:"Hohe Ausnahmerate macht unwartbar",risk:"med"},{t:"Audit-Trail-Anforderungen bekannt",r:"Muss konfiguriert werden",risk:"low"}],deps:{same:["tech_ml"],up:["sol_class"],down:["data_structured","sec_rbac"]}},
+  tech_ml:{layer:3,label:"Analytik / ML",togaf:"app",adm:"C",noai:false,prereqs:[{t:"Trainingsdaten verfügbar, gelabelt, repräsentativ",r:"ML nur so gut wie die Daten",risk:"high"},{t:"Feature Engineering abgeschlossen",r:"Rohdaten selten direkt modellierbar",risk:"high"},{t:"Evaluation-Framework definiert",r:"Ohne Baseline kein Nachweis",risk:"med"}],deps:{same:["tech_determ","tech_nlp","tech_genai"],up:["sol_class"],down:["data_structured","data_catalog"]}},
+  tech_nlp:{layer:3,label:"NLP / Speech",togaf:"app",adm:"C",noai:false,prereqs:[{t:"Textkorpus in Zielsprache und -domäne",r:"Generisch miss-klassifiziert Fachbegriffe",risk:"high"},{t:"Domänenvokabular / Taxonomie definiert",r:"Basis für Entitätserkennung",risk:"med"}],deps:{same:["tech_ml","tech_genai"],up:["sol_class"],down:["data_unstructured","data_ontology"]}},
+  tech_genai:{layer:3,label:"GenAI / LLM",togaf:"app",adm:"C",noai:false,prereqs:[{t:"Evaluation-Framework vor Go-Live",r:"Halluzinationen sonst unsichtbar",risk:"high"},{t:"Datensouveränität / Datenschutz geklärt",r:"PII nicht unkontrolliert in Cloud-LLMs",risk:"high"},{t:"Fallback für Low-Confidence definiert",r:"LLMs antworten immer",risk:"high"},{t:"Guard-Rails (Input/Output-Filtering)",r:"Ohne Guard-Rails kein Production",risk:"high"}],deps:{same:["tech_ml","tech_nlp","tech_agentic"],up:["sol_class"],down:["data_unstructured","data_vector","sec_abac"]}},
+  tech_agentic:{layer:3,label:"Agentic AI",togaf:"app",adm:"C",noai:false,prereqs:[{t:"Alle GenAI-Prereqs erfüllt",r:"Agentic baut auf GenAI auf",risk:"high"},{t:"Tool-Inventory und MCP-Server definiert",r:"Ohne Tools kann Agent nichts ausführen",risk:"high"},{t:"Permission-Modell auf Infra-Ebene erzwungen",r:"MCP ist kein Sicherheitsmodell",risk:"high"},{t:"Human-in-the-Loop-Punkte definiert",r:"Agentic macht Fehler — Eskalation ist Pflicht",risk:"med"}],deps:{same:["tech_genai"],up:["sol_class"],down:["data_vector","sec_abac","sec_mcp"]}},
+  data_structured:{layer:4,label:"Strukturierte Daten",togaf:"data",adm:"C",noai:false,prereqs:[{t:"Schema definiert und versioniert",r:"Drift bricht ML-Pipelines",risk:"high"},{t:"Datenqualitäts-KPIs gemessen",r:"Garbage in, garbage out",risk:"high"}],deps:{same:["data_unstructured"],up:["tech_determ","tech_ml"],down:["fabric_fabric","sec_rbac"]}},
+  data_unstructured:{layer:4,label:"Unstrukturierte Daten",togaf:"data",adm:"C",noai:false,prereqs:[{t:"Dokumentquellen inventarisiert",r:"Unkontrollierter Einfluss auf AI",risk:"high"},{t:"Preprocessing-Pipeline definiert",r:"Rohdaten nicht direkt nutzbar",risk:"med"}],deps:{same:["data_structured","data_vector"],up:["tech_nlp","tech_genai"],down:["fabric_catalog"]}},
+  data_vector:{layer:4,label:"Vektorembeddings",togaf:"data",adm:"C",noai:false,prereqs:[{t:"Embedding-Modell domänentauglich",r:"Generisch verliert Fachsemantik",risk:"med"},{t:"Chunking-Strategie validiert",r:"Schlechtes Chunking degradiert Retrieval",risk:"high"},{t:"Vector Store skalierbar",r:"Kritisch für RAG-Latenz",risk:"med"}],deps:{same:["data_unstructured"],up:["tech_genai","tech_agentic"],down:["fabric_fabric"]}},
+  data_catalog:{layer:4,label:"Datenkatalog",togaf:"data",adm:"C",noai:false,prereqs:[{t:"Metadaten-Schema definiert",r:"Katalog ohne Struktur = Chaos",risk:"high"},{t:"Crawler zu Quellsystemen konfiguriert",r:"Manuell veraltet innerhalb Monate",risk:"med"}],deps:{same:["data_structured","data_vector"],up:["tech_ml","tech_genai","tech_agentic"],down:["fabric_catalog"]}},
+  data_ontology:{layer:4,label:"Ontologie/Knowledge Graph",togaf:"data",adm:"C",noai:false,prereqs:[{t:"Domänenexperten für Pflege",r:"Ontologie veraltet ohne Pflege",risk:"high"},{t:"Toolchain definiert",r:"Kein operativer Betrieb ohne Tools",risk:"med"},{t:"Scope abgegrenzt",r:"Overscoping → Scheitern",risk:"high"}],deps:{same:["data_structured","data_vector"],up:["tech_nlp"],down:[]}},
+  fabric_fabric:{layer:5,label:"Data Fabric",togaf:"tech",adm:"D",noai:true,prereqs:[{t:"Datenquellen vollständig inventarisiert",r:"Fabric ohne Inventory = Teillösung",risk:"high"},{t:"Security-Architektur Cross-Domain freigegeben",r:"Traversiert Security-Boundaries",risk:"high"}],deps:{same:["fabric_catalog"],up:["data_structured","data_vector"],down:["sec_rbac","sec_abac"]}},
+  fabric_catalog:{layer:5,label:"Datenkatalog (Betrieb)",togaf:"data",adm:"C",noai:false,prereqs:[{t:"Taxonomie und Schema definiert",r:"Ohne Struktur = Chaos auf neuem Tool",risk:"high"},{t:"Governance-Prozess etabliert",r:"Kein Einmal-Projekt",risk:"high"}],deps:{same:["fabric_fabric"],up:["data_unstructured","data_catalog"],down:["sec_rbac"]}},
+  sec_rbac:{layer:6,label:"RBAC",togaf:"tech",adm:"D",noai:true,prereqs:[{t:"Rollenkonzept dokumentiert & AD-synchronisiert",r:"Veraltet → Over-Provisioning",risk:"high"},{t:"Least-Privilege angewendet",r:"Zu breite Rollen = Schwachstelle",risk:"high"}],deps:{same:["sec_abac","sec_mcp"],up:["fabric_fabric","tech_determ"],down:[]}},
+  sec_abac:{layer:6,label:"ABAC",togaf:"tech",adm:"D",noai:false,prereqs:[{t:"Datenklassifikationsschema implementiert",r:"ABAC braucht Attribute",risk:"high"},{t:"Policy-Engine gewählt (OPA, Keycloak)",r:"Nicht im LLM implementierbar",risk:"high"}],deps:{same:["sec_rbac","sec_mcp"],up:["fabric_fabric","tech_genai","tech_agentic"],down:[]}},
+  sec_mcp:{layer:6,label:"MCP & Tool-Permissions",togaf:"tech",adm:"D",noai:true,prereqs:[{t:"MCP-Server-Inventory mit Scopes",r:"Ohne Inventory = unkontrollierter Zugriff",risk:"high"},{t:"API-Gateway als Enforcement-Punkt",r:"MCP selbst erzwingt keine Berechtigungen",risk:"high"},{t:"Audit-Log für alle Tool-Calls",r:"Agentic ohne Log nicht nachvollziehbar",risk:"med"}],deps:{same:["sec_rbac","sec_abac"],up:["tech_agentic"],down:[]}},
+};
+
+const TOGAF_DOMAIN={biz:{label:"Business",cls:"td-biz"},app:{label:"Application",cls:"td-app"},data:{label:"Data",cls:"td-data"},tech:{label:"Technology",cls:"td-tech"}};
+const ADM_LABELS={A:"ADM-A",B:"ADM-B",C:"ADM-C",D:"ADM-D"};
+const LAYER_LABELS={1:"Prozess & Aufgabe",2:"Lösungsklasse",3:"Technologie",4:"Datengrundlage",5:"Data Fabric",6:"Governance"};
+
+const SCENARIOS={
+  s_hiring:{title:"Personal-Einstellung",type:"determ",desc:"Eingehende Bewerbungen werden entlang eines definierten Workflows geroutet: Eingangsbestätigung, HR-Sichtung, Weiterleitung an Fachabteilung, Interviewplanung, Vertragsworkflow. Alle Schritte sind regelbasiert und auditierbar.",recommendation:"Deterministisch mit BPMN/Workflow-Engine. GenAI kann als Assistenz für Stellentexte eingesetzt werden — nicht für Auswahlentscheidungen (diskriminierungsrechtlich kritisch).",aiCaution:"KI-gestützte Bewerberauswahl unterliegt strengen Anforderungen (EU AI Act, Antidiskriminierungsrecht). Deterministischer Workflow mit menschlicher Entscheidung ist Pflicht.",techStack:["proc_process","proc_task","proc_trigger","sol_class","tech_determ","data_structured","sec_rbac"],prereqFocus:["tech_determ","sec_rbac"]},
+  s_invoice:{title:"Rechnungsverarbeitung",type:"determ",desc:"Eingangsrechnungen werden gescannt, OCR-verarbeitet, gegen Bestellungen gematcht, buchhalterisch zugeordnet und zur Freigabe weitergeleitet. Regelbasierter Prozess mit vollständigem Audit-Trail für GoBD-Konformität.",recommendation:"RPA + Workflow-Engine für den Kernprozess. OCR/NLP für Extraktion aus unstrukturierten Belegen. GenAI nicht notwendig — Regelwerk ist bekannt und vollständig.",aiCaution:null,techStack:["proc_process","proc_task","tech_determ","tech_nlp","data_structured","data_unstructured","sec_rbac"],prereqFocus:["tech_determ","data_structured"]},
+  s_compliance:{title:"Compliance-Prüfung (reguliert)",type:"determ",desc:"KYC/AML-Prüfungen, DSGVO-Assessments, regulatorische Meldepflichten. Zero-Error-Anforderung, vollständiger Audit-Trail, Nachweispflicht gegenüber Regulatoren.",recommendation:"Regelmaschine + formale Ontologie für Wissensmodellierung. LLM ausschliesslich als Recherche-Assistenz, niemals als Entscheidungsinstanz.",aiCaution:"GenAI ist für regulatorisch verbindliche Entscheidungen nicht geeignet. Halluzinationsrisiko bei Compliance-Verletzungen inakzeptabel. Deterministisch + formal ist Pflicht.",techStack:["proc_process","sol_class","tech_determ","data_structured","data_ontology","data_catalog","sec_rbac","sec_abac"],prereqFocus:["tech_determ","sec_abac","data_ontology"]},
+  s_onboarding:{title:"IT-Onboarding neuer Mitarbeiter",type:"determ",desc:"Account-Erstellung, Rollenzuweisung, System-Zugänge, Hardware-Bestellung, Einführungsplanung — alles entlang definierter Rollenprofile und Freigaberegeln.",recommendation:"Workflow-Engine + RBAC-Integration. Vollständig deterministisch realisierbar. Self-Service-Portal für Mitarbeiter reduziert IT-Last. Kein AI-Bedarf.",aiCaution:null,techStack:["proc_process","proc_task","tech_determ","data_structured","sec_rbac"],prereqFocus:["tech_determ","sec_rbac"]},
+  s_dictation:{title:"Diktat / Arzt-Dokumentation",type:"ai",desc:"Arzt spricht Befund, Anamnese oder Entlassungsbrief. Speech-to-Text überführt Sprache in Text, NLP strukturiert und klassifiziert medizinische Entitäten, LLM formatiert in Zieldokument (ICD-kodiert, FHIR-kompatibel).",recommendation:"Speech-to-Text (domänenspezifisch, medizinisch) + medizinisches NLP-Modell + LLM für Formatierung. Pflichtreview durch Arzt vor Freigabe. Datenschutz: on-premise oder souveräne Cloud.",aiCaution:"Medizinische Daten (besondere Kategorien nach DSGVO Art. 9). Zwingend: On-Premise oder zertifizierte Gesundheitscloud. Arzt-Review ist Pflicht — kein autonomes Speichern in Patientenakte.",techStack:["proc_process","proc_trigger","sol_class","tech_nlp","tech_genai","data_unstructured","data_vector","sec_abac"],prereqFocus:["tech_nlp","tech_genai","sec_abac"]},
+  s_churn:{title:"Kunden-Churn-Vorhersage",type:"ai",desc:"Verhaltens- und Transaktionsdaten von Kunden werden genutzt um Abwanderungswahrscheinlichkeit zu berechnen. Frühwarnsystem triggert Retention-Massnahmen.",recommendation:"ML-Klassifikationsmodell (Gradient Boosting, XGBoost) auf strukturierten Verhaltensdaten. Kein LLM nötig — strukturierte Daten, klares Label, messbarer Outcome.",aiCaution:null,techStack:["proc_process","sol_class","tech_ml","data_structured","data_catalog","fabric_fabric","sec_abac"],prereqFocus:["tech_ml","data_structured"]},
+  s_contract_qa:{title:"Vertragsanalyse / Q&A",type:"ai",desc:"Juristen und Einkäufer können Fragen an Vertragsdokumente stellen, Klauseln werden extrahiert, Risiken zusammengefasst.",recommendation:"RAG-Pipeline: Dokumente chunken → Embeddings → Vector Store → LLM mit Retrieval-Kontext. Datenkatalog für Auffindbarkeit. Jurist-Review für kritische Einschätzungen.",aiCaution:"LLM-Antworten auf rechtliche Fragen müssen von Jurist verifiziert werden. Halluzinationsrisiko bei Vertragsinterpretation ist signifikant. Keine autonome Handlungsempfehlung.",techStack:["sol_class","tech_genai","data_unstructured","data_vector","data_catalog","fabric_catalog","sec_abac"],prereqFocus:["tech_genai","data_vector","sec_abac"]},
+  s_anomaly:{title:"Anomalieerkennung Logistik",type:"ai",desc:"Sendungsrouten, Lieferzeiten, Scannerereignisse werden auf Muster analysiert. Ungewöhnliche Abweichungen werden frühzeitig erkannt.",recommendation:"Unsupervised ML (Isolation Forest, Autoencoder) auf Zeitreihendaten. Kein LLM. Strukturierte Sensordaten sind ideal für ML-Anomalieerkennung.",aiCaution:null,techStack:["sol_class","tech_ml","data_structured","data_catalog","fabric_fabric","sec_rbac"],prereqFocus:["tech_ml","data_structured","fabric_fabric"]},
+  s_support_agent:{title:"Autonomer Support-Agent",type:"ai",desc:"Eingehende Support-Tickets werden klassifiziert, in Wissensbasis und Tickethistorie gesucht, Antworten generiert. Einfache Fälle autonom gelöst, komplexe eskaliert.",recommendation:"Agentic AI: LLM + Tool-Use (Ticketsystem-API, Wissensbasis-RAG, Kundendaten-Lookup via MCP). Human-in-the-Loop für Eskalation. ABAC für Kundendaten-Zugriff.",aiCaution:"Agentic-System darf keine sensitiven Kundendaten unkontrolliert verarbeiten. MCP-Permissions auf Infra-Ebene erzwingen. Fehlerhafte Antworten schädigen Kundenbeziehung.",techStack:["sol_class","tech_genai","tech_agentic","data_unstructured","data_vector","data_catalog","sec_abac","sec_mcp"],prereqFocus:["tech_agentic","sec_abac","sec_mcp"]},
+  s_medical_decision:{title:"Medizinische Diagnose-Unterstützung",type:"caution",desc:"AI analysiert Symptome, Labordaten, Bildgebung und schlägt Differentialdiagnosen vor. Arzt erhält strukturierten Entscheidungskontext — trifft Diagnose selbst.",recommendation:"ML für Bildanalyse (radiologisch zertifiziert), LLM für Befund-Zusammenfassung. Zwingend: Human-in-the-Loop, MDR-Zertifizierung, On-Premise.",aiCaution:"EU AI Act: Hochrisiko-KI-System (Annex III). MDR-Zertifizierung wenn Medizinprodukt. Arztentscheidung nicht delegierbar. Halluzinationsrisiko = Patientenschaden.",techStack:["sol_class","tech_ml","tech_genai","data_structured","data_unstructured","data_vector","sec_abac"],prereqFocus:["tech_genai","tech_ml","sec_abac"]},
+  s_legal_draft:{title:"Rechtliche Dokumentenerstellung",type:"caution",desc:"Vertragsentwürfe, AGBs, Datenschutzerklärungen werden per LLM generiert auf Basis von Vorlagen und Mandanteninformationen.",recommendation:"LLM + RAG auf kuratierter Vorlagenbasis. Zwingend: Rechtsanwalt-Review vor Freigabe. Versionierung und Freigabe-Workflow deterministisch.",aiCaution:"LLM kann rechtlich falsche, veraltete oder jurisdiktionsinkompatible Klauseln generieren. Human-in-the-Loop (Jurist) ist nicht optional.",techStack:["sol_class","tech_genai","data_unstructured","data_vector","tech_determ","sec_abac"],prereqFocus:["tech_genai","tech_determ","sec_abac"]},
+  s_financial_advice:{title:"Finanzberatung / Portfolio-Empfehlung",type:"caution",desc:"AI analysiert Marktdaten, Kundenprofil und generiert Portfolio-Vorschläge oder Marktkommentare.",recommendation:"ML für Marktanalyse und Scoring, LLM für Reporting und Erläuterung. Berater-Review vor Kundenausgabe. MiFID II: Dokumentationspflicht, Geeignetheitsprüfung durch Menschen.",aiCaution:"MiFID II reguliert Anlageberatung streng. AI-Empfehlung ohne menschliche Verantwortungsübernahme ist regulatorisch nicht zulässig.",techStack:["sol_class","tech_ml","tech_genai","data_structured","data_catalog","sec_abac","sec_rbac"],prereqFocus:["tech_ml","tech_genai","sec_abac"]},
+};
+
+const TYPE_ACTIVE_CLS={determ:'active-determ',ai:'active',caution:'active-caution'};
+const TECH_CLS={tech_determ:'tc-determ',tech_ml:'tc-ml',tech_nlp:'tc-nlp',tech_genai:'tc-genai',tech_agentic:'tc-agentic'};
+const riskColor={high:'#D85A30',med:'#BA7517',low:'#3B6D11'};
+const riskLabel={high:'Risiko hoch',med:'Risiko mittel',low:'Risiko niedrig'};
+
+function selectScenario(sid){
+  Object.keys(SCENARIOS).forEach(id=>{const el=document.getElementById('si_'+id);if(el)el.className=el.className.replace(/ active[^ ]*/g,'').trim()});
+  const s=SCENARIOS[sid];if(!s)return;
+  const el=document.getElementById('si_'+sid);if(el)el.className+=' '+TYPE_ACTIVE_CLS[s.type];
+  renderDetail(s);renderGraph(s);
+}
+
+function renderDetail(s){
+  document.getElementById('detail-placeholder').style.display='none';
+  const card=document.getElementById('detail-card');
+  card.style.display='block';
+  const typeLabel={determ:'Deterministisch — kein AI nötig',ai:'AI sinnvoll einsetzbar',caution:'⚠ AI nur unter kontrollierten Bedingungen'};
+  const typeBadge={determ:'badge-determ',ai:'badge-ai',caution:'badge-caution'};
+  const techNodes=s.techStack.filter(id=>O[id]&&O[id].layer===3);
+  const techHtml=techNodes.map(id=>{const o=O[id];const cls=TECH_CLS[id]||'tc-determ';return`<span class="tech-chip ${cls}">${o.label}</span>`}).join('');
+  const prereqHtml=s.prereqFocus.map(id=>{
+    const o=O[id];if(!o)return'';
+    const dom=TOGAF_DOMAIN[o.togaf];
+    const items=o.prereqs.map(p=>`<div class="prereq-item"><div class="pdot" style="background:${riskColor[p.risk]}"></div><div><div class="prereq-text">${p.t}</div>${p.r?`<div class="prereq-risk"><span class="risk-tag" style="background:${riskColor[p.risk]}22;color:${riskColor[p.risk]}">${riskLabel[p.risk]}</span>${p.r}</div>`:''}</div></div>`).join('');
+    return`<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="font-size:10px;font-weight:500">${o.label}</span><span class="togaf-domain ${dom.cls}" style="font-size:9px;padding:1px 5px">${dom.label}</span><span class="adm-badge">${ADM_LABELS[o.adm]||o.adm}</span></div>${items}</div>`;
+  }).join('');
+  card.innerHTML=`<div class="dc-title">${s.title}</div><div style="margin-bottom:7px"><span class="scen-badge ${typeBadge[s.type]}">${typeLabel[s.type]}</span></div><div class="dc-desc">${s.desc}</div><div class="divider"></div><div class="dc-section"><div class="dc-label">Empfohlener Technologie-Stack</div><div>${techHtml}</div></div><div class="dc-section" style="margin-top:8px"><div class="dc-label">Empfehlung</div><div style="font-size:11px;line-height:1.5">${s.recommendation}</div></div>${s.aiCaution?`<div class="warn-box">⚠ ${s.aiCaution}</div>`:''}${prereqHtml?`<div class="divider"></div><div class="dc-label" style="margin-bottom:6px">Kritische Voraussetzungen</div>${prereqHtml}`:''}`;
+}
+
+function renderGraph(s){
+  document.getElementById('graph-head').textContent='Dependency-Graph — '+s.title;
+  const wrap=document.getElementById('graph-full');
+  const nodeIds=s.techStack.filter(id=>O[id]);
+  if(!nodeIds.length){wrap.innerHTML='<div class="graph-placeholder-full">Keine Graph-Daten</div>';return;}
+  const byLayer={};
+  nodeIds.forEach(id=>{const n=O[id];if(!byLayer[n.layer])byLayer[n.layer]=[];byLayer[n.layer].push(id)});
+  const usedLayers=Object.keys(byLayer).map(Number).sort((a,b)=>a-b);
+  const GW=900,NODE_W=130,NODE_H=40,ROW_H=90,MARGIN=60;
+  const totalH=usedLayers.length*ROW_H+50;
+  const pos={};
+  usedLayers.forEach((lnum,li)=>{const nodes=byLayer[lnum];const count=nodes.length;const avail=GW-2*MARGIN;nodes.forEach((id,ni)=>{pos[id]={x:count>1?MARGIN+(avail/(count-1))*ni:GW/2,y:40+li*ROW_H}})});
+  const domColors={biz:{fill:'#FAEEDA',stroke:'#BA7517',text:'#633806'},app:{fill:'#EEEDFE',stroke:'#534AB7',text:'#3C3489'},data:{fill:'#E1F5EE',stroke:'#0F6E56',text:'#085041'},tech:{fill:'#E6F1FB',stroke:'#185FA5',text:'#0C447C'}};
+  const edgeColors={same:'#888780',up:'#3B6D11',down:'#534AB7'};
+  const bandSvg=usedLayers.map((lnum,li)=>{const y=40+li*ROW_H;const label=LAYER_LABELS[lnum]||('Layer '+lnum);const odd=li%2===0;return`<rect x="0" y="${y-22}" width="${GW}" height="${ROW_H}" fill="#f5f5f3" opacity="${odd?.4:.2}"/><text x="8" y="${y-7}" font-size="9" fill="#aaa" font-weight="500">L${lnum} ${label}</text>`}).join('');
+  const nodeSet=new Set(nodeIds);const drawnEdges=new Set();const edges=[];
+  nodeIds.forEach(aid=>{const o=O[aid];if(!o)return;const checkDep=(bids,dir)=>{bids.forEach(bid=>{if(!nodeSet.has(bid)||!O[bid])return;const key=[aid,bid].sort().join('|')+'|'+dir;if(drawnEdges.has(key))return;drawnEdges.add(key);edges.push({a:aid,b:bid,dir})})};checkDep(o.deps.same,'same');checkDep(o.deps.down,'down');checkDep(o.deps.up,'up')});
+  const edgeSvg=edges.map(e=>{const a=pos[e.a],b=pos[e.b];if(!a||!b)return'';const col=edgeColors[e.dir];const dash=e.dir==='same'?'':'6 3';let d;if(e.dir==='same'){const mx=(a.x+b.x)/2;d=`M${a.x} ${a.y} C${mx} ${a.y} ${mx} ${b.y} ${b.x} ${b.y}`}else{const ay=e.dir==='up'?a.y-NODE_H/2:a.y+NODE_H/2;const by2=e.dir==='up'?b.y+NODE_H/2:b.y-NODE_H/2;const my=(ay+by2)/2;d=`M${a.x} ${ay} C${a.x} ${my} ${b.x} ${my} ${b.x} ${by2}`}return`<path d="${d}" fill="none" stroke="${col}" stroke-width="1.4" stroke-dasharray="${dash}" marker-end="url(#ga2)" opacity=".7"/>`}).join('');
+  const nodeSvg=nodeIds.filter(id=>O[id]).map(id=>{const n=O[id];const p=pos[id];if(!p)return'';const dc=domColors[n.togaf]||domColors.biz;const isFocus=s.prereqFocus.includes(id);const sw=isFocus?2.5:0.8;const lbl=n.label.length>16?n.label.slice(0,15)+'…':n.label;return`<g><rect x="${(p.x-NODE_W/2).toFixed(1)}" y="${(p.y-NODE_H/2).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="8" fill="${dc.fill}" stroke="${dc.stroke}" stroke-width="${sw}"/>${isFocus?`<rect x="${(p.x-NODE_W/2).toFixed(1)}" y="${(p.y-NODE_H/2).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="8" fill="none" stroke="${dc.stroke}" stroke-width="4" opacity=".18"/>`:''}<text x="${p.x.toFixed(1)}" y="${(p.y-5).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="${isFocus?600:400}" fill="${dc.text}">${lbl}</text><text x="${p.x.toFixed(1)}" y="${(p.y+10).toFixed(1)}" text-anchor="middle" font-size="9" fill="${dc.text}" opacity=".7">${TOGAF_DOMAIN[n.togaf].label} · ${ADM_LABELS[n.adm]||n.adm}</text></g>`}).join('');
+  const legY=totalH+8;
+  const legend=`<g><text x="8" y="${legY+6}" font-size="9" fill="#888" font-weight="500">Legende:</text><line x1="68" y1="${legY+2}" x2="94" y2="${legY+2}" stroke="${edgeColors.same}" stroke-width="1.3"/><text x="98" y="${legY+6}" font-size="9" fill="#888">gleicher Layer</text><line x1="190" y1="${legY+2}" x2="216" y2="${legY+2}" stroke="${edgeColors.up}" stroke-width="1.3" stroke-dasharray="6 3"/><text x="220" y="${legY+6}" font-size="9" fill="#888">übergeordnet</text><line x1="310" y1="${legY+2}" x2="336" y2="${legY+2}" stroke="${edgeColors.down}" stroke-width="1.3" stroke-dasharray="6 3"/><text x="340" y="${legY+6}" font-size="9" fill="#888">untergeordnet</text><rect x="435" y="${legY-5}" width="12" height="12" rx="3" fill="#EEEDFE" stroke="#534AB7" stroke-width="2.5"/><text x="452" y="${legY+6}" font-size="9" fill="#888">kritische Prereqs</text></g>`;
+  wrap.innerHTML=`<svg width="100%" viewBox="0 0 ${GW} ${totalH+22}" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ga2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>${bandSvg}${edgeSvg}${nodeSvg}${legend}</svg>`;
+}
+</script>
+</body>
+</html>

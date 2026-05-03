@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solina EAM Modeller v4 — ADM Phase Mapping</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0f1a;--surface:#111827;--surface2:#1a2235;--border:#1f2d45;--text:#e2e8f0;--text-muted:#64748b;--text-dim:#94a3b8;--accent:#4f8ef7;--accent-glow:rgba(79,142,247,0.3);--arrow-cross:#f59e0b;--arrow-inner:#64748b;--selected:#4f8ef7;--selected-glow:rgba(79,142,247,0.25);--radius:6px;--mono:'DM Mono',monospace;--serif:'Fraunces',serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;min-height:100vh;overflow-x:hidden;}
+  header{display:flex;align-items:center;justify-content:space-between;padding:18px 32px 16px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100;}
+  .logo{display:flex;align-items:baseline;gap:10px;}
+  .logo-name{font-family:var(--serif);font-size:22px;font-weight:700;letter-spacing:-0.5px;}
+  .logo-tag{font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;padding:2px 7px;border:1px solid var(--accent);border-radius:3px;}
+  .logo-ver{font-size:10px;color:#22d3ee;letter-spacing:2px;text-transform:uppercase;padding:2px 7px;border:1px solid #22d3ee;border-radius:3px;}
+
+  /* View toggle */
+  .view-tabs{display:flex;gap:4px;background:var(--surface2);padding:3px;border-radius:7px;border:1px solid var(--border);}
+  .view-tab{padding:5px 14px;border-radius:5px;cursor:pointer;font-size:11px;color:var(--text-muted);transition:all .15s;border:1px solid transparent;}
+  .view-tab.active{background:var(--surface);color:var(--text);border-color:var(--border);}
+
+  .controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 32px;background:var(--surface2);border-bottom:1px solid var(--border);}
+  .ctrl-group{display:flex;align-items:center;gap:8px;}
+  .ctrl-label{color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;}
+  .toggle-wrap{display:flex;align-items:center;gap:8px;}
+  .toggle{position:relative;width:44px;height:22px;cursor:pointer;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:11px;transition:background .2s;}
+  .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:var(--text-muted);border-radius:50%;transition:transform .2s,background .2s;}
+  .toggle input:checked+.toggle-slider{background:var(--accent);}
+  .toggle input:checked+.toggle-slider::before{transform:translateX(22px);background:#fff;}
+  .toggle-label{font-size:11px;color:var(--text-dim);}
+  .layer-checks{display:flex;gap:6px;flex-wrap:wrap;}
+  .layer-check{display:flex;align-items:center;gap:5px;cursor:pointer;padding:3px 8px;border-radius:var(--radius);border:1px solid var(--border);transition:all .15s;user-select:none;}
+  .layer-check.active{border-color:currentColor;background:rgba(255,255,255,0.04);}
+  .layer-check-dot{width:7px;height:7px;border-radius:50%;}
+  .layer-check span{font-size:10px;}
+
+  /* ─── View: Matrix (default) ─── */
+  .view-matrix{display:block;}
+  .view-adm{display:none;}
+  .canvas-wrap{position:relative;padding:24px 32px 80px;}
+  #arrow-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;overflow:visible;}
+  .layer-row{display:grid;grid-template-columns:200px 1fr;margin-bottom:8px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+  .layer-row.hidden{display:none;}
+  .layer-label{padding:14px 16px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border);position:relative;overflow:hidden;}
+  .layer-label-name{font-family:var(--serif);font-size:15px;font-weight:600;margin-bottom:3px;}
+  .layer-label-sub{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;}
+  .layer-label-order{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:28px;font-family:var(--serif);font-weight:700;opacity:0.06;color:#fff;}
+  .layer-objects{padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;align-content:flex-start;min-height:52px;}
+  .obj-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:4px;border:1px solid transparent;cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .15s;user-select:none;white-space:nowrap;}
+  .obj-chip:hover{transform:translateY(-1px);}
+  .obj-chip.selected{border-color:var(--selected)!important;box-shadow:0 0 0 2px var(--selected-glow);}
+  .obj-chip.connected-same{border-color:var(--arrow-inner)!important;}
+  .obj-chip.connected-cross{border-color:var(--arrow-cross)!important;}
+  .obj-chip.dimmed{opacity:0.2;}
+  .chip-icon{font-size:12px;line-height:1;}
+  .add-obj-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:4px;border:1px dashed var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .15s;}
+  .add-obj-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* ─── View: ADM Phase Grid ─── */
+  .adm-wrap{padding:24px 32px 80px;overflow-x:auto;}
+  .adm-header{display:grid;margin-bottom:8px;}
+  .adm-phase-label{padding:8px 12px;text-align:center;font-size:10px;letter-spacing:1px;text-transform:uppercase;border-radius:5px 5px 0 0;border:1px solid var(--border);border-bottom:none;position:relative;}
+  .adm-phase-label .phase-letter{font-family:var(--serif);font-size:20px;font-weight:700;opacity:0.8;line-height:1;}
+  .adm-phase-label .phase-name{font-size:9px;color:var(--text-muted);margin-top:2px;}
+  .adm-body{display:grid;}
+  .adm-row{display:contents;}
+  .adm-layer-cell{padding:6px 8px;border:1px solid var(--border);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;background:var(--surface);border-right:none;white-space:nowrap;}
+  .adm-cell{padding:8px;border:1px solid var(--border);border-left:none;min-height:60px;display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;background:var(--surface2);position:relative;transition:background .15s;}
+  .adm-cell:hover{background:#1e2a3e;}
+  .adm-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:3px;font-size:10px;cursor:pointer;transition:all .15s;border:1px solid transparent;user-select:none;white-space:nowrap;}
+  .adm-chip:hover{transform:scale(1.05);}
+  .adm-chip.selected{box-shadow:0 0 0 2px var(--selected-glow);}
+  .adm-phase-marker{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;opacity:0.5;}
+  /* Phase colors */
+  .phase-P{color:#94a3b8;} .phase-A{color:#f472b6;} .phase-B{color:#f59e0b;} .phase-C{color:#22d3ee;}
+  .phase-D{color:#a78bfa;} .phase-E{color:#34d399;} .phase-F{color:#fb923c;} .phase-G{color:#60a5fa;} .phase-H{color:#f87171;}
+  .phase-bg-P{background:rgba(148,163,184,0.06);} .phase-bg-A{background:rgba(244,114,182,0.06);} .phase-bg-B{background:rgba(245,158,11,0.06);}
+  .phase-bg-C{background:rgba(34,211,238,0.06);} .phase-bg-D{background:rgba(167,139,250,0.06);} .phase-bg-E{background:rgba(52,211,153,0.06);}
+  .phase-bg-F{background:rgba(251,146,60,0.06);} .phase-bg-G{background:rgba(96,165,250,0.06);} .phase-bg-H{background:rgba(248,113,113,0.06);}
+
+  /* ADM wheel mini visualization */
+  .adm-wheel-wrap{display:flex;justify-content:center;padding:20px 0 10px;}
+  .adm-wheel-hint{font-size:10px;color:var(--text-muted);text-align:center;margin-top:6px;}
+
+  /* Info panel */
+  .info-panel{position:fixed;right:24px;bottom:24px;width:340px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,0.5);transform:translateX(380px);transition:transform .3s cubic-bezier(0.16,1,0.3,1);}
+  .info-panel.visible{transform:translateX(0);}
+  .info-panel-title{font-family:var(--serif);font-size:17px;font-weight:600;margin-bottom:12px;}
+  .info-section{margin-bottom:12px;}
+  .info-section-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:6px;}
+  .info-conn-list{display:flex;flex-direction:column;gap:4px;}
+  .info-conn-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-dim);padding:3px 0;}
+  .info-conn-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .close-panel{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;}
+  /* Phase badge in info panel */
+  .phase-badges{display:flex;flex-wrap:wrap;gap:5px;}
+  .phase-badge{padding:3px 8px;border-radius:3px;font-size:10px;border:1px solid;cursor:pointer;transition:all .15s;}
+  .phase-badge:hover{filter:brightness(1.2);}
+  .phase-badge.assigned{opacity:1;}
+  .phase-badge.unassigned{opacity:0.3;}
+
+  /* Modals */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;width:460px;max-width:95vw;}
+  .modal h3{font-family:var(--serif);font-size:18px;margin-bottom:18px;}
+  .modal-field{margin-bottom:14px;}
+  .modal-field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:5px;}
+  .modal-field input,.modal-field select,.modal-field textarea{width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .15s;}
+  .modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--accent);}
+  .modal-field select option{background:var(--surface2);}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+  .btn{padding:8px 18px;border-radius:var(--radius);border:none;cursor:pointer;font-family:var(--mono);font-size:12px;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#fff;} .btn-primary:hover{filter:brightness(1.1);}
+  .btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text-dim);} .btn-secondary:hover{border-color:var(--text-muted);color:var(--text);}
+  .btn-danger{background:#ef4444;color:#fff;} .btn-danger:hover{filter:brightness(1.1);}
+  /* Phase checkboxes in modal */
+  .phase-check-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .phase-check-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:4px;border:1px solid var(--border);cursor:pointer;transition:all .15s;font-size:11px;}
+  .phase-check-item input{display:none;}
+  .phase-check-item.checked{background:rgba(79,142,247,0.1);}
+  .legend{display:flex;gap:16px;align-items:center;font-size:10px;color:var(--text-muted);}
+  .legend-item{display:flex;align-items:center;gap:5px;}
+  .legend-line{width:22px;height:2px;}
+  .legend-line.cross{background:var(--arrow-cross);}
+  .legend-line.inner{background:var(--arrow-inner);}
+  .status-bar{padding:8px 32px;border-top:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:16px;position:fixed;bottom:0;left:0;right:0;z-index:50;font-size:10px;color:var(--text-muted);}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:#34d399;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-name">Solina EAM Modeller</span>
+    <span class="logo-tag">TOGAF v10</span>
+    <span class="logo-ver">v4 · ADM Mapping</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:20px;">
+    <div class="view-tabs">
+      <div class="view-tab active" id="tab-matrix" onclick="switchView('matrix')">📋 Layer Matrix</div>
+      <div class="view-tab" id="tab-adm" onclick="switchView('adm')">🔄 ADM Phasen</div>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-line cross"></span><span>Cross-Layer</span></span>
+      <span class="legend-item"><span class="legend-line inner"></span><span>Layer-intern</span></span>
+    </div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <span class="ctrl-label">Verbindungen</span>
+    <div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="toggle-cross" checked><span class="toggle-slider"></span></label><span class="toggle-label">Layer-übergreifend</span></div>
+    <div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="toggle-inner" checked><span class="toggle-slider"></span></label><span class="toggle-label">Layer-intern</span></div>
+  </div>
+  <div class="ctrl-group" style="margin-left:12px;">
+    <span class="ctrl-label">Layer</span>
+    <div class="layer-checks" id="layer-checks"></div>
+  </div>
+  <!-- ADM phase filter -->
+  <div class="ctrl-group" id="adm-filter-group" style="margin-left:12px;display:none;">
+    <span class="ctrl-label">ADM Phase</span>
+    <div id="adm-phase-filters" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+  </div>
+  <div class="ctrl-group" style="margin-left:auto;gap:8px;">
+    <button class="btn btn-secondary" onclick="openAddObjectModal(null)" style="font-size:11px;">+ Objekt</button>
+    <button class="btn btn-secondary" onclick="clearSelection()" style="font-size:11px;">✕ Auswahl</button>
+  </div>
+</div>
+
+<!-- Matrix View -->
+<div class="view-matrix" id="view-matrix">
+  <div class="canvas-wrap" id="canvas">
+    <svg id="arrow-svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-cross" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/></marker>
+        <marker id="arrow-inner" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+      </defs>
+    </svg>
+  </div>
+</div>
+
+<!-- ADM View -->
+<div class="view-adm" id="view-adm">
+  <div class="adm-wrap">
+    <div id="adm-grid"></div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="obj-modal">
+  <div class="modal">
+    <h3 id="modal-title">Objekt hinzufügen</h3>
+    <div class="modal-field"><label>Name</label><input type="text" id="modal-name"></div>
+    <div class="modal-field"><label>Layer</label><select id="modal-layer"></select></div>
+    <div class="modal-field"><label>Icon (Emoji)</label><input type="text" id="modal-icon" maxlength="2"></div>
+    <div class="modal-field"><label>Beschreibung</label><textarea id="modal-desc" rows="2"></textarea></div>
+    <div class="modal-field">
+      <label>ADM Phasen (Mehrfachauswahl)</label>
+      <div class="phase-check-grid" id="modal-phase-grid"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('obj-modal')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveObject()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="info-panel" id="info-panel">
+  <button class="close-panel" onclick="clearSelection()">✕</button>
+  <div class="info-panel-title" id="info-title">—</div>
+  <div class="info-section"><div class="info-section-label">Layer</div><div id="info-layer" style="font-size:12px;"></div></div>
+  <div class="info-section">
+    <div class="info-section-label">ADM Phasen — klicken zum Zuweisen</div>
+    <div class="phase-badges" id="info-phases"></div>
+  </div>
+  <div class="info-section"><div class="info-section-label">↕ Layer-übergreifend</div><div class="info-conn-list" id="info-cross-list"></div></div>
+  <div class="info-section"><div class="info-section-label">↔ Layer-intern</div><div class="info-conn-list" id="info-inner-list"></div></div>
+  <div style="margin-top:14px;display:flex;gap:8px;">
+    <button class="btn btn-secondary" style="font-size:10px;" onclick="editSelectedObject()">✏ Umbenennen</button>
+    <button class="btn btn-danger" style="font-size:10px;" onclick="deleteSelectedObject()">✕ Löschen</button>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span class="status-dot"></span>
+  <span id="status-text">Layer Matrix · Klicken Sie ein Objekt an, um Verbindungen anzuzeigen</span>
+  <span style="margin-left:auto;">Solina EAM Modeller v4 · ADM Phase Mapping</span>
+</div>
+
+<script>
+const LAYERS=[
+  {id:'strategy',name:'Strategy',sub:'Motivation & Direction',color:'#fb923c',order:'01',bg:'rgba(251,146,60,0.06)'},
+  {id:'motivation',name:'Motivation',sub:'Goals & Constraints',color:'#f472b6',order:'02',bg:'rgba(244,114,182,0.06)'},
+  {id:'business',name:'Business',sub:'Processes & Value',color:'#f59e0b',order:'03',bg:'rgba(245,158,11,0.06)'},
+  {id:'application',name:'Application',sub:'Services & Components',color:'#22d3ee',order:'04',bg:'rgba(34,211,238,0.06)'},
+  {id:'data',name:'Data',sub:'Semantics & Structure',color:'#a78bfa',order:'05',bg:'rgba(167,139,250,0.06)'},
+  {id:'technology',name:'Technology',sub:'Infrastructure & Platforms',color:'#34d399',order:'06',bg:'rgba(52,211,153,0.06)'},
+];
+
+const ADM_PHASES=[
+  {id:'P',name:'Preliminary',short:'Prelim.',color:'#94a3b8',desc:'Framework & Principles'},
+  {id:'A',name:'Architecture Vision',short:'Vision',color:'#f472b6',desc:'Scope & Stakeholders'},
+  {id:'B',name:'Business Architecture',short:'Business',color:'#f59e0b',desc:'Baseline & Target'},
+  {id:'C',name:'Information Systems',short:'IS Arch.',color:'#22d3ee',desc:'Data & Application'},
+  {id:'D',name:'Technology Architecture',short:'Tech.',color:'#a78bfa',desc:'Technology Baseline'},
+  {id:'E',name:'Opportunities & Solutions',short:'Opport.',color:'#34d399',desc:'Roadmap Planning'},
+  {id:'F',name:'Migration Planning',short:'Migration',color:'#fb923c',desc:'Implementation Plan'},
+  {id:'G',name:'Implementation Governance',short:'Govern.',color:'#60a5fa',desc:'Architecture Contracts'},
+  {id:'H',name:'Architecture Change Mgmt.',short:'Change',color:'#f87171',desc:'Change Management'},
+];
+
+// Default ADM assignments: layer objects → phases
+const DEFAULT_PHASE_MAP={
+  's1':['P','A'],'s2':['A','B'],'s3':['A','B'],'s4':['E','F'],
+  'm1':['A'],'m2':['A','B'],'m3':['P','A'],'m4':['P'],
+  'b1':['B'],'b2':['B'],'b3':['B','A'],'b4':['B'],'b5':['B','E'],'b6':['G'],
+  'a1':['C'],'a2':['C'],'a3':['C','D'],'a4':['C'],'a5':['C','E'],
+  'd1':['C'],'d2':['C','B'],'d3':['C'],'d4':['C','E'],'d5':['C'],'d6':['G','P'],
+  't1':['D'],'t2':['D'],'t3':['D'],'t4':['D','E'],'t5':['D','F'],'t6':['D'],'t7':['D','G'],
+};
+
+let objects=[
+  {id:'s1',layer:'strategy',name:'Vision & Mission',icon:'🎯',desc:'Unternehmensausrichtung',phases:['P','A']},
+  {id:'s2',layer:'strategy',name:'Strategische Ziele',icon:'📌',desc:'OKRs, KPIs',phases:['A','B']},
+  {id:'s3',layer:'strategy',name:'Capabilities',icon:'💡',desc:'Business Capabilities Map',phases:['A','B']},
+  {id:'s4',layer:'strategy',name:'Investitionsportfolio',icon:'💼',desc:'Strategic Portfolios',phases:['E','F']},
+  {id:'m1',layer:'motivation',name:'Treiber',icon:'⚡',desc:'Business Driver',phases:['A']},
+  {id:'m2',layer:'motivation',name:'Anforderungen',icon:'📋',desc:'Requirements',phases:['A','B']},
+  {id:'m3',layer:'motivation',name:'Compliance & Regulatorik',icon:'⚖️',desc:'GDPR, ISO, FINMA',phases:['P','A']},
+  {id:'m4',layer:'motivation',name:'Prinzipien',icon:'🏛️',desc:'Architecture Principles',phases:['P']},
+  {id:'b1',layer:'business',name:'Geschäftsobjekte',icon:'📦',desc:'Business Objects',phases:['B']},
+  {id:'b2',layer:'business',name:'Prozesse',icon:'🔄',desc:'Business Processes',phases:['B']},
+  {id:'b3',layer:'business',name:'Value Streams',icon:'🌊',desc:'Value Streams',phases:['B','A']},
+  {id:'b4',layer:'business',name:'Rollen & Akteure',icon:'👥',desc:'Stakeholder',phases:['B']},
+  {id:'b5',layer:'business',name:'Produkte & Services',icon:'🛍️',desc:'Business Services',phases:['B','E']},
+  {id:'b6',layer:'business',name:'Contracts',icon:'📄',desc:'Verträge & SLAs',phases:['G']},
+  {id:'a1',layer:'application',name:'Applikationskomponenten',icon:'🧩',desc:'App Components',phases:['C']},
+  {id:'a2',layer:'application',name:'Application Services',icon:'⚙️',desc:'APIs',phases:['C']},
+  {id:'a3',layer:'application',name:'Integration Layer',icon:'🔗',desc:'ESB, iPaaS',phases:['C','D']},
+  {id:'a4',layer:'application',name:'Benutzeroberflächen',icon:'🖥️',desc:'UI, Portale',phases:['C']},
+  {id:'a5',layer:'application',name:'Microservices',icon:'🔲',desc:'Autonome Dienste',phases:['C','E']},
+  {id:'d1',layer:'data',name:'Kanonische Datenobjekte',icon:'🗂️',desc:'Canonical Data Model',phases:['C']},
+  {id:'d2',layer:'data',name:'Semantik',icon:'🔤',desc:'Bedeutungsträger',phases:['C','B']},
+  {id:'d3',layer:'data',name:'Ontologien',icon:'🕸️',desc:'Knowledge Graphs',phases:['C']},
+  {id:'d4',layer:'data',name:'Datenprodukte',icon:'📊',desc:'Data Products',phases:['C','E']},
+  {id:'d5',layer:'data',name:'Masterdata Entities',icon:'🏷️',desc:'MDM / Golden Records',phases:['C']},
+  {id:'d6',layer:'data',name:'Data Policies',icon:'🔒',desc:'Governance & Lineage',phases:['G','P']},
+  {id:'t1',layer:'technology',name:'Datenbanken',icon:'🗄️',desc:'RDBMS, NoSQL',phases:['D']},
+  {id:'t2',layer:'technology',name:'Streams',icon:'📡',desc:'Kafka, Event Mesh',phases:['D']},
+  {id:'t3',layer:'technology',name:'Data Fabric',icon:'🌐',desc:'HPE Ezmeral',phases:['D']},
+  {id:'t4',layer:'technology',name:'AI/ML Platforms',icon:'🤖',desc:'NVIDIA NIM, NeMo',phases:['D','E']},
+  {id:'t5',layer:'technology',name:'Container Platform',icon:'📦',desc:'Kubernetes, ArgoCD',phases:['D','F']},
+  {id:'t6',layer:'technology',name:'Object Storage',icon:'💾',desc:'MinIO, S3',phases:['D']},
+  {id:'t7',layer:'technology',name:'Netzwerk & Security',icon:'🛡️',desc:'Zero Trust',phases:['D','G']},
+];
+
+let crossConnections=[
+  ['s2','m1','löst aus'],['s3','m2','definiert'],['s2','m4','leitet ab'],
+  ['s3','b3','realisiert'],['s3','b5','ermöglicht'],
+  ['m2','b2','spezifiziert'],['m3','b6','reguliert'],['m4','b1','definiert'],
+  ['b2','a1','unterstützt durch'],['b3','a2','realisiert durch'],['b5','a4','präsentiert in'],['b1','a3','integriert über'],['b4','a4','nutzt'],
+  ['b1','d1','abstrakt von'],['b1','d2','repräsentiert in'],['b1','d5','instanziiert als'],['b3','d4','produziert'],
+  ['a1','d1','liest/schreibt'],['a3','d4','verarbeitet'],['a5','d6','governed by'],
+  ['d1','t1','physisch in'],['d1','t3','verteilt über'],['d2','t4','trainiert in'],['d3','t4','ausgewertet in'],
+  ['d4','t2','gestreamt über'],['d4','t6','gespeichert in'],['d5','t1','persistiert in'],['d6','t3','enforced by'],
+];
+
+let innerConnections=[
+  ['s1','s2','erzeugt'],['s2','s3','benötigt'],['s4','s2','finanziert'],
+  ['m1','m2','erzeugt'],['m3','m2','erweitert'],['m4','m2','constraints'],
+  ['b1','b2','verarbeitet in'],['b2','b3','Teil von'],['b4','b2','führt aus'],['b5','b1','umfasst'],['b6','b5','regelt'],
+  ['a1','a2','exponiert'],['a2','a3','routing durch'],['a5','a2','implementiert'],['a4','a1','nutzt'],
+  ['d1','d2','beschrieben durch'],['d2','d3','eingebettet in'],['d5','d1','konform zu'],['d4','d1','basiert auf'],['d6','d4','governs'],
+  ['t1','t3','managed by'],['t2','t3','Teil von'],['t5','t3','orchestriert'],['t6','t1','backing store'],['t4','t5','deployed on'],['t7','t5','secures'],
+];
+
+let selectedId=null,hiddenLayers=new Set(),showCross=true,showInner=true,editingId=null;
+let currentView='matrix',activePhaseFilter=null;
+
+// ── VIEW SWITCHING ───────────────────────────────────
+function switchView(view){
+  currentView=view;
+  document.getElementById('view-matrix').style.display=view==='matrix'?'block':'none';
+  document.getElementById('view-adm').style.display=view==='adm'?'block':'none';
+  document.getElementById('tab-matrix').className='view-tab'+(view==='matrix'?' active':'');
+  document.getElementById('tab-adm').className='view-tab'+(view==='adm'?' active':'');
+  document.getElementById('adm-filter-group').style.display=view==='adm'?'flex':'none';
+  if(view==='adm'){renderADMGrid();document.getElementById('status-text').textContent='ADM Phasen-Ansicht · Klicken Sie ein Objekt an';}
+  else{document.getElementById('status-text').textContent='Layer Matrix · Klicken Sie ein Objekt an';}
+}
+
+// ── MATRIX RENDER ───────────────────────────────────
+function render(){
+  const canvas=document.getElementById('canvas');
+  canvas.querySelectorAll('.layer-row').forEach(el=>el.remove());
+  LAYERS.forEach(layer=>{
+    const layerObjs=objects.filter(o=>o.layer===layer.id);
+    const row=document.createElement('div');row.className='layer-row'+(hiddenLayers.has(layer.id)?' hidden':'');row.id='layer-row-'+layer.id;
+    const label=document.createElement('div');label.className='layer-label';label.style.cssText=`background:${layer.bg};border-left:3px solid ${layer.color}`;
+    label.innerHTML=`<span class="layer-label-order">${layer.order}</span><div class="layer-label-name" style="color:${layer.color}">${layer.name}</div><div class="layer-label-sub">${layer.sub}</div>`;
+    const objs=document.createElement('div');objs.className='layer-objects';objs.style.background=layer.bg;objs.id='layer-objects-'+layer.id;
+    layerObjs.forEach(obj=>objs.appendChild(createChip(obj,layer)));
+    const addBtn=document.createElement('button');addBtn.className='add-obj-btn';addBtn.innerHTML='+ Objekt';addBtn.onclick=()=>openAddObjectModal(layer.id);
+    objs.appendChild(addBtn);row.appendChild(label);row.appendChild(objs);canvas.appendChild(row);
+  });
+  renderLayerChecks();if(selectedId)applySelection(selectedId);
+}
+
+function createChip(obj,layer){
+  const chip=document.createElement('div');chip.className='obj-chip';chip.id='chip-'+obj.id;chip.dataset.id=obj.id;
+  chip.style.background=layer.bg;chip.style.color=layer.color;chip.style.borderColor=layer.color+'44';
+  chip.innerHTML=`<span class="chip-icon">${obj.icon||'●'}</span><span>${obj.name}</span>`;chip.title=obj.desc||obj.name;
+  chip.onclick=()=>selectObject(obj.id);return chip;
+}
+
+function renderLayerChecks(){
+  const cont=document.getElementById('layer-checks');cont.innerHTML='';
+  LAYERS.forEach(layer=>{
+    const el=document.createElement('div');el.className='layer-check'+(hiddenLayers.has(layer.id)?'':' active');el.style.color=layer.color;
+    el.innerHTML=`<span class="layer-check-dot" style="background:${layer.color}"></span><span>${layer.name}</span>`;
+    el.onclick=()=>{hiddenLayers.has(layer.id)?hiddenLayers.delete(layer.id):hiddenLayers.add(layer.id);render();drawArrows();if(currentView==='adm')renderADMGrid();};
+    cont.appendChild(el);
+  });
+}
+
+// ── ADM GRID ─────────────────────────────────────────
+function renderADMGrid(){
+  const grid=document.getElementById('adm-grid');grid.innerHTML='';
+  const colCount=ADM_PHASES.length+1;
+  const gridStyle=`grid-template-columns: 140px repeat(${ADM_PHASES.length}, minmax(110px, 1fr));`;
+
+  // Header row
+  const header=document.createElement('div');header.style.cssText=`display:grid;${gridStyle}margin-bottom:0;`;
+  header.innerHTML=`<div style="border:1px solid var(--border);border-right:none;border-bottom:none;background:var(--surface);padding:8px;font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">TOGAF Layer</div>`;
+  ADM_PHASES.forEach(phase=>{
+    const ph=document.createElement('div');ph.className='adm-phase-label phase-bg-'+phase.id;
+    ph.style.cssText=`border:1px solid var(--border);border-left:none;border-bottom:none;cursor:pointer;`;
+    ph.innerHTML=`<div class="phase-letter phase-${phase.id}">${phase.id}</div><div class="phase-name">${phase.short}</div>`;
+    ph.title=phase.name+' — '+phase.desc;
+    ph.onclick=()=>filterByPhase(phase.id);
+    if(activePhaseFilter===phase.id)ph.style.borderBottom=`2px solid ${phase.color}`;
+    header.appendChild(ph);
+  });
+  grid.appendChild(header);
+
+  // Body rows per layer
+  LAYERS.forEach(layer=>{
+    if(hiddenLayers.has(layer.id))return;
+    const rowWrap=document.createElement('div');rowWrap.style.cssText=`display:grid;${gridStyle}`;
+    // Layer label cell
+    const lc=document.createElement('div');lc.className='adm-layer-cell';lc.style.cssText=`color:${layer.color};border-left:3px solid ${layer.color};`;lc.textContent=layer.name;
+    rowWrap.appendChild(lc);
+    // Phase cells
+    ADM_PHASES.forEach(phase=>{
+      const cell=document.createElement('div');cell.className='adm-cell';
+      if(activePhaseFilter&&activePhaseFilter!==phase.id)cell.style.opacity='0.3';
+      // Filter objects: in this layer AND assigned to this phase
+      const phaseObjs=objects.filter(o=>o.layer===layer.id&&(o.phases||[]).includes(phase.id));
+      phaseObjs.forEach(obj=>{
+        const chip=document.createElement('div');chip.className='adm-chip';
+        chip.style.background=layer.bg;chip.style.color=layer.color;chip.style.borderColor=layer.color+'44';
+        chip.innerHTML=`<span>${obj.icon||''}</span><span>${obj.name}</span>`;
+        chip.onclick=()=>{selectObject(obj.id);if(currentView==='adm')updateInfoPanel(obj.id);};
+        chip.id='adm-chip-'+obj.id+'-'+phase.id;
+        cell.appendChild(chip);
+      });
+      rowWrap.appendChild(cell);
+    });
+    grid.appendChild(rowWrap);
+  });
+
+  // Phase filter UI
+  const pf=document.getElementById('adm-phase-filters');pf.innerHTML='';
+  ADM_PHASES.forEach(phase=>{
+    const el=document.createElement('div');
+    el.className='layer-check'+(activePhaseFilter===phase.id||!activePhaseFilter?' active':'');
+    el.style.color=phase.color;
+    el.innerHTML=`<span class="layer-check-dot" style="background:${phase.color}"></span><span>${phase.id}</span>`;
+    el.onclick=()=>filterByPhase(activePhaseFilter===phase.id?null:phase.id);
+    pf.appendChild(el);
+  });
+}
+
+function filterByPhase(phaseId){
+  activePhaseFilter=activePhaseFilter===phaseId?null:phaseId;
+  renderADMGrid();
+  document.getElementById('status-text').textContent=activePhaseFilter?`Filter: ADM Phase ${activePhaseFilter} — ${ADM_PHASES.find(p=>p.id===activePhaseFilter)?.name}`:'ADM Phasen-Ansicht · alle Phasen';
+}
+
+// ── SELECTION ───────────────────────────────────────
+function selectObject(id){selectedId=id;if(currentView==='matrix'){applySelection(id);drawArrows();}updateInfoPanel(id);}
+
+function applySelection(id){
+  document.querySelectorAll('.obj-chip').forEach(c=>c.classList.remove('selected','connected-cross','connected-same','dimmed'));
+  const chip=document.getElementById('chip-'+id);if(!chip)return;chip.classList.add('selected');
+  const connCross=new Set(),connInner=new Set();
+  if(showCross)crossConnections.forEach(([f,t])=>{if(f===id)connCross.add(t);if(t===id)connCross.add(f);});
+  if(showInner)innerConnections.forEach(([f,t])=>{if(f===id)connInner.add(t);if(t===id)connInner.add(f);});
+  document.querySelectorAll('.obj-chip').forEach(c=>{const cid=c.dataset.id;if(cid===id)return;if(connCross.has(cid))c.classList.add('connected-cross');else if(connInner.has(cid))c.classList.add('connected-same');else c.classList.add('dimmed');});
+  document.getElementById('status-text').textContent=`"${objects.find(o=>o.id===id)?.name}" — ${connCross.size} cross, ${connInner.size} inner`;
+}
+
+function clearSelection(){
+  selectedId=null;
+  document.querySelectorAll('.obj-chip').forEach(c=>c.classList.remove('selected','connected-cross','connected-same','dimmed'));
+  clearArrows();document.getElementById('info-panel').classList.remove('visible');
+}
+
+function drawArrows(){
+  clearArrows();if(!selectedId||currentView!=='matrix')return;
+  const id=selectedId,svg=document.getElementById('arrow-svg'),canvasRect=document.getElementById('canvas').getBoundingClientRect();
+  function gc(chipId){const el=document.getElementById('chip-'+chipId);if(!el)return null;const r=el.getBoundingClientRect();return{x:r.left-canvasRect.left+r.width/2,y:r.top-canvasRect.top+r.height/2+window.scrollY};}
+  function dl(fId,tId,isCross){
+    if(!showCross&&isCross)return;if(!showInner&&!isCross)return;
+    const from=gc(fId),to=gc(tId);if(!from||!to)return;
+    const color=isCross?'#f59e0b':'#64748b',dx=to.x-from.x,dy=to.y-from.y;
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M ${from.x} ${from.y} C ${from.x+dx*0.2} ${from.y+dy*0.5}, ${to.x-dx*0.2} ${from.y+dy*0.5}, ${to.x} ${to.y}`);
+    path.setAttribute('stroke',color);path.setAttribute('stroke-width',isCross?'2':'1.5');path.setAttribute('fill','none');
+    path.setAttribute('marker-end',`url(#arrow-${isCross?'cross':'inner'})`);path.setAttribute('stroke-dasharray',isCross?'0':'4 3');path.setAttribute('opacity',isCross?'0.85':'0.7');
+    svg.appendChild(path);
+  }
+  crossConnections.forEach(([f,t])=>{if(f===id||t===id)dl(f,t,true);});
+  innerConnections.forEach(([f,t])=>{if(f===id||t===id)dl(f,t,false);});
+}
+function clearArrows(){document.getElementById('arrow-svg').querySelectorAll('path').forEach(p=>p.remove());}
+
+// ── INFO PANEL ──────────────────────────────────────
+function updateInfoPanel(id){
+  const obj=objects.find(o=>o.id===id);if(!obj)return;
+  const layer=LAYERS.find(l=>l.id===obj.layer);
+  document.getElementById('info-title').textContent=(obj.icon||'')+' '+obj.name;
+  document.getElementById('info-layer').innerHTML=`<span style="color:${layer.color}">${layer.name}</span> — ${layer.sub}`;
+  // Phase badges
+  const phasesDiv=document.getElementById('info-phases');phasesDiv.innerHTML='';
+  ADM_PHASES.forEach(phase=>{
+    const assigned=(obj.phases||[]).includes(phase.id);
+    const badge=document.createElement('div');badge.className='phase-badge '+(assigned?'assigned':'unassigned');
+    badge.style.cssText=`color:${phase.color};border-color:${phase.color}`;badge.textContent=phase.id;badge.title=phase.name;
+    badge.onclick=()=>togglePhaseAssignment(id,phase.id);
+    phasesDiv.appendChild(badge);
+  });
+  function bl(listId,conns){
+    const list=document.getElementById(listId);list.innerHTML='';
+    conns.forEach(([f,t,label])=>{
+      if(f!==id&&t!==id)return;
+      const oid=f===id?t:f,other=objects.find(o=>o.id===oid),ol=other?LAYERS.find(l=>l.id===other.layer):null;if(!other||!ol)return;
+      const item=document.createElement('div');item.className='info-conn-item';
+      item.innerHTML=`<span class="info-conn-dot" style="background:${ol.color}"></span><span style="color:#94a3b8">${f===id?'→':'←'}</span><span style="color:${ol.color}">${other.name}</span><span style="color:#475569;font-size:10px">(${label})</span>`;
+      list.appendChild(item);
+    });
+    if(!list.children.length)list.innerHTML='<span style="color:#475569;font-size:11px">Keine</span>';
+  }
+  bl('info-cross-list',crossConnections);bl('info-inner-list',innerConnections);
+  document.getElementById('info-panel').classList.add('visible');
+}
+
+function togglePhaseAssignment(objId,phaseId){
+  const obj=objects.find(o=>o.id===objId);if(!obj)return;
+  if(!obj.phases)obj.phases=[];
+  const idx=obj.phases.indexOf(phaseId);
+  if(idx>=0)obj.phases.splice(idx,1);else obj.phases.push(phaseId);
+  updateInfoPanel(objId);
+  if(currentView==='adm')renderADMGrid();
+}
+
+// ── OBJECT MODAL ─────────────────────────────────────
+function openAddObjectModal(layerId){
+  editingId=null;document.getElementById('modal-title').textContent='Objekt hinzufügen';
+  document.getElementById('modal-name').value='';document.getElementById('modal-icon').value='';document.getElementById('modal-desc').value='';
+  buildPhaseGrid([]);populateLayerSelect(layerId);document.getElementById('obj-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('modal-name').focus(),100);
+}
+function editSelectedObject(){
+  if(!selectedId)return;const obj=objects.find(o=>o.id===selectedId);if(!obj)return;
+  editingId=selectedId;document.getElementById('modal-title').textContent='Objekt bearbeiten';
+  document.getElementById('modal-name').value=obj.name;document.getElementById('modal-icon').value=obj.icon||'';document.getElementById('modal-desc').value=obj.desc||'';
+  buildPhaseGrid(obj.phases||[]);populateLayerSelect(obj.layer);document.getElementById('obj-modal').classList.add('open');
+}
+
+function buildPhaseGrid(selected){
+  const grid=document.getElementById('modal-phase-grid');grid.innerHTML='';
+  ADM_PHASES.forEach(phase=>{
+    const item=document.createElement('label');item.className='phase-check-item'+(selected.includes(phase.id)?' checked':'');
+    item.style.borderColor=selected.includes(phase.id)?phase.color:'var(--border)';
+    item.style.color=phase.color;
+    const cb=document.createElement('input');cb.type='checkbox';cb.value=phase.id;if(selected.includes(phase.id))cb.checked=true;
+    cb.onchange=()=>{item.classList.toggle('checked',cb.checked);item.style.borderColor=cb.checked?phase.color:'var(--border)';};
+    item.appendChild(cb);item.appendChild(document.createTextNode(phase.id+' '+phase.short));
+    grid.appendChild(item);
+  });
+}
+
+function getSelectedPhases(){
+  return Array.from(document.querySelectorAll('#modal-phase-grid input:checked')).map(cb=>cb.value);
+}
+
+function populateLayerSelect(sel){
+  const s=document.getElementById('modal-layer');s.innerHTML='';
+  LAYERS.forEach(l=>{const o=document.createElement('option');o.value=l.id;o.textContent=l.name;if(l.id===sel)o.selected=true;s.appendChild(o);});
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function saveObject(){
+  const name=document.getElementById('modal-name').value.trim();if(!name)return;
+  const layerId=document.getElementById('modal-layer').value,icon=document.getElementById('modal-icon').value.trim()||'●',desc=document.getElementById('modal-desc').value.trim(),phases=getSelectedPhases();
+  if(editingId){const obj=objects.find(o=>o.id===editingId);if(obj){obj.name=name;obj.layer=layerId;obj.icon=icon;obj.desc=desc;obj.phases=phases;}}
+  else objects.push({id:'c_'+Date.now(),layer:layerId,name,icon,desc,phases});
+  closeModal('obj-modal');render();if(currentView==='adm')renderADMGrid();if(selectedId)drawArrows();
+}
+function deleteSelectedObject(){
+  if(!selectedId)return;if(!confirm('Objekt löschen?'))return;
+  objects=objects.filter(o=>o.id!==selectedId);
+  crossConnections=crossConnections.filter(([f,t])=>f!==selectedId&&t!==selectedId);
+  innerConnections=innerConnections.filter(([f,t])=>f!==selectedId&&t!==selectedId);
+  clearSelection();render();if(currentView==='adm')renderADMGrid();
+}
+
+// Toggles
+document.getElementById('toggle-cross').addEventListener('change',e=>{showCross=e.target.checked;if(selectedId&&currentView==='matrix'){applySelection(selectedId);drawArrows();}});
+document.getElementById('toggle-inner').addEventListener('change',e=>{showInner=e.target.checked;if(selectedId&&currentView==='matrix'){applySelection(selectedId);drawArrows();}});
+window.addEventListener('scroll',()=>{if(selectedId&&currentView==='matrix')drawArrows();});
+window.addEventListener('resize',()=>{if(selectedId&&currentView==='matrix')drawArrows();});
+document.getElementById('obj-modal').addEventListener('click',e=>{if(e.target===document.getElementById('obj-modal'))closeModal('obj-modal');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){clearSelection();closeModal('obj-modal');}});
+
+render();
+</script>
+</body>
+</html>
