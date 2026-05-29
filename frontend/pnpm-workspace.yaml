@@ -1,6 +1,5 @@
 # pnpm 11+ erwartet diese Settings hier statt im package.json "pnpm"-Feld.
 # Whitelistet native Build-Scripts (postinstall) der Deps.
-
-onlyBuiltDependencies:
-  - esbuild
-  - "@tailwindcss/oxide"
+allowBuilds:
+  esbuild: true
+  "@tailwindcss/oxide": true
