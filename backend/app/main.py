@@ -1,0 +1,39 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import get_settings
+from app.routers import health, reference
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = get_settings()
+    app.state.settings = settings
+    yield
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Sovaia Architecture-Modeler API",
+        version="0.1.0",
+        description="L3-Service für Architektur-Modellierung, IST/SOLL und Storyteller (ADR-082).",
+        lifespan=lifespan,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    app.include_router(health.router, tags=["health"])
+    app.include_router(reference.router, prefix="/v1/reference", tags=["reference"])
+
+    return app
+
+
+app = create_app()

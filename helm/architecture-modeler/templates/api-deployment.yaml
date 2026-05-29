@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "am.fullname" . }}-api
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "am.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "am.name" . }}
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "am.name" . }}
+        app.kubernetes.io/component: api
+    spec:
+      containers:
+        - name: api
+          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.api.port }}
+          env:
+            {{- range $k, $v := .Values.api.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+            - name: EAM_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secretName }}
+                  key: {{ .Values.postgres.secretKey }}
+          {{- if .Values.referenceConfigMap.enabled }}
+          volumeMounts:
+            - name: reference
+              mountPath: /etc/sovaia-reference
+              readOnly: true
+          {{- end }}
+          livenessProbe:
+            httpGet: { path: /v1/health, port: {{ .Values.api.port }} }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: { path: /v1/health, port: {{ .Values.api.port }} }
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+      {{- if .Values.referenceConfigMap.enabled }}
+      volumes:
+        - name: reference
+          configMap:
+            name: {{ .Values.referenceConfigMap.name }}
+      {{- end }}

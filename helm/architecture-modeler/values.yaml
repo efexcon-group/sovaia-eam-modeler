@@ -1,0 +1,72 @@
+# Default-Werte für architecture-modeler Helm-Chart.
+# Werden in values-internal.yaml (Sovaia-internal) bzw. values-tenant-template.yaml
+# (Lizenz-Tenants) überschrieben.
+
+namespace: platform
+tenant: sovaia-internal
+
+api:
+  image:
+    repository: ghcr.io/efexcon-group/architecture-modeler-api
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 8000
+  env:
+    EAM_ENV: "dev"
+    EAM_REFERENCE_REPO_PATH: "/etc/sovaia-reference"
+    EAM_LLM_BRIDGE_URL: "http://architecture-modeler-llm-bridge:8001"
+    EAM_LICENSE_CORE_URL: "http://license-core.platform:8080"
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+
+frontend:
+  image:
+    repository: ghcr.io/efexcon-group/architecture-modeler-frontend
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 80
+  resources:
+    requests: { cpu: 50m,  memory: 64Mi }
+    limits:   { cpu: 200m, memory: 128Mi }
+
+eamLlmBridge:
+  image:
+    repository: ghcr.io/efexcon-group/eam-llm-bridge
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 8001
+  env:
+    DGX_GATEWAY_URL: "http://dgx-gateway.sovaia:8000"
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+
+postgres:
+  external: true
+  host: platform-postgresql.platform
+  port: 5432
+  database: architecture_modeler
+  secretName: architecture-modeler-postgres
+  secretKey: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  host: architektur-modeler.int.efexcon.com
+  tls: true
+
+oidc:
+  issuer: "https://keycloak.int.efexcon.com/realms/efexcon-group"
+  clientId: architecture-modeler-frontend
+  audience: architecture-modeler-api
+
+referenceConfigMap:
+  enabled: true
+  name: architecture-modeler-reference
+  # Inhalt wird per CI-Job aus sovaia-contracts/registry/architecture-modeler/ befüllt.

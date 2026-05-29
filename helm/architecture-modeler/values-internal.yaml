@@ -1,0 +1,18 @@
+# Sovaia-Internal-Deployment (efexcon, im platform-Namespace).
+# Auth über internen Keycloak. Iteration 0.
+
+namespace: platform
+tenant: sovaia-internal
+
+api:
+  env:
+    EAM_ENV: "internal"
+    EAM_TENANT_DEFAULT: "sovaia-internal"
+
+ingress:
+  host: architektur-modeler.int.efexcon.com
+
+oidc:
+  issuer: "https://keycloak.int.efexcon.com/realms/efexcon-group"
+  clientId: architecture-modeler-frontend
+  audience: architecture-modeler-api

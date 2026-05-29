@@ -1,0 +1,15 @@
+apiVersion: v2
+name: architecture-modeler
+description: Sovaia Architecture-Modeler (L3-Lizenzprodukt, ADR-082)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - architecture
+  - modeling
+  - storyteller
+  - llm
+home: https://github.com/efexcon-group/sovaia-eam-modeler
+maintainers:
+  - name: efexcon
+    email: ops@efexcon.com
