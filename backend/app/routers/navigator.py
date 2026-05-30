@@ -22,9 +22,10 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 
 from app.config import Settings, get_settings
+from app.storage import overlay as overlay_store
 
 router = APIRouter()
 
@@ -133,6 +134,7 @@ def _aggregate_impact(sovaia_nodes: list[dict]) -> dict[str, Any]:
 @router.get("")
 async def navigator(
     path: str = Query("", description="Pfad im Layer-Tree, z.B. 'business/healthcare/heim-pflege'."),
+    x_eam_tenant: str | None = Header(default=None),
     settings: Settings = Depends(get_settings),
 ) -> dict:
     base = Path(settings.reference_repo_path)
@@ -140,8 +142,6 @@ async def navigator(
     # 1) Pfad parsen.
     segments = [s for s in path.split("/") if s]
     if not segments:
-        # Top-Level: returnt nur Layer-Liste — Front-End macht damit nichts spannendes,
-        # nutzt eher GET /v1/taxonomy/schichten.
         raise HTTPException(status_code=400, detail="path required, e.g. 'business' or 'business/healthcare'.")
 
     layer_id, *rest = segments
@@ -160,14 +160,29 @@ async def navigator(
     # 4) Reference-Knoten an diesem Pfad sammeln (Prefix-Match).
     full_path = "/".join(segments)
     all_nodes = _scan_reference_files(base)
-    matched = [n for n in all_nodes if _matches_path(n["_taxonomy_paths_list"], full_path)]
 
-    classic = [_strip_internal(n) for n in matched if _is_classic(n)]
-    sovaia = [_strip_internal(n) for n in matched if not _is_classic(n)]
+    # Classic + Sovaia trennen.
+    classic_baseline = [_strip_internal(n) for n in all_nodes if _is_classic(n)]
+    sovaia_all = [_strip_internal(n) for n in all_nodes if not _is_classic(n)]
+
+    # Tenant-Overlay anwenden — nur Classic.
+    tenant = (x_eam_tenant or settings.tenant_default).strip().lower() or settings.tenant_default
+    overlay = overlay_store.load_overlay(Path(settings.overlay_dir).resolve(), tenant)
+    classic_effective = overlay_store.apply_overlay_to_classic(classic_baseline, overlay)
+
+    # Filter nach Pfad.
+    def _node_matches(n: dict) -> bool:
+        cluster_defaults = _load_cluster_defaults(str(base))
+        paths = _extract_taxonomy_paths(n, cluster_defaults)
+        return _matches_path(paths, full_path)
+
+    classic = [n for n in classic_effective if _node_matches(n)]
+    sovaia = [n for n in sovaia_all if _node_matches(n)]
 
     return {
         "path": full_path,
         "layer": layer_id,
+        "tenant": tenant,
         "current": _shape_current(current, full_path),
         "children": [_shape_child(c, full_path) for c in children],
         "classic": classic,

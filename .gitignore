@@ -32,3 +32,7 @@ build/
 
 # Helm
 charts/*.tgz
+
+# Iteration-1b — JSON-Overlays (Tenant-Edits, lokale Persistenz, kein commit)
+backend/overlays/
+overlays/

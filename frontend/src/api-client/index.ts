@@ -142,3 +142,69 @@ export async function getNavigator(path: string): Promise<NavigatorResponse> {
   if (!r.ok) throw new Error(`navigator failed: ${r.status} ${await r.text()}`);
   return r.json();
 }
+
+// ── Edit + Intake (Iteration 1b) ────────────────────────────────────────
+
+export interface ClassicCreatePayload {
+  type: string;
+  "label-de": string;
+  "summary-de"?: string;
+  "taxonomy-paths": string;
+  "operational-status"?: string;
+  "typical-tools"?: string[];
+}
+
+export interface ClassicPatchPayload {
+  "label-de"?: string;
+  "summary-de"?: string;
+  "taxonomy-paths"?: string;
+  "operational-status"?: string;
+  "available-from"?: string;
+  "typical-tools"?: string[];
+}
+
+export async function createClassic(payload: ClassicCreatePayload): Promise<NavigatorNode> {
+  const r = await fetch(`${API}/edit/classic`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error(`createClassic failed: ${r.status} ${await r.text()}`);
+  return r.json();
+}
+
+export async function patchClassic(nodeId: string, payload: ClassicPatchPayload): Promise<void> {
+  const r = await fetch(`${API}/edit/classic/${encodeURIComponent(nodeId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error(`patchClassic failed: ${r.status} ${await r.text()}`);
+}
+
+export async function deleteClassic(nodeId: string): Promise<void> {
+  const r = await fetch(`${API}/edit/classic/${encodeURIComponent(nodeId)}`, {
+    method: "DELETE",
+  });
+  if (!r.ok && r.status !== 204) {
+    throw new Error(`deleteClassic failed: ${r.status} ${await r.text()}`);
+  }
+}
+
+export interface GenerateClassicResponse {
+  added: NavigatorNode[];
+  count: number;
+}
+
+export async function generateClassic(
+  path: string,
+  limit = 5,
+): Promise<GenerateClassicResponse> {
+  const r = await fetch(`${API}/intake/generate-classic`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path, limit }),
+  });
+  if (!r.ok) throw new Error(`generateClassic failed: ${r.status} ${await r.text()}`);
+  return r.json();
+}

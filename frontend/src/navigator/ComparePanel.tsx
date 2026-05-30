@@ -1,9 +1,18 @@
-import type { NavigatorImpact, NavigatorNode } from "../api-client";
+import { useState } from "react";
+import {
+  deleteClassic,
+  generateClassic,
+  type NavigatorImpact,
+  type NavigatorNode,
+} from "../api-client";
+import { EditDrawer } from "./EditDrawer";
 
 interface Props {
+  path: string;
   classic: NavigatorNode[];
   sovaia: NavigatorNode[];
   impact: NavigatorImpact;
+  onMutate: () => void;
 }
 
 function StatusPill({ status }: { status?: string }) {
@@ -25,7 +34,28 @@ function StatusPill({ status }: { status?: string }) {
   );
 }
 
-function NodeCard({ node, side }: { node: NavigatorNode; side: "classic" | "sovaia" }) {
+function SourceBadge({ node }: { node: NavigatorNode }) {
+  const seeded = node.tags?.["seeded-by"];
+  if (seeded === "llm-generated") {
+    return <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-800">LLM</span>;
+  }
+  if (seeded === "user-edit") {
+    return <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-800">eigen</span>;
+  }
+  return null;
+}
+
+function NodeCard({
+  node,
+  side,
+  onEdit,
+  onDelete,
+}: {
+  node: NavigatorNode;
+  side: "classic" | "sovaia";
+  onEdit?: (n: NavigatorNode) => void;
+  onDelete?: (n: NavigatorNode) => void;
+}) {
   const tags = node.tags ?? {};
   const status =
     side === "classic"
@@ -34,9 +64,12 @@ function NodeCard({ node, side }: { node: NavigatorNode; side: "classic" | "sova
   const availableFrom = side === "sovaia" ? node.impact?.["available-from"] : undefined;
 
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-3">
+    <div className="group rounded-md border border-slate-200 bg-white p-3 relative">
       <div className="flex items-start justify-between gap-2">
-        <div className="font-medium text-sm text-slate-900">{node["label-de"]}</div>
+        <div className="font-medium text-sm text-slate-900 flex items-center gap-2 flex-wrap">
+          {node["label-de"]}
+          <SourceBadge node={node} />
+        </div>
         <StatusPill status={status} />
       </div>
       {node["summary-de"] && (
@@ -64,6 +97,30 @@ function NodeCard({ node, side }: { node: NavigatorNode; side: "classic" | "sova
       {availableFrom && (
         <div className="mt-1 text-[10px] text-slate-400">verfügbar ab {availableFrom}</div>
       )}
+      {side === "classic" && (onEdit || onDelete) && (
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2 flex gap-1 bg-white/80 rounded">
+          {onEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(node)}
+              className="text-[10px] px-1.5 py-0.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded"
+              title="Bearbeiten"
+            >
+              ✎
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(node)}
+              className="text-[10px] px-1.5 py-0.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded"
+              title="Löschen"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -89,13 +146,69 @@ function ImpactFooter({ impact }: { impact: NavigatorImpact }) {
   );
 }
 
-export function ComparePanel({ classic, sovaia, impact }: Props) {
+export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props) {
+  const [drawer, setDrawer] = useState<{ mode: "create" | "edit"; node?: NavigatorNode } | null>(null);
+  const [llmBusy, setLlmBusy] = useState(false);
+  const [llmError, setLlmError] = useState<string | null>(null);
+
+  const handleDelete = async (n: NavigatorNode) => {
+    if (!confirm(`Classic-Knoten "${n["label-de"]}" löschen?`)) return;
+    try {
+      await deleteClassic(n.id);
+      onMutate();
+    } catch (e) {
+      alert(`Löschen fehlgeschlagen: ${e}`);
+    }
+  };
+
+  const handleGenerate = async () => {
+    setLlmBusy(true);
+    setLlmError(null);
+    try {
+      const r = await generateClassic(path, 5);
+      onMutate();
+      if (r.count === 0) {
+        setLlmError("LLM lieferte 0 Vorschläge.");
+      }
+    } catch (e) {
+      setLlmError(String(e));
+    } finally {
+      setLlmBusy(false);
+    }
+  };
+
   if (classic.length === 0 && sovaia.length === 0) {
     return (
       <section className="px-4 py-4 border-t border-slate-200">
-        <div className="text-xs text-slate-500">
-          Keine zugeordneten Module auf diesem Pfad. LLM-Befüllung folgt in Iteration 1b.
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="text-xs text-slate-500">
+            Keine zugeordneten Module auf diesem Pfad.
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setDrawer({ mode: "create" })}
+              className="text-xs px-2 py-1 rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
+            >
+              + Classic anlegen
+            </button>
+            <button
+              onClick={handleGenerate}
+              disabled={llmBusy}
+              className="text-xs px-2 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+            >
+              {llmBusy ? "LLM …" : "✨ LLM-Vorschläge"}
+            </button>
+          </div>
         </div>
+        {llmError && <div className="text-xs text-rose-700 mb-2">{llmError}</div>}
+        <EditDrawer
+          open={!!drawer}
+          mode={drawer?.mode ?? "create"}
+          node={drawer?.node}
+          defaultPath={path}
+          onClose={() => setDrawer(null)}
+          onSaved={onMutate}
+        />
       </section>
     );
   }
@@ -107,19 +220,50 @@ export function ComparePanel({ classic, sovaia, impact }: Props) {
       </h2>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
-          <h3 className="text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-slate-400" />
-            Classic Stack
-            <span className="text-xs text-slate-400">({classic.length})</span>
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-slate-700 flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-slate-400" />
+              Classic Stack
+              <span className="text-xs text-slate-400">({classic.length})</span>
+            </h3>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setDrawer({ mode: "create" })}
+                className="text-[11px] px-2 py-1 rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
+              >
+                + Neu
+              </button>
+              <button
+                onClick={handleGenerate}
+                disabled={llmBusy}
+                className="text-[11px] px-2 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {llmBusy ? "LLM …" : "✨ LLM"}
+              </button>
+            </div>
+          </div>
+          {llmError && (
+            <div className="text-xs text-rose-700 mb-2 bg-rose-50 border border-rose-200 rounded p-2">
+              {llmError}
+            </div>
+          )}
           <div className="space-y-2">
             {classic.length === 0 ? (
               <div className="text-xs text-slate-400 italic">Noch nicht erfasst.</div>
             ) : (
-              classic.map((n) => <NodeCard key={n.id} node={n} side="classic" />)
+              classic.map((n) => (
+                <NodeCard
+                  key={n.id}
+                  node={n}
+                  side="classic"
+                  onEdit={(node) => setDrawer({ mode: "edit", node })}
+                  onDelete={handleDelete}
+                />
+              ))
             )}
           </div>
         </div>
+
         <div>
           <h3 className="text-sm font-medium text-emerald-700 mb-2 flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
@@ -136,6 +280,15 @@ export function ComparePanel({ classic, sovaia, impact }: Props) {
         </div>
       </div>
       <ImpactFooter impact={impact} />
+
+      <EditDrawer
+        open={!!drawer}
+        mode={drawer?.mode ?? "create"}
+        node={drawer?.node}
+        defaultPath={path}
+        onClose={() => setDrawer(null)}
+        onSaved={onMutate}
+      />
     </section>
   );
 }

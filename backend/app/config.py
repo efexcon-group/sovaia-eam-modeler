@@ -26,6 +26,12 @@ class Settings(BaseSettings):
 
     tenant_default: str = Field(default="sovaia-internal")
 
+    overlay_dir: str = Field(
+        default="./overlays",
+        description="Verzeichnis für JSON-Overlays (Tenant-Edits über YAML-Baseline). "
+        "Wird automatisch erstellt wenn nicht vorhanden.",
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:

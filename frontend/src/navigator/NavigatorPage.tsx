@@ -27,6 +27,7 @@ export default function NavigatorPage() {
 
   const [navData, setNavData] = useState<CachedTree | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   // Schichten einmal laden.
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function NavigatorPage() {
       .catch((e) => setSchichtenError(String(e)));
   }, []);
 
-  // Navigator-Daten bei Pfadwechsel laden.
+  // Navigator-Daten bei Pfadwechsel oder Mutation laden.
   useEffect(() => {
     if (segments.length === 0) {
       setNavData(null);
@@ -50,7 +51,9 @@ export default function NavigatorPage() {
     return () => {
       alive = false;
     };
-  }, [path]);
+  }, [path, refreshTick]);
+
+  const refresh = () => setRefreshTick((n) => n + 1);
 
   // Breadcrumb-Labels auflösen — Layer aus schichten, Rest aus navData.current bzw IDs.
   const breadcrumbSegments = useMemo(() => {
@@ -137,9 +140,11 @@ export default function NavigatorPage() {
                 }
               />
               <ComparePanel
+                path={path}
                 classic={navData.data.classic}
                 sovaia={navData.data.sovaia}
                 impact={navData.data["impact-aggregate"]}
+                onMutate={refresh}
               />
             </>
           )}
