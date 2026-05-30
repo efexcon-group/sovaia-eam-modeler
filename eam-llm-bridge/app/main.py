@@ -20,6 +20,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from app.config import Settings, get_settings
+from app.stub import stub_classic_proposals
 
 
 app = FastAPI(
@@ -171,6 +172,10 @@ async def health() -> dict[str, str]:
 @app.post("/v1/generate-classic", response_model=GenerateClassicResponse)
 async def generate_classic(req: GenerateClassicRequest) -> GenerateClassicResponse:
     settings = get_settings()
+    if settings.llm_mode.lower() == "stub":
+        proposals = stub_classic_proposals(req.path, req.limit)
+        return GenerateClassicResponse(proposals=proposals, model="stub")
+    # Default: dgx
     system = _load_system_prompt("classic_seed_system.txt", limit=req.limit)
     user = _build_user_message(req)
     content = await _call_dgx(settings, system, user)
