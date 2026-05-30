@@ -36,3 +36,6 @@ charts/*.tgz
 # Iteration-1b — JSON-Overlays (Tenant-Edits, lokale Persistenz, kein commit)
 backend/overlays/
 overlays/
+
+# Lokale Compose-Env
+.env

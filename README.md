@@ -23,7 +23,27 @@ legacy/             v2-v9 HTML-Prototypes (UX-Konzept-Referenz, read-only)
 - Iteration-0-Spec in [docs/iteration-0.md](docs/iteration-0.md)
 - Reference-Modell in [sovaia-contracts/registry/architecture-modeler/](https://github.com/efexcon-group/sovaia-contracts/tree/main/registry/architecture-modeler)
 
-## Lokal entwickeln
+## Lokal starten (Empfohlen: Docker Compose)
+
+Voraussetzung: `sovaia-contracts` liegt als Geschwister-Repo daneben
+(`~/sovaia-contracts/`). Dann:
+
+```bash
+make up
+# oder:  docker compose up --build -d
+```
+
+URLs:
+- Frontend:  `http://localhost:5173/`  (bzw. `http://<tailscale-ip>:5173/`)
+- Backend:   `http://localhost:8003/v1/health`
+
+Logs: `make logs`  ·  Stop: `make down`
+
+LLM-Modus per Default `stub` (Template-Vorschläge ohne DGX). Echter
+DGX-Call: `.env`-Datei aus `.env.example` ableiten, `EAM_LLM_MODE=dgx`
++ `DGX_LLM_URL` setzen, dann `make rebuild`.
+
+## Alternative: ohne Docker
 
 ```bash
 # Backend
