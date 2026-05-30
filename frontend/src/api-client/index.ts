@@ -70,3 +70,75 @@ export async function listStories(): Promise<StoryListItem[]> {
   if (!r.ok) throw new Error(`stories failed: ${r.status}`);
   return r.json();
 }
+
+// ── Taxonomy + Navigator ────────────────────────────────────────────────
+
+export interface Schicht {
+  id: string;
+  "label-de": string;
+  "label-en"?: string;
+  "description-de"?: string;
+  "tree-file"?: string;
+  "cross-cutting"?: boolean;
+  order?: number;
+}
+
+export interface SchichtenResponse {
+  "taxonomy-id": string;
+  "taxonomy-version": string;
+  schichten: Schicht[];
+}
+
+export interface NavigatorImpact {
+  "automation-grade"?: number | null;
+  "headcount-delta"?: number | null;
+  "cost-delta"?: number | null;
+  "sample-size"?: number;
+}
+
+export interface NavigatorChild {
+  id: string;
+  "label-de": string;
+  "summary-de"?: string;
+  path: string;
+  "has-children": boolean;
+}
+
+export interface NavigatorNode {
+  id: string;
+  type?: string;
+  "label-de": string;
+  "summary-de"?: string;
+  tags?: Record<string, string>;
+  impact?: {
+    "automation-grade"?: number;
+    "headcount-delta"?: number;
+    "cost-delta"?: number;
+    "time-to-value"?: string;
+    "operational-status"?: string;
+    "available-from"?: string;
+    evidence?: string;
+  };
+}
+
+export interface NavigatorResponse {
+  path: string;
+  layer: string;
+  current: { id: string; "label-de": string; "summary-de"?: string };
+  children: NavigatorChild[];
+  classic: NavigatorNode[];
+  sovaia: NavigatorNode[];
+  "impact-aggregate": NavigatorImpact;
+}
+
+export async function getSchichten(): Promise<SchichtenResponse> {
+  const r = await fetch(`${API}/taxonomy/schichten`);
+  if (!r.ok) throw new Error(`taxonomy/schichten failed: ${r.status}`);
+  return r.json();
+}
+
+export async function getNavigator(path: string): Promise<NavigatorResponse> {
+  const r = await fetch(`${API}/navigator?path=${encodeURIComponent(path)}`);
+  if (!r.ok) throw new Error(`navigator failed: ${r.status} ${await r.text()}`);
+  return r.json();
+}
