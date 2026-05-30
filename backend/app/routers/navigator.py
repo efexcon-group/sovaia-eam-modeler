@@ -12,7 +12,12 @@ Antwort:
   "sovaia":  [ { node-shape } ],
   "impact-aggregate": { automation-grade, headcount-delta, cost-delta }
 }
+
+Cluster-Defaults: wenn ein Knoten keine explizite taxonomy-paths trägt, aber
+einen cluster-Tag, wird der Default-Pfad aus taxonomy/cluster-defaults.yaml
+angewendet. Explizite Tags HABEN VORRANG.
 """
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +27,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.config import Settings, get_settings
 
 router = APIRouter()
+
+
+# ── Cluster-Defaults laden ──────────────────────────────────────────────
+
+@lru_cache(maxsize=4)
+def _load_cluster_defaults(base_str: str) -> dict[str, list[str]]:
+    p = Path(base_str) / "taxonomy" / "cluster-defaults.yaml"
+    if not p.exists():
+        return {}
+    with p.open() as f:
+        data = yaml.safe_load(f) or {}
+    return data.get("defaults") or {}
 
 
 # ── YAML-Scan ───────────────────────────────────────────────────────────
@@ -41,6 +58,8 @@ def _scan_reference_files(base: Path) -> list[dict]:
         if d.exists():
             files.extend(sorted(d.glob("*.yaml")))
 
+    cluster_defaults = _load_cluster_defaults(str(base))
+
     all_nodes: list[dict] = []
     for f in files:
         with f.open() as fh:
@@ -48,19 +67,23 @@ def _scan_reference_files(base: Path) -> list[dict]:
         for n in data.get("nodes", []) or []:
             n2 = dict(n)
             n2["_source"] = str(f.relative_to(base))
-            n2["_taxonomy_paths_list"] = _extract_taxonomy_paths(n)
+            n2["_taxonomy_paths_list"] = _extract_taxonomy_paths(n, cluster_defaults)
             all_nodes.append(n2)
     return all_nodes
 
 
-def _extract_taxonomy_paths(node: dict) -> list[str]:
+def _extract_taxonomy_paths(node: dict, cluster_defaults: dict[str, list[str]]) -> list[str]:
     tags = node.get("tags") or {}
     raw = tags.get("taxonomy-paths")
-    if not raw:
-        return []
-    if isinstance(raw, list):
-        return [str(x).strip() for x in raw if x]
-    return [s.strip() for s in str(raw).split(",") if s.strip()]
+    if raw:
+        if isinstance(raw, list):
+            return [str(x).strip() for x in raw if x]
+        return [s.strip() for s in str(raw).split(",") if s.strip()]
+    # Fallback: Cluster-Default.
+    cluster = tags.get("cluster")
+    if cluster and cluster in cluster_defaults:
+        return list(cluster_defaults[cluster])
+    return []
 
 
 def _is_classic(node: dict) -> bool:
