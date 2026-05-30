@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     )
 
     llm_bridge_url: str = Field(default="http://localhost:8001")
+    llm_bridge_timeout: float = Field(
+        default=180.0,
+        description="Timeout (Sekunden) für Calls an eam-llm-bridge. Muss länger sein als der DGX-Timeout der Bridge.",
+    )
     license_core_url: str = Field(default="http://license-core:8080")
 
     oidc_issuer: str = Field(default="https://keycloak.int.efexcon.com/realms/efexcon-group")

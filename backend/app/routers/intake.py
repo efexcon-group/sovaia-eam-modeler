@@ -83,7 +83,12 @@ def _collect_context(settings: Settings, path: str) -> dict[str, Any]:
 # ── Bridge-Call ─────────────────────────────────────────────────────────
 
 async def _call_bridge(
-    bridge_url: str, path: str, sovaia: list[dict], existing_classic: list[dict], limit: int
+    bridge_url: str,
+    timeout: float,
+    path: str,
+    sovaia: list[dict],
+    existing_classic: list[dict],
+    limit: int,
 ) -> list[dict]:
     payload = {
         "path": path,
@@ -98,7 +103,7 @@ async def _call_bridge(
         ],
     }
     url = bridge_url.rstrip("/") + "/v1/generate-classic"
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.post(url, json=payload)
         if r.status_code >= 500:
             raise HTTPException(
@@ -125,7 +130,12 @@ async def generate_classic(
 
     ctx = _collect_context(settings, body.path)
     proposals = await _call_bridge(
-        settings.llm_bridge_url, body.path, ctx["sovaia"], ctx["classic"], body.limit
+        settings.llm_bridge_url,
+        settings.llm_bridge_timeout,
+        body.path,
+        ctx["sovaia"],
+        ctx["classic"],
+        body.limit,
     )
 
     if not proposals:

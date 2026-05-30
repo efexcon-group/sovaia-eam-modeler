@@ -13,7 +13,7 @@ class Settings(BaseSettings):
         "Wenn leer, returnen Endpoints einen Stub mit klarem Hinweis.",
     )
     dgx_model: str = Field(default="default")
-    dgx_timeout_seconds: float = Field(default=60.0)
+    dgx_timeout_seconds: float = Field(default=150.0)
     dgx_api_key: str = Field(default="", description="Optional. Wird als Bearer-Token gesendet falls gesetzt.")
 
 
