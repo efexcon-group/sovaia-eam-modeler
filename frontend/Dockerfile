@@ -1,8 +1,15 @@
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
+
 RUN corepack enable
-COPY package.json ./
-RUN pnpm install --shamefully-hoist
+
+# Erst Dep-Manifeste — für Layer-Cache. pnpm-workspace.yaml ist nötig
+# damit allowBuilds (esbuild, @tailwindcss/oxide) greift.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+RUN pnpm install --frozen-lockfile
+
+# Source + Build
 COPY . .
 RUN pnpm build
 
