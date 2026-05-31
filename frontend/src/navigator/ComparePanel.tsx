@@ -1,18 +1,23 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   deleteClassic,
   generateClassic,
   revertSovaia,
+  type CostAggregate,
   type NavigatorImpact,
+  type NavigatorMapping,
   type NavigatorNode,
 } from "../api-client";
 import { EditDrawer } from "./EditDrawer";
+import { MappingDrawer } from "./MappingDrawer";
 
 interface Props {
   path: string;
   classic: NavigatorNode[];
   sovaia: NavigatorNode[];
   impact: NavigatorImpact;
+  mappings?: NavigatorMapping[];
+  costAggregate?: CostAggregate;
   onMutate: () => void;
 }
 
@@ -54,12 +59,16 @@ function SourceBadge({ node }: { node: NavigatorNode }) {
 function NodeCard({
   node,
   side,
+  mappingCount = 0,
+  isTransformation = false,
   onEdit,
   onDelete,
   onRevert,
 }: {
   node: NavigatorNode;
   side: "classic" | "sovaia";
+  mappingCount?: number;
+  isTransformation?: boolean;
   onEdit?: (n: NavigatorNode) => void;
   onDelete?: (n: NavigatorNode) => void;
   onRevert?: (n: NavigatorNode) => void;
@@ -77,6 +86,16 @@ function NodeCard({
         <div className="font-medium text-sm text-slate-900 flex items-center gap-2 flex-wrap">
           {node["label-de"]}
           <SourceBadge node={node} />
+          {mappingCount > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800" title="Mappings">
+              ↔ {mappingCount}
+            </span>
+          )}
+          {isTransformation && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800" title="Neue Capability, kein klassisches Pendant">
+              Transformation
+            </span>
+          )}
         </div>
         <StatusPill status={status} />
       </div>
@@ -128,34 +147,142 @@ function NodeCard({
   );
 }
 
-function ImpactFooter({ impact }: { impact: NavigatorImpact }) {
-  const has = impact && impact["sample-size"];
-  if (!has) return null;
+function ImpactFooter({ impact, cost }: { impact: NavigatorImpact; cost?: CostAggregate }) {
+  const hasImpact = impact && impact["sample-size"];
+  const hasCost = cost && cost["mapping-count"];
+  if (!hasImpact && !hasCost) return null;
   const fmtPct = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v * 100)}%`);
+  const fmtChf = (v: number | null | undefined) => (v == null ? "—" : `CHF ${v.toLocaleString("de-CH")}`);
+
   return (
-    <div className="mt-3 rounded-md bg-emerald-50 border border-emerald-100 px-3 py-2 text-xs text-emerald-900 flex flex-wrap gap-4">
-      <div>
-        <span className="text-emerald-700 font-medium">Automations-Grad ø</span>{" "}
-        {impact["automation-grade"] != null ? `${impact["automation-grade"]}%` : "—"}
-      </div>
-      <div>
-        <span className="text-emerald-700 font-medium">Personal ø</span> {fmtPct(impact["headcount-delta"])}
-      </div>
-      <div>
-        <span className="text-emerald-700 font-medium">Cost ø</span> {fmtPct(impact["cost-delta"])}
-      </div>
-      <div className="text-emerald-700/70">{impact["sample-size"]} Sovaia-Module</div>
+    <div className="mt-3 space-y-2">
+      {hasImpact && (
+        <div className="rounded-md bg-emerald-50 border border-emerald-100 px-3 py-2 text-xs text-emerald-900 flex flex-wrap gap-4">
+          <div>
+            <span className="text-emerald-700 font-medium">Automations-Grad ø</span>{" "}
+            {impact["automation-grade"] != null ? `${impact["automation-grade"]}%` : "—"}
+          </div>
+          <div><span className="text-emerald-700 font-medium">Personal ø</span> {fmtPct(impact["headcount-delta"])}</div>
+          <div><span className="text-emerald-700 font-medium">Cost ø</span> {fmtPct(impact["cost-delta"])}</div>
+          <div className="text-emerald-700/70">{impact["sample-size"]} Sovaia-Module</div>
+        </div>
+      )}
+      {hasCost && (
+        <div className="rounded-md bg-indigo-50 border border-indigo-100 px-3 py-2 text-xs text-indigo-900">
+          <div className="font-medium mb-1">Vorher / Nachher (Summe über {cost["mapping-count"]} Mapping(s))</div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+            <div className="text-slate-700">
+              <span className="text-slate-500">vorher CAPEX:</span> {fmtChf(cost.vorher?.capex)}
+            </div>
+            <div className="text-emerald-700">
+              <span className="text-slate-500">nachher CAPEX:</span> {fmtChf(cost.nachher?.capex)}
+            </div>
+            <div className="text-slate-700">
+              <span className="text-slate-500">vorher OPEX/Mt:</span> {fmtChf(cost.vorher?.["opex-monatlich"])}
+            </div>
+            <div className="text-emerald-700">
+              <span className="text-slate-500">nachher OPEX/Mt:</span> {fmtChf(cost.nachher?.["opex-monatlich"])}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props) {
+function MappingsList({
+  mappings,
+  classicById,
+  sovaiaById,
+  onEdit,
+  onAdd,
+}: {
+  mappings: NavigatorMapping[];
+  classicById: Map<string, NavigatorNode>;
+  sovaiaById: Map<string, NavigatorNode>;
+  onEdit: (m: NavigatorMapping) => void;
+  onAdd: () => void;
+}) {
+  return (
+    <section className="px-4 py-3 border-t border-slate-200 bg-slate-50/40">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-xs uppercase tracking-wide text-slate-500">
+          Mappings <span className="text-slate-400">({mappings.length})</span>
+        </h3>
+        <button onClick={onAdd}
+          className="text-[11px] px-2 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+          + Mapping
+        </button>
+      </div>
+      {mappings.length === 0 ? (
+        <div className="text-xs text-slate-400 italic">
+          Noch keine Mappings auf diesem Pfad. „+ Mapping" anlegen, um Classic ↔ Sovaia zu verbinden.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {mappings.map((m) => {
+            const cls = m["classic-node-id"] ? classicById.get(m["classic-node-id"]) : null;
+            const targets = m["sovaia-node-ids"].map((id) => sovaiaById.get(id)).filter(Boolean) as NavigatorNode[];
+            return (
+              <button key={m.id} onClick={() => onEdit(m)}
+                className="w-full text-left rounded-md border border-slate-200 bg-white p-3 hover:border-indigo-400 transition-colors">
+                <div className="flex items-center gap-2 text-xs text-slate-600 mb-1 flex-wrap">
+                  {cls ? (
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">{cls["label-de"]}</span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Transformation (neu)</span>
+                  )}
+                  <span className="text-slate-400">→</span>
+                  {targets.map((t) => (
+                    <span key={t.id} className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                      {t["label-de"]}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-700 line-clamp-2">{m["narrative-de"]}</p>
+                {(m.vorher?.["opex-monatlich"] != null || m.nachher?.["opex-monatlich"] != null) && (
+                  <div className="mt-1 text-[11px] text-slate-500">
+                    OPEX/Mt: <span className="text-slate-700">CHF {m.vorher?.["opex-monatlich"] ?? "—"}</span>
+                    {" → "}
+                    <span className="text-emerald-700 font-medium">CHF {m.nachher?.["opex-monatlich"] ?? "—"}</span>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function ComparePanel({
+  path, classic, sovaia, impact, mappings = [], costAggregate, onMutate,
+}: Props) {
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
+  const [mappingDrawer, setMappingDrawer] = useState<{ mode: "create" } | { mode: "edit"; mapping: NavigatorMapping } | null>(null);
   const [llmBusy, setLlmBusy] = useState(false);
   const [llmError, setLlmError] = useState<string | null>(null);
 
   // LLM-Batch nur sinnvoll wenn Pfad tiefer als Layer-Root ist.
   const canLlmBatch = path.includes("/");
+
+  // Mapping-Beziehungen berechnen (id → mapping-count).
+  const { classicMapCount, sovaiaMapCount, classicById, sovaiaById } = useMemo(() => {
+    const classicMapCount = new Map<string, number>();
+    const sovaiaMapCount = new Map<string, number>();
+    const classicById = new Map(classic.map((n) => [n.id, n]));
+    const sovaiaById = new Map(sovaia.map((n) => [n.id, n]));
+    for (const m of mappings) {
+      if (m["classic-node-id"]) {
+        classicMapCount.set(m["classic-node-id"], (classicMapCount.get(m["classic-node-id"]) ?? 0) + 1);
+      }
+      for (const sid of m["sovaia-node-ids"]) {
+        sovaiaMapCount.set(sid, (sovaiaMapCount.get(sid) ?? 0) + 1);
+      }
+    }
+    return { classicMapCount, sovaiaMapCount, classicById, sovaiaById };
+  }, [classic, sovaia, mappings]);
 
   const handleDelete = async (n: NavigatorNode) => {
     if (!confirm(`Classic-Knoten "${n["label-de"]}" löschen?`)) return;
@@ -277,6 +404,7 @@ export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props)
                   key={n.id}
                   node={n}
                   side="classic"
+                  mappingCount={classicMapCount.get(n.id) ?? 0}
                   onEdit={(node) => setDrawer({ mode: "edit-classic", node })}
                   onDelete={handleDelete}
                 />
@@ -295,20 +423,33 @@ export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props)
             {sovaia.length === 0 ? (
               <div className="text-xs text-slate-400 italic">Keine zugeordneten Sovaia-Module.</div>
             ) : (
-              sovaia.map((n) => (
-                <NodeCard
-                  key={n.id}
-                  node={n}
-                  side="sovaia"
-                  onEdit={(node) => setDrawer({ mode: "edit-sovaia", node })}
-                  onRevert={handleRevertSovaia}
-                />
-              ))
+              sovaia.map((n) => {
+                const count = sovaiaMapCount.get(n.id) ?? 0;
+                return (
+                  <NodeCard
+                    key={n.id}
+                    node={n}
+                    side="sovaia"
+                    mappingCount={count}
+                    isTransformation={count === 0 && mappings.length > 0}
+                    onEdit={(node) => setDrawer({ mode: "edit-sovaia", node })}
+                    onRevert={handleRevertSovaia}
+                  />
+                );
+              })
             )}
           </div>
         </div>
       </div>
-      <ImpactFooter impact={impact} />
+      <ImpactFooter impact={impact} cost={costAggregate} />
+
+      <MappingsList
+        mappings={mappings}
+        classicById={classicById}
+        sovaiaById={sovaiaById}
+        onEdit={(m) => setMappingDrawer({ mode: "edit", mapping: m })}
+        onAdd={() => setMappingDrawer({ mode: "create" })}
+      />
 
       <EditDrawer
         open={!!drawer}
@@ -316,6 +457,16 @@ export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props)
         node={drawer && "node" in drawer ? drawer.node : undefined}
         defaultPath={path}
         onClose={() => setDrawer(null)}
+        onSaved={onMutate}
+      />
+
+      <MappingDrawer
+        open={!!mappingDrawer}
+        mode={mappingDrawer?.mode ?? "create"}
+        mapping={mappingDrawer && "mapping" in mappingDrawer ? mappingDrawer.mapping : undefined}
+        classicOptions={classic}
+        sovaiaOptions={sovaia}
+        onClose={() => setMappingDrawer(null)}
         onSaved={onMutate}
       />
     </section>

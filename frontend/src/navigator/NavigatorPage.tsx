@@ -144,6 +144,8 @@ export default function NavigatorPage() {
                 classic={navData.data.classic}
                 sovaia={navData.data.sovaia}
                 impact={navData.data["impact-aggregate"]}
+                mappings={navData.data.mappings}
+                costAggregate={navData.data["cost-aggregate"]}
                 onMutate={refresh}
               />
             </>
