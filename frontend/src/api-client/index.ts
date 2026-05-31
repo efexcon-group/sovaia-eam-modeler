@@ -121,14 +121,35 @@ export interface NavigatorNode {
   };
 }
 
+export interface NavigatorMapping {
+  id: string;
+  "classic-node-id"?: string | null;
+  "sovaia-node-ids": string[];
+  "narrative-de": string;
+  vorher?: { capex?: number; "opex-monatlich"?: number; annahmen?: string };
+  nachher?: { capex?: number; "opex-monatlich"?: number; annahmen?: string };
+  confidence?: number;
+  "created-at"?: string;
+  "updated-at"?: string;
+}
+
+export interface CostAggregate {
+  vorher?: { capex?: number | null; "opex-monatlich"?: number | null };
+  nachher?: { capex?: number | null; "opex-monatlich"?: number | null };
+  "mapping-count"?: number;
+}
+
 export interface NavigatorResponse {
   path: string;
   layer: string;
+  tenant?: string;
   current: { id: string; "label-de": string; "summary-de"?: string };
   children: NavigatorChild[];
   classic: NavigatorNode[];
   sovaia: NavigatorNode[];
+  mappings?: NavigatorMapping[];
   "impact-aggregate": NavigatorImpact;
+  "cost-aggregate"?: CostAggregate;
 }
 
 export async function getSchichten(): Promise<SchichtenResponse> {
@@ -207,4 +228,111 @@ export async function generateClassic(
   });
   if (!r.ok) throw new Error(`generateClassic failed: ${r.status} ${await r.text()}`);
   return r.json();
+}
+
+// ── Sovaia-Edit (Iteration 1d) ──────────────────────────────────────────
+
+export interface SovaiaImpactPatch {
+  "automation-grade"?: number;
+  "headcount-delta"?: number;
+  "cost-delta"?: number;
+  "time-to-value"?: string;
+  "operational-status"?: string;
+  "available-from"?: string;
+  evidence?: string;
+}
+
+export interface SovaiaPatchPayload {
+  "label-de"?: string;
+  "summary-de"?: string;
+  impact?: SovaiaImpactPatch;
+}
+
+export async function patchSovaia(nodeId: string, payload: SovaiaPatchPayload): Promise<void> {
+  const r = await fetch(`${API}/edit/sovaia/${encodeURIComponent(nodeId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error(`patchSovaia failed: ${r.status} ${await r.text()}`);
+}
+
+export async function revertSovaia(nodeId: string): Promise<void> {
+  const r = await fetch(`${API}/edit/sovaia/${encodeURIComponent(nodeId)}`, {
+    method: "DELETE",
+  });
+  if (!r.ok && r.status !== 204) {
+    throw new Error(`revertSovaia failed: ${r.status} ${await r.text()}`);
+  }
+}
+
+// ── Per-Card-LLM-Helper ─────────────────────────────────────────────────
+
+export type RefineIntent = "improve" | "expand" | "shorten" | "from-keywords";
+export type RefinePersona = "decision-maker" | "architect" | "functional";
+
+export interface RefineRequest {
+  "label-de": string;
+  "summary-de"?: string;
+  intent: RefineIntent;
+  persona: RefinePersona;
+  "extra-hint"?: string;
+}
+
+export interface RefineResponse {
+  "label-de": string;
+  "summary-de": string;
+  model: string;
+}
+
+export async function refineDescription(req: RefineRequest): Promise<RefineResponse> {
+  const r = await fetch(`${API}/intake/refine-description`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  if (!r.ok) throw new Error(`refineDescription failed: ${r.status} ${await r.text()}`);
+  return r.json();
+}
+
+// ── Mappings (für C3 — bereits exportiert) ──────────────────────────────
+
+export interface MappingCreatePayload {
+  "classic-node-id"?: string | null;
+  "sovaia-node-ids": string[];
+  "narrative-de": string;
+  vorher?: { capex?: number; "opex-monatlich"?: number; annahmen?: string };
+  nachher?: { capex?: number; "opex-monatlich"?: number; annahmen?: string };
+  confidence?: number;
+}
+
+export interface MappingPatchPayload extends Partial<MappingCreatePayload> {}
+
+export async function createMapping(payload: MappingCreatePayload): Promise<NavigatorMapping> {
+  const r = await fetch(`${API}/edit/mappings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error(`createMapping failed: ${r.status} ${await r.text()}`);
+  return r.json();
+}
+
+export async function patchMapping(id: string, payload: MappingPatchPayload): Promise<NavigatorMapping> {
+  const r = await fetch(`${API}/edit/mappings/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error(`patchMapping failed: ${r.status} ${await r.text()}`);
+  return r.json();
+}
+
+export async function deleteMapping(id: string): Promise<void> {
+  const r = await fetch(`${API}/edit/mappings/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  if (!r.ok && r.status !== 204) {
+    throw new Error(`deleteMapping failed: ${r.status} ${await r.text()}`);
+  }
 }

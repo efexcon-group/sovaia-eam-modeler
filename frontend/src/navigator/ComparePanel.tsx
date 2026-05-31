@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   deleteClassic,
   generateClassic,
+  revertSovaia,
   type NavigatorImpact,
   type NavigatorNode,
 } from "../api-client";
@@ -14,6 +15,11 @@ interface Props {
   impact: NavigatorImpact;
   onMutate: () => void;
 }
+
+type DrawerState =
+  | { mode: "create" }
+  | { mode: "edit-classic"; node: NavigatorNode }
+  | { mode: "edit-sovaia"; node: NavigatorNode };
 
 function StatusPill({ status }: { status?: string }) {
   if (!status) return null;
@@ -50,11 +56,13 @@ function NodeCard({
   side,
   onEdit,
   onDelete,
+  onRevert,
 }: {
   node: NavigatorNode;
   side: "classic" | "sovaia";
   onEdit?: (n: NavigatorNode) => void;
   onDelete?: (n: NavigatorNode) => void;
+  onRevert?: (n: NavigatorNode) => void;
 }) {
   const tags = node.tags ?? {};
   const status =
@@ -97,27 +105,22 @@ function NodeCard({
       {availableFrom && (
         <div className="mt-1 text-[10px] text-slate-400">verfügbar ab {availableFrom}</div>
       )}
-      {side === "classic" && (onEdit || onDelete) && (
+      {(onEdit || onDelete || onRevert) && (
         <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2 flex gap-1 bg-white/80 rounded">
           {onEdit && (
-            <button
-              type="button"
-              onClick={() => onEdit(node)}
+            <button type="button" onClick={() => onEdit(node)}
               className="text-[10px] px-1.5 py-0.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded"
-              title="Bearbeiten"
-            >
-              ✎
-            </button>
+              title="Bearbeiten">✎</button>
+          )}
+          {onRevert && (
+            <button type="button" onClick={() => onRevert(node)}
+              className="text-[10px] px-1.5 py-0.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded"
+              title="Overlay verwerfen (Baseline wiederherstellen)">↩</button>
           )}
           {onDelete && (
-            <button
-              type="button"
-              onClick={() => onDelete(node)}
+            <button type="button" onClick={() => onDelete(node)}
               className="text-[10px] px-1.5 py-0.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded"
-              title="Löschen"
-            >
-              ✕
-            </button>
+              title="Löschen">✕</button>
           )}
         </div>
       )}
@@ -147,9 +150,12 @@ function ImpactFooter({ impact }: { impact: NavigatorImpact }) {
 }
 
 export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props) {
-  const [drawer, setDrawer] = useState<{ mode: "create" | "edit"; node?: NavigatorNode } | null>(null);
+  const [drawer, setDrawer] = useState<DrawerState | null>(null);
   const [llmBusy, setLlmBusy] = useState(false);
   const [llmError, setLlmError] = useState<string | null>(null);
+
+  // LLM-Batch nur sinnvoll wenn Pfad tiefer als Layer-Root ist.
+  const canLlmBatch = path.includes("/");
 
   const handleDelete = async (n: NavigatorNode) => {
     if (!confirm(`Classic-Knoten "${n["label-de"]}" löschen?`)) return;
@@ -161,7 +167,18 @@ export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props)
     }
   };
 
+  const handleRevertSovaia = async (n: NavigatorNode) => {
+    if (!confirm(`Tenant-Override für "${n["label-de"]}" verwerfen und Baseline wiederherstellen?`)) return;
+    try {
+      await revertSovaia(n.id);
+      onMutate();
+    } catch (e) {
+      alert(`Revert fehlgeschlagen: ${e}`);
+    }
+  };
+
   const handleGenerate = async () => {
+    if (!canLlmBatch) return;
     setLlmBusy(true);
     setLlmError(null);
     try {
@@ -191,13 +208,15 @@ export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props)
             >
               + Classic anlegen
             </button>
-            <button
-              onClick={handleGenerate}
-              disabled={llmBusy}
-              className="text-xs px-2 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
-            >
-              {llmBusy ? "LLM …" : "✨ LLM-Vorschläge"}
-            </button>
+            {canLlmBatch && (
+              <button
+                onClick={handleGenerate}
+                disabled={llmBusy}
+                className="text-xs px-2 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {llmBusy ? "LLM …" : "✨ LLM-Vorschläge"}
+              </button>
+            )}
           </div>
         </div>
         {llmError && <div className="text-xs text-rose-700 mb-2">{llmError}</div>}
@@ -233,13 +252,15 @@ export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props)
               >
                 + Neu
               </button>
-              <button
-                onClick={handleGenerate}
-                disabled={llmBusy}
-                className="text-[11px] px-2 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
-              >
-                {llmBusy ? "LLM …" : "✨ LLM"}
-              </button>
+              {canLlmBatch && (
+                <button
+                  onClick={handleGenerate}
+                  disabled={llmBusy}
+                  className="text-[11px] px-2 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {llmBusy ? "LLM …" : "✨ LLM"}
+                </button>
+              )}
             </div>
           </div>
           {llmError && (
@@ -256,7 +277,7 @@ export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props)
                   key={n.id}
                   node={n}
                   side="classic"
-                  onEdit={(node) => setDrawer({ mode: "edit", node })}
+                  onEdit={(node) => setDrawer({ mode: "edit-classic", node })}
                   onDelete={handleDelete}
                 />
               ))
@@ -274,7 +295,15 @@ export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props)
             {sovaia.length === 0 ? (
               <div className="text-xs text-slate-400 italic">Keine zugeordneten Sovaia-Module.</div>
             ) : (
-              sovaia.map((n) => <NodeCard key={n.id} node={n} side="sovaia" />)
+              sovaia.map((n) => (
+                <NodeCard
+                  key={n.id}
+                  node={n}
+                  side="sovaia"
+                  onEdit={(node) => setDrawer({ mode: "edit-sovaia", node })}
+                  onRevert={handleRevertSovaia}
+                />
+              ))
             )}
           </div>
         </div>
@@ -284,7 +313,7 @@ export function ComparePanel({ path, classic, sovaia, impact, onMutate }: Props)
       <EditDrawer
         open={!!drawer}
         mode={drawer?.mode ?? "create"}
-        node={drawer?.node}
+        node={drawer && "node" in drawer ? drawer.node : undefined}
         defaultPath={path}
         onClose={() => setDrawer(null)}
         onSaved={onMutate}
