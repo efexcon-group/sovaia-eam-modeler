@@ -6,8 +6,9 @@ COPY pyproject.toml /app/
 RUN uv pip install --system -r pyproject.toml
 
 COPY app /app/app
-COPY alembic.ini /app/alembic.ini
-COPY alembic /app/alembic
+
+# Alembic-Migrations folgen wenn Postgres-Persistenz hinzukommt; aktuell
+# nutzen wir JSON-Overlays (siehe app/storage/overlay.py).
 
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
