@@ -1,0 +1,197 @@
+# Branchen-Modell: Field-Service / Aussendienst
+# Property-Services, Hausmeister-Dienste, Handwerker, Service-Kräfte.
+# Cluster-Parent: sovaia-reference.yaml → field-service-vertical-cluster.
+# ADR-082, Schema 0.1.0.
+
+cluster-id: field-service-vertical
+cluster-version: "0.1.0"
+industry: service-provider
+view-profile-default: c-level
+
+nodes:
+
+  # ── Container ────────────────────────────────────────────────────────
+
+  - id: field-service-vertical-root
+    type: mandant
+    label-de: Field-Service-Branchenmodell
+    tags: { status: released, layer: L3, perspective: marketing, industry: service-provider, cluster: field-service-vertical, ownership: sovaia-baseline }
+    summary-de: Branchen-Bauplan für Property-Services, Hausmeister-Dienste, Handwerks-/Service-Betriebe.
+
+  # ── Capabilities (TOGAF) ────────────────────────────────────────────
+
+  - id: cap-fs-property
+    type: faehigkeit
+    label-de: Property-Services
+    tags: { cluster: field-service-vertical, industry: service-provider, business-capability: "BC-FS-1" }
+    summary-de: Betrieb von Liegenschaften — Reinigung, Wartung, Gartenpflege, Winterdienst.
+
+  - id: cap-fs-hausmeister
+    type: faehigkeit
+    label-de: Hausmeister-Dienste
+    tags: { cluster: field-service-vertical, industry: service-provider, business-capability: "BC-FS-2" }
+    summary-de: Hauswart-Routinen, Pikett, Mängelaufnahme, Mieter-Anliegen.
+
+  - id: cap-fs-handwerker
+    type: faehigkeit
+    label-de: Handwerker-Disposition
+    tags: { cluster: field-service-vertical, industry: service-provider, business-capability: "BC-FS-3" }
+    summary-de: Anfrage → Disposition → Einsatz → Material/Zeit → Rapport → Abrechnung.
+
+  - id: cap-fs-service
+    type: faehigkeit
+    label-de: Service-Kraft-Koordination
+    tags: { cluster: field-service-vertical, industry: service-provider, business-capability: "BC-FS-4" }
+    summary-de: Einsatz von Reinigungs-, Sicherheits-, Event-Service-Kräften — Vertretung und Skill-Match.
+
+  - id: cap-fs-wartung
+    type: faehigkeit
+    label-de: Wartungs- und Inspektions-Planung
+    tags: { cluster: field-service-vertical, industry: service-provider, business-capability: "BC-FS-5" }
+    summary-de: Wiederkehrende Wartung, gesetzliche Inspektionen, Lifecycle-Steuerung.
+
+  # ── AI-Agenten ──────────────────────────────────────────────────────
+
+  - id: ai-disposition
+    type: ki-agent
+    label-de: AI-Disposition
+    tags: { status: planned, cluster: field-service-vertical, industry: service-provider, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Schlägt Einsatz-Zuweisungen vor unter Skill, Region, Auslastung und Kunden-Priorität.
+
+  - id: ai-vor-ort-doc
+    type: ki-agent
+    label-de: AI-Vor-Ort-Doc
+    tags: { status: planned, cluster: field-service-vertical, industry: service-provider, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Erfasst Vor-Ort-Doku per Sprache und Foto, schlägt Massnahmen-Texte, Material und Folge-Termine vor.
+
+  - id: ai-wartungs-planner
+    type: ki-agent
+    label-de: AI-Wartungs-Planner
+    tags: { status: planned, cluster: field-service-vertical, industry: service-provider, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Plant Wartungs-Zyklen, optimiert Touren über Objekte hinweg, hebt überfällige Inspektionen hervor.
+
+  - id: ai-rapport-generator
+    type: ki-agent
+    label-de: AI-Rapport-Generator
+    tags: { status: planned, cluster: field-service-vertical, industry: service-provider, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Erzeugt aus Vor-Ort-Doku den Kunden-Rapport (Sprache des Empfängers) plus Abrechnungs-Spiegel.
+
+  # ── Data-Spaces ─────────────────────────────────────────────────────
+
+  - id: objektkatalog
+    type: datenraum
+    label-de: Objekt-Katalog
+    tags: { cluster: field-service-vertical, industry: service-provider, ownership: sovaia-baseline }
+    summary-de: Liegenschaften, Anlagen, Komponenten, Garantien, Wartungs-Verträge.
+
+  - id: einsatz-historie
+    type: datenraum
+    label-de: Einsatz-Historie
+    tags: { cluster: field-service-vertical, industry: service-provider, ownership: sovaia-baseline }
+    summary-de: Vergangene Einsätze, Befunde, Lösungen, Zeit/Material, Kunden-Feedback.
+
+  - id: materialverbrauch
+    type: datenraum
+    label-de: Material- und Lager-Verbrauch
+    tags: { cluster: field-service-vertical, industry: service-provider, ownership: sovaia-baseline }
+    summary-de: Verbaute Teile, Lager-Bestände, Auto-Nachbestellung.
+
+  - id: kunden-objekt-map
+    type: datenraum
+    label-de: Kunde-Objekt-Mapping
+    tags: { cluster: field-service-vertical, industry: service-provider, ownership: sovaia-baseline }
+    summary-de: Welche Kunden besitzen / nutzen welche Objekte (Eigentümer / Verwaltung / Mieter).
+
+  # ── Process-Blueprints ──────────────────────────────────────────────
+
+  - id: proc-auftrag-disposition
+    type: prozess
+    label-de: Auftrag → Disposition → Einsatz
+    tags: { cluster: field-service-vertical, industry: service-provider, ownership: sovaia-baseline }
+    summary-de: Anfrage erfassen → AI-Disposition → Zuweisung → Bestätigung an Kunden.
+
+  - id: proc-vor-ort-einsatz
+    type: prozess
+    label-de: Vor-Ort-Einsatz
+    tags: { cluster: field-service-vertical, industry: service-provider, ownership: sovaia-baseline }
+    summary-de: Anfahrt → Befund per Sprache/Foto → Arbeiten → Material → Doku-Abschluss.
+
+  - id: proc-abrechnungsflow
+    type: prozess
+    label-de: Abrechnungs-Rückfluss
+    tags: { cluster: field-service-vertical, industry: service-provider, ownership: sovaia-baseline }
+    summary-de: Rapport → Rechnungs-Entwurf → Vier-Augen-Freigabe → Versand via portal/SMTP.
+
+  - id: proc-recurring-wartung
+    type: prozess
+    label-de: Recurring-Wartung
+    tags: { cluster: field-service-vertical, industry: service-provider, ownership: sovaia-baseline }
+    summary-de: Wartungs-Zyklen auf Objekt-Ebene, AI-Tour-Optimierung pro Region/Saison.
+
+  # ── Touchpoints ─────────────────────────────────────────────────────
+
+  - id: tp-handwerker-app
+    type: touchpoint
+    label-de: Handwerker-/Service-Mobile-App
+    tags: { cluster: field-service-vertical, industry: service-provider, ownership: sovaia-baseline }
+    summary-de: Auftrag, Navigation, Befund per Sprache/Foto, Material-Scan, Stundenrapport.
+
+  - id: tp-eigentumer-portal
+    type: touchpoint
+    label-de: Objekt-Eigentümer-/Verwaltungs-Portal
+    tags: { cluster: field-service-vertical, industry: service-provider, ownership: sovaia-baseline }
+    summary-de: Aufträge erfassen, Status sehen, Rapporte herunterladen.
+
+  # ── Compliance-Anker ────────────────────────────────────────────────
+
+  - id: comp-suva
+    type: compliance-anker
+    label-de: SUVA-Arbeitssicherheit
+    tags: { cluster: field-service-vertical, industry: service-provider, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Branchen-Vorschriften für Arbeitssicherheit im Aussendienst.
+
+  - id: comp-sia-norm
+    type: compliance-anker
+    label-de: SIA-Normen (Gebäudeunterhalt)
+    tags: { cluster: field-service-vertical, industry: service-provider, perspective: governance, ownership: sovaia-baseline }
+    summary-de: SIA-Normen für Wartung/Instandhaltung von Gebäuden und Anlagen.
+
+  - id: comp-or-werkvertrag
+    type: compliance-anker
+    label-de: OR Werkvertrag (Art. 363ff)
+    tags: { cluster: field-service-vertical, industry: service-provider, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Schweizer Obligationenrecht — Werkvertrag, Mängelrüge, Garantie.
+
+edges:
+
+  # Capabilities werden von Agenten erfüllt
+  - { from: ai-disposition,        to: cap-fs-property,    type: erfuellt }
+  - { from: ai-disposition,        to: cap-fs-handwerker,  type: erfuellt }
+  - { from: ai-disposition,        to: cap-fs-service,     type: erfuellt }
+  - { from: ai-vor-ort-doc,        to: cap-fs-hausmeister, type: erfuellt }
+  - { from: ai-wartungs-planner,   to: cap-fs-wartung,     type: erfuellt }
+  - { from: ai-rapport-generator,  to: cap-fs-handwerker,  type: erfuellt }
+
+  # Agents nutzen Data-Spaces
+  - { from: ai-disposition,        to: kunden-objekt-map,  type: nutzt }
+  - { from: ai-disposition,        to: einsatz-historie,   type: nutzt }
+  - { from: ai-vor-ort-doc,        to: einsatz-historie,   type: nutzt }
+  - { from: ai-vor-ort-doc,        to: objektkatalog,      type: nutzt }
+  - { from: ai-wartungs-planner,   to: objektkatalog,      type: nutzt }
+  - { from: ai-rapport-generator,  to: einsatz-historie,   type: nutzt }
+  - { from: ai-rapport-generator,  to: materialverbrauch,  type: nutzt }
+
+  # Processes
+  - { from: proc-auftrag-disposition, to: ai-disposition,  type: nutzt }
+  - { from: proc-vor-ort-einsatz,  to: ai-vor-ort-doc,     type: nutzt }
+  - { from: proc-abrechnungsflow,  to: ai-rapport-generator, type: nutzt }
+  - { from: proc-recurring-wartung, to: ai-wartungs-planner, type: nutzt }
+
+  # Touchpoints
+  - { from: tp-handwerker-app,     to: proc-vor-ort-einsatz, type: liefert }
+  - { from: tp-eigentumer-portal,  to: kunden-objekt-map,  type: liefert }
+
+  # Compliance
+  - { from: proc-vor-ort-einsatz,  to: comp-suva,          type: erfuellt }
+  - { from: objektkatalog,         to: comp-sia-norm,      type: erfuellt }
+  - { from: proc-abrechnungsflow,  to: comp-or-werkvertrag, type: erfuellt }

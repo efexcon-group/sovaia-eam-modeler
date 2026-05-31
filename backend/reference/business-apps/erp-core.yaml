@@ -1,0 +1,187 @@
+# Business-App-Modell: ERP-Core (efx-erp Module + Bridges)
+# Cluster-Parent: sovaia-reference.yaml → erp-core-cluster.
+# Bridges sind Schnittstellen zu anderen Stacks (Teams, Brief, SMTP, Portal, BLM).
+# ADR-082, Schema 0.1.0.
+
+cluster-id: erp-core
+cluster-version: "0.1.0"
+view-profile-default: c-level
+
+nodes:
+
+  # ── Container ────────────────────────────────────────────────────────
+
+  - id: erp-core-root
+    type: anwendung
+    label-de: ERP-Core (efx-erp)
+    tags: { status: live, layer: L3, perspective: marketing, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Service-Provider-ERP — Stammdaten, Vertrieb, Auftrag, Settlement, Verträge, Documents-on-Object.
+
+  # ── ERP-Module (kanonisches Lifecycle) ──────────────────────────────
+
+  - id: erp-accounts
+    type: service
+    label-de: Accounts
+    tags: { status: live, layer: L3, perspective: marketing, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Kunden-/Lieferanten-Stammdaten mit Customer-Master-First-Pattern (ADR-081).
+
+  - id: erp-contacts
+    type: service
+    label-de: Contacts
+    tags: { status: live, layer: L3, perspective: marketing, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Kontakt-Personen, Portal-Rollen (USER/ADMIN/SIGNATORY), Multi-Brand-Personas.
+
+  - id: erp-quotes
+    type: service
+    label-de: Quotes / Angebote
+    tags: { status: live, layer: L3, perspective: marketing, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Angebots-Lebenszyklus mit Positionen, Aufschlägen, Tax-pro-Position (geplant).
+
+  - id: erp-orders
+    type: service
+    label-de: Orders / Aufträge
+    tags: { status: live, layer: L3, perspective: marketing, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Auftrags-Lebenszyklus inklusive Konvertierung aus Quotes.
+
+  - id: erp-invoices
+    type: service
+    label-de: Invoices / Rechnungen
+    tags: { status: live, layer: L3, perspective: marketing, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Rechnungs-Lebenszyklus mit QR-Rechnung, Mehrwährung, Storno/Gutschrift.
+
+  - id: erp-settlement
+    type: service
+    label-de: Settlement-Pipeline
+    tags: { status: released, layer: L3, perspective: marketing, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Multi-Channel-Erfassung (Bank, Online, Portal, SEPA, Bar) — Unter-/Über-/Korrekt-Fall.
+
+  - id: erp-contracts
+    type: service
+    label-de: Contracts / Verträge
+    tags: { status: live, layer: L3, perspective: marketing, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Vertrags-Lebenszyklus mit Vier-Augen (ADR-080) und Autosignatur.
+
+  - id: erp-documents-on-object
+    type: service
+    label-de: Documents-on-Object
+    tags: { status: released, layer: L3, perspective: marketing, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Dokumente pro Objekt (Account/Quote/Order/Invoice/Contract/Opportunity) im Kontext.
+
+  # ── Bridges (Schnittstellen nach aussen) ────────────────────────────
+
+  - id: bridge-teams
+    type: schnittstelle
+    label-de: teams-bridge
+    tags: { status: live, layer: L2, perspective: integration, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Push von Dokumenten und Notifikationen in MS-Teams-Channels.
+
+  - id: bridge-smtp
+    type: schnittstelle
+    label-de: smtp-bridge
+    tags: { status: live, layer: L2, perspective: integration, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Mail-Versand-Bridge (Welle-1b Production-Mail).
+
+  - id: bridge-letter
+    type: schnittstelle
+    label-de: letter-bridge
+    tags: { status: live, layer: L2, perspective: integration, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Brief-Versand-Bridge (PDF → Lettershop, Tag-18 B).
+
+  - id: bridge-portal
+    type: schnittstelle
+    label-de: portal-bridge
+    tags: { status: live, layer: L2, perspective: integration, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Customer-Self-Service-Portal-Bridge (ADR-081).
+
+  - id: bridge-blm
+    type: schnittstelle
+    label-de: blm-bridge (ERP → BLM)
+    tags: { status: live, layer: L2, perspective: integration, cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Sync nach BLM — Projekt-Anlage aus Order-Konvertierung, Timesheet-Push.
+
+  # ── AI-Agenten ──────────────────────────────────────────────────────
+
+  - id: ai-erp-settlement
+    type: ki-agent
+    label-de: AI-Settlement-Agent
+    tags: { status: planned, cluster: erp-core, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Auto-Match CAMT.053 zu Invoice, Cross-Currency-FX, Refund-Vorschlag.
+
+  - id: ai-erp-doc-pipeline
+    type: ki-agent
+    label-de: AI-Document-Pipeline-Agent
+    tags: { status: planned, cluster: erp-core, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Erzeugt PDF-Mirror, schiebt in Documents-on-Object, signalisiert Vier-Augen-Trigger.
+
+  # ── Data-Spaces ─────────────────────────────────────────────────────
+
+  - id: ds-erp-master
+    type: datenraum
+    label-de: ERP-Master-Daten
+    tags: { cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Accounts, Contacts, Articles, Tax-Codes, Currencies.
+
+  - id: ds-erp-transactions
+    type: datenraum
+    label-de: ERP-Transaktions-Daten
+    tags: { cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Quotes, Orders, Invoices, Settlements, Contracts.
+
+  - id: ds-erp-documents
+    type: datenraum
+    label-de: ERP-Dokumenten-Speicher
+    tags: { cluster: erp-core, ownership: sovaia-baseline }
+    summary-de: Documents-on-Object über MinIO/Teams/SharePoint/OneDrive Pluggable-Backend.
+
+  # ── Compliance ──────────────────────────────────────────────────────
+
+  - id: comp-vier-augen
+    type: compliance-anker
+    label-de: Vier-Augen-Approval
+    tags: { cluster: erp-core, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Pflicht für Verträge und kritische Rechnungs-/Settlement-Aktionen (ADR-080).
+
+  - id: comp-or-rg-buchfuehrung
+    type: compliance-anker
+    label-de: OR / RG (Buchführung CH)
+    tags: { cluster: erp-core, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Schweizer Obligationenrecht und Rechnungslegung — Aufbewahrung, Audit-Trail.
+
+edges:
+
+  # ERP-Module sind Teile des Cores
+  - { from: erp-core-root,         to: erp-accounts,       type: gehoert-zu }
+  - { from: erp-core-root,         to: erp-contacts,       type: gehoert-zu }
+  - { from: erp-core-root,         to: erp-quotes,         type: gehoert-zu }
+  - { from: erp-core-root,         to: erp-orders,         type: gehoert-zu }
+  - { from: erp-core-root,         to: erp-invoices,       type: gehoert-zu }
+  - { from: erp-core-root,         to: erp-settlement,     type: gehoert-zu }
+  - { from: erp-core-root,         to: erp-contracts,      type: gehoert-zu }
+  - { from: erp-core-root,         to: erp-documents-on-object, type: gehoert-zu }
+
+  # Module nutzen Data-Spaces
+  - { from: erp-accounts,          to: ds-erp-master,      type: nutzt }
+  - { from: erp-contacts,          to: ds-erp-master,      type: nutzt }
+  - { from: erp-quotes,            to: ds-erp-transactions, type: nutzt }
+  - { from: erp-orders,            to: ds-erp-transactions, type: nutzt }
+  - { from: erp-invoices,          to: ds-erp-transactions, type: nutzt }
+  - { from: erp-settlement,        to: ds-erp-transactions, type: nutzt }
+  - { from: erp-contracts,         to: ds-erp-transactions, type: nutzt }
+  - { from: erp-documents-on-object, to: ds-erp-documents, type: nutzt }
+
+  # Bridges integrieren mit anderen Stacks
+  - { from: erp-core-root,         to: bridge-teams,       type: integriert-mit }
+  - { from: erp-core-root,         to: bridge-smtp,        type: integriert-mit }
+  - { from: erp-core-root,         to: bridge-letter,      type: integriert-mit }
+  - { from: erp-core-root,         to: bridge-portal,      type: integriert-mit }
+  - { from: erp-core-root,         to: bridge-blm,         type: integriert-mit }
+
+  # Agents
+  - { from: ai-erp-settlement,     to: erp-settlement,     type: nutzt }
+  - { from: ai-erp-settlement,     to: erp-invoices,       type: nutzt }
+  - { from: ai-erp-doc-pipeline,   to: erp-documents-on-object, type: nutzt }
+
+  # Compliance
+  - { from: erp-contracts,         to: comp-vier-augen,    type: erfuellt }
+  - { from: erp-settlement,        to: comp-vier-augen,    type: erfuellt }
+  - { from: ds-erp-transactions,   to: comp-or-rg-buchfuehrung, type: erfuellt }

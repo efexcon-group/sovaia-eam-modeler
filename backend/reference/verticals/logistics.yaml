@@ -1,0 +1,210 @@
+# Branchen-Modell: Logistik (Multimodaler Transport + Verzollung + Track & Trace)
+# Cluster-Parent: sovaia-reference.yaml → logistics-vertical-cluster.
+# ADR-082, Schema 0.1.0.
+
+cluster-id: logistics-vertical
+cluster-version: "0.1.0"
+industry: logistics
+view-profile-default: c-level
+
+nodes:
+
+  # ── Container ────────────────────────────────────────────────────────
+
+  - id: logistics-vertical-root
+    type: mandant
+    label-de: Logistik-Branchenmodell
+    tags: { status: released, layer: L3, perspective: marketing, industry: logistics, cluster: logistics-vertical, ownership: sovaia-baseline }
+    summary-de: Branchen-Bauplan für Spedition, Multimodal-Operator, Zollagent.
+
+  # ── Capabilities (TOGAF) ────────────────────────────────────────────
+
+  - id: cap-log-air
+    type: faehigkeit
+    label-de: Air-Transport
+    tags: { cluster: logistics-vertical, industry: logistics, business-capability: "BC-LOG-1" }
+    summary-de: Luftfracht — AWB, IATA-Tarife, Frachtraumbuchung.
+
+  - id: cap-log-sea
+    type: faehigkeit
+    label-de: Sea-Transport
+    tags: { cluster: logistics-vertical, industry: logistics, business-capability: "BC-LOG-2" }
+    summary-de: Seefracht — B/L, FCL/LCL, Container-Tracking.
+
+  - id: cap-log-river
+    type: faehigkeit
+    label-de: River-Transport
+    tags: { cluster: logistics-vertical, industry: logistics, business-capability: "BC-LOG-3" }
+    summary-de: Binnenschifffahrt — Rhein/Donau-Routen, Schleusenzeiten.
+
+  - id: cap-log-street
+    type: faehigkeit
+    label-de: Street-Transport
+    tags: { cluster: logistics-vertical, industry: logistics, business-capability: "BC-LOG-4" }
+    summary-de: Strassentransport — CMR, Tour-Planung, Lenk-/Ruhezeiten.
+
+  - id: cap-log-customs
+    type: faehigkeit
+    label-de: Verzollung
+    tags: { cluster: logistics-vertical, industry: logistics, business-capability: "BC-LOG-5" }
+    summary-de: Import/Export-Verzollung, Transit-Verfahren, Präferenzen.
+
+  - id: cap-log-tnt
+    type: faehigkeit
+    label-de: Track & Trace
+    tags: { cluster: logistics-vertical, industry: logistics, business-capability: "BC-LOG-6" }
+    summary-de: Real-Time-Sendungsverfolgung, Exception-Detection, Kunden-Notifikation.
+
+  # ── AI-Agenten ──────────────────────────────────────────────────────
+
+  - id: ai-tarif-optimizer
+    type: ki-agent
+    label-de: AI-Tarif-Optimizer
+    tags: { status: planned, cluster: logistics-vertical, industry: logistics, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Schlägt günstigste Modus-/Carrier-/Routen-Kombination vor unter Berücksichtigung Laufzeit, CO₂, Preis.
+
+  - id: ai-customs-doc
+    type: ki-agent
+    label-de: AI-Customs-Doc
+    tags: { status: planned, cluster: logistics-vertical, industry: logistics, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Erzeugt Zoll-Anmeldungen (e-dec, eVV, ATLAS) aus Handelsrechnung + Lieferschein, mit HS-Code-Vorschlag.
+
+  - id: ai-track-companion
+    type: ki-agent
+    label-de: AI-Track-Companion
+    tags: { status: planned, cluster: logistics-vertical, industry: logistics, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Überwacht Sendungen, erkennt Verzögerungen, schreibt Status-Updates an Kunden in deren Sprache.
+
+  - id: ai-multimodal-planner
+    type: ki-agent
+    label-de: AI-Multimodal-Planner
+    tags: { status: planned, cluster: logistics-vertical, industry: logistics, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Plant Multimodal-Ketten (Sea→Rail→Street) mit Pufferzeiten und Umlade-Risiko-Bewertung.
+
+  # ── Data-Spaces ─────────────────────────────────────────────────────
+
+  - id: shipment-master
+    type: datenraum
+    label-de: Shipment-Master
+    tags: { cluster: logistics-vertical, industry: logistics, ownership: sovaia-baseline }
+    summary-de: Auftrag, Absender, Empfänger, Ware, Modi-Kette, Status.
+
+  - id: customs-records
+    type: datenraum
+    label-de: Customs-Records
+    tags: { cluster: logistics-vertical, industry: logistics, ownership: sovaia-baseline }
+    summary-de: Zoll-Anmeldungen, Belege, Tarif-Entscheide, Buchhaltungs-Spiegel.
+
+  - id: tnt-events
+    type: datenraum
+    label-de: Track-Trace-Events
+    tags: { cluster: logistics-vertical, industry: logistics, ownership: sovaia-baseline }
+    summary-de: GPS, RFID, EDI-Status (EDIFACT IFTSTA), POD-Scans.
+
+  - id: tariff-codes
+    type: datenraum
+    label-de: Tarif-Kataloge
+    tags: { cluster: logistics-vertical, industry: logistics, ownership: sovaia-baseline }
+    summary-de: HS-Codes, Carrier-Tarife, Treibstoff-/Währungs-Zuschläge.
+
+  # ── Process-Blueprints ──────────────────────────────────────────────
+
+  - id: proc-customs-clearance
+    type: prozess
+    label-de: Verzollungs-Prozess (CH e-dec / eVV)
+    tags: { cluster: logistics-vertical, industry: logistics, ownership: sovaia-baseline }
+    summary-de: Dokumenten-Import → HS-Code → Anmeldung → Selektion → Veranlagung → Buchung.
+
+  - id: proc-multimodal-booking
+    type: prozess
+    label-de: Multimodale Buchung
+    tags: { cluster: logistics-vertical, industry: logistics, ownership: sovaia-baseline }
+    summary-de: Anfrage → Modus-Mix → Carrier-Buchungen → Tracking-Setup → Kunden-Bestätigung.
+
+  - id: proc-exception-handling
+    type: prozess
+    label-de: Exception-Handling
+    tags: { cluster: logistics-vertical, industry: logistics, ownership: sovaia-baseline }
+    summary-de: TnT-Event triggert → Ursache → Re-Plan → Kunden-Update mit Sprach-Anpassung.
+
+  - id: proc-pod
+    type: prozess
+    label-de: Proof-of-Delivery
+    tags: { cluster: logistics-vertical, industry: logistics, ownership: sovaia-baseline }
+    summary-de: POD-Erfassung (Foto/Unterschrift) → Auto-OCR → Abschluss + Rechnungs-Trigger.
+
+  # ── Touchpoints ─────────────────────────────────────────────────────
+
+  - id: tp-fahrer-app
+    type: touchpoint
+    label-de: Fahrer-/Crew-App
+    tags: { cluster: logistics-vertical, industry: logistics, ownership: sovaia-baseline }
+    summary-de: Mobile App für Fahrer/Crew — Auftrag, Navigation, POD-Erfassung, Sprachsteuerung.
+
+  - id: tp-shipper-portal
+    type: touchpoint
+    label-de: Versender-Portal
+    tags: { cluster: logistics-vertical, industry: logistics, ownership: sovaia-baseline }
+    summary-de: Auftragsanlage, Tracking, Dokumente, Self-Service für Versender.
+
+  # ── Compliance-Anker ────────────────────────────────────────────────
+
+  - id: comp-zollgesetz-ch
+    type: compliance-anker
+    label-de: Zollgesetz (CH) + ZTG
+    tags: { cluster: logistics-vertical, industry: logistics, perspective: governance, ownership: sovaia-baseline }
+    summary-de: CH-Zollgesetz, Zolltarifgesetz, e-dec / eVV-Schnittstellen.
+
+  - id: comp-incoterms
+    type: compliance-anker
+    label-de: Incoterms 2020
+    tags: { cluster: logistics-vertical, industry: logistics, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Lieferbedingungs-Klauseln, Risikoübergang, Kosten-Aufteilung.
+
+  - id: comp-cmr
+    type: compliance-anker
+    label-de: CMR-Konvention
+    tags: { cluster: logistics-vertical, industry: logistics, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Internationales Übereinkommen über den Beförderungsvertrag im Strassengüterverkehr.
+
+  - id: comp-iata
+    type: compliance-anker
+    label-de: IATA-Resolutionen
+    tags: { cluster: logistics-vertical, industry: logistics, perspective: governance, ownership: sovaia-baseline }
+    summary-de: IATA-Regeln für Luftfrachtbriefe, gefährliche Güter, Tarifierung.
+
+edges:
+
+  # Capabilities werden von Agenten erfüllt
+  - { from: ai-tarif-optimizer,    to: cap-log-air,        type: erfuellt }
+  - { from: ai-tarif-optimizer,    to: cap-log-sea,        type: erfuellt }
+  - { from: ai-tarif-optimizer,    to: cap-log-street,     type: erfuellt }
+  - { from: ai-tarif-optimizer,    to: cap-log-river,      type: erfuellt }
+  - { from: ai-customs-doc,        to: cap-log-customs,    type: erfuellt }
+  - { from: ai-track-companion,    to: cap-log-tnt,        type: erfuellt }
+  - { from: ai-multimodal-planner, to: cap-log-air,        type: erfuellt }
+  - { from: ai-multimodal-planner, to: cap-log-sea,        type: erfuellt }
+
+  # Agents nutzen Data-Spaces
+  - { from: ai-tarif-optimizer,    to: tariff-codes,       type: nutzt }
+  - { from: ai-customs-doc,        to: customs-records,    type: nutzt }
+  - { from: ai-customs-doc,        to: tariff-codes,       type: nutzt }
+  - { from: ai-track-companion,    to: tnt-events,         type: nutzt }
+  - { from: ai-track-companion,    to: shipment-master,    type: nutzt }
+  - { from: ai-multimodal-planner, to: shipment-master,    type: nutzt }
+
+  # Processes
+  - { from: proc-customs-clearance, to: ai-customs-doc,    type: nutzt }
+  - { from: proc-multimodal-booking, to: ai-multimodal-planner, type: nutzt }
+  - { from: proc-exception-handling, to: ai-track-companion, type: nutzt }
+  - { from: proc-pod,              to: shipment-master,    type: nutzt }
+
+  # Touchpoints
+  - { from: tp-fahrer-app,         to: proc-pod,           type: liefert }
+  - { from: tp-shipper-portal,     to: shipment-master,    type: liefert }
+
+  # Compliance
+  - { from: customs-records,       to: comp-zollgesetz-ch, type: erfuellt }
+  - { from: shipment-master,       to: comp-incoterms,     type: erfuellt }
+  - { from: shipment-master,       to: comp-cmr,           type: erfuellt }
+  - { from: shipment-master,       to: comp-iata,          type: erfuellt }

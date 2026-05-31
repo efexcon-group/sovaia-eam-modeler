@@ -1,0 +1,58 @@
+# Story: Ein Tag in der Spitex mit Sovaia
+# Baseline-Story für Free-Tier-Player. Industry-Tag: care.
+# Anchors zeigen auf Knoten in verticals/care.yaml.
+
+id: care-day-in-spitex
+title: Ein Tag in der Spitex mit Sovaia
+industry-tag: care
+persona-target: decision-maker
+status: planned
+maturity-claim: showcase
+ownership: sovaia-baseline
+brand-allowed: [sovaia, efexcon]
+summary-de: Spitex-Tour einer Pflegekraft — Sprache statt Klicks, KVG-Doku entsteht nebenbei.
+
+beats:
+
+  - id: morgen-tour
+    ordinal: 1
+    narrative-md: |
+      **6:30 Uhr.** Sarah startet ihre Tour. Die App zeigt 11 Klienten, AI-Mobile-Companion
+      priorisiert nach Medikationszeit, Verkehr und Wetter. Kein Schichtbuch, kein Excel.
+    anchors: [tp-pflege-mobile-cockpit, ai-mobile-companion, schichtplan]
+    camera: { view-profile: c-level, zoom: 1.2, pan: { x: 0, y: 0 } }
+    overlay: agent-glow
+    cta: { type: next-beat }
+
+  - id: bei-klientin
+    ordinal: 2
+    narrative-md: |
+      **9:15 Uhr.** Bei Frau M. Sarah spricht Verlauf, Vitalwerte, Beobachtungen ins Mikro.
+      **AI-Pflegedoc** strukturiert in Echtzeit, schlägt Codes vor, signalisiert Auffälligkeit
+      (Blutdruck steigt seit 3 Tagen).
+    anchors: [ai-pflegedoc, pflegeprotokoll, bewohner-akte]
+    camera: { view-profile: c-level, zoom: 1.4, pan: { x: 100, y: 50 } }
+    overlay: data-flow
+    cta: { type: next-beat }
+
+  - id: uebergabe
+    ordinal: 3
+    narrative-md: |
+      **14:00 Uhr.** Schichtwechsel. Statt 20-Minuten-Übergabe zeigt die App eine
+      AI-erzeugte Zusammenfassung pro Klient: was war, was steht an, was beobachten.
+      Übergabe in 4 Minuten.
+    anchors: [proc-schichtwechsel-uebergabe, ai-pflegedoc]
+    camera: { view-profile: c-level, zoom: 1.0, pan: { x: 0, y: 0 } }
+    overlay: document-flow
+    cta: { type: next-beat }
+
+  - id: qm-bereit
+    ordinal: 4
+    narrative-md: |
+      **Quartals-Audit, einen Monat später.** QM-Verantwortliche öffnet die Audit-Sicht.
+      Doku-Vollständigkeit pro Klient, KVG-konforme Leistungs-Spiegel, automatische
+      Stichprobenvorschläge. Audit-Vorbereitung dauert eine Stunde, nicht eine Woche.
+    anchors: [ai-qm-agent, comp-kvg, comp-ehealth-ch]
+    camera: { view-profile: c-level, zoom: 1.0, pan: { x: 0, y: 0 } }
+    overlay: none
+    cta: { type: contact-sales, target: "/contact?topic=care" }

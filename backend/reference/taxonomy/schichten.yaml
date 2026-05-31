@@ -1,0 +1,64 @@
+# Schichten-Taxonomie — Primär-Achse des Stakeholder-Navigators.
+# ADR-082 §"Zwei UX-Modi". 7 Schichten, davon Governance cross-cutting.
+
+taxonomy-id: schichten
+taxonomy-version: "0.1.0"
+
+schichten:
+
+  - id: business
+    label-de: Business
+    label-en: Business
+    description-de: Geschäfts-Logik, Branchen-Prozesse und Wertschöpfung. Tree-Quelle taxonomy/business-tree.yaml.
+    icon: briefcase
+    tree-file: business-tree.yaml
+    order: 1
+
+  - id: application
+    label-de: Application
+    label-en: Application
+    description-de: Software-Anwendungen und Services die die Business-Prozesse durchführen.
+    icon: app-window
+    tree-file: application-tree.yaml
+    order: 2
+
+  - id: data
+    label-de: Data
+    label-en: Data
+    description-de: Daten-Domänen, Stammdaten, Transaktionen, AI-Embeddings.
+    icon: database
+    tree-file: data-tree.yaml
+    order: 3
+
+  - id: technology
+    label-de: Technology
+    label-en: Technology
+    description-de: Plattformen, Frameworks, Sprachen, LLM-Stacks, Build-/Runtime-Stacks.
+    icon: cpu
+    tree-file: technology-tree.yaml
+    order: 4
+
+  - id: operations
+    label-de: Operations
+    label-en: Operations
+    description-de: Betrieb, Monitoring, Observability, Incident-Management, SRE.
+    icon: activity
+    tree-file: operations-tree.yaml
+    order: 5
+
+  - id: infrastructure
+    label-de: Infrastructure
+    label-en: Infrastructure
+    description-de: Compute, Storage, Network, Tenancy, Souveränität.
+    icon: server
+    tree-file: infrastructure-tree.yaml
+    order: 6
+
+  - id: governance-compliance-security
+    label-de: Governance / Compliance / Security
+    label-en: Governance / Compliance / Security
+    description-de: Cross-cutting — durchdringt alle anderen Schichten. Pre-Write/Pre-Read AI-Governance, Audit, regulatorische Pflichten.
+    icon: shield-check
+    tree-file: governance-tree.yaml
+    cross-cutting: true
+    order: 7

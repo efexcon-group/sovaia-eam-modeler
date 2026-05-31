@@ -1,0 +1,280 @@
+# Branchen-Modell: Schweizer Heim/Pflege/Medizin
+# Cluster-Parent: sovaia-reference.yaml → care-vertical-cluster.
+# Tonalität: C-Level / Marketing. Detail-Profile (Architect/Functional) zeigen mehr.
+# ADR-082, Schema 0.1.0.
+
+cluster-id: care-vertical
+cluster-version: "0.1.0"
+industry: care
+view-profile-default: c-level
+
+nodes:
+
+  # ── Container ────────────────────────────────────────────────────────
+
+  - id: care-vertical-root
+    type: mandant
+    label-de: Care-Branchenmodell (Heim / Pflege / Medizin CH)
+    tags: { status: released, layer: L3, perspective: marketing, industry: care, cluster: care-vertical, ownership: sovaia-baseline }
+    summary-de: Branchen-Bauplan für Schweizer Pflegeheim, Spitex, Spital, ambulante Medizin.
+
+  # ── Capabilities (TOGAF Business Layer) ─────────────────────────────
+
+  - id: cap-care-betreuung
+    type: faehigkeit
+    label-de: Bewohner- und Klienten-Betreuung
+    tags: { cluster: care-vertical, industry: care, business-capability: "BC-CARE-1" }
+    summary-de: Tägliche Pflege- und Betreuungsleistung am Bewohner / Klient.
+
+  - id: cap-care-pflegeplanung
+    type: faehigkeit
+    label-de: Pflegeplanung und Dokumentation
+    tags:
+      cluster: care-vertical
+      industry: care
+      business-capability: "BC-CARE-2"
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+    summary-de: Individuelle Pflegeplanung, Verlaufsdokumentation, Übergabe-Reports.
+
+  - id: cap-care-qm
+    type: faehigkeit
+    label-de: Qualitätsmanagement
+    tags: { cluster: care-vertical, industry: care, business-capability: "BC-CARE-3" }
+    summary-de: QM-Audit, Vorfälle, kontinuierliche Verbesserung — gegen ANQ, Curaviva-Standards.
+
+  - id: cap-care-schicht
+    type: faehigkeit
+    label-de: Personal- und Schichtplanung
+    tags:
+      cluster: care-vertical
+      industry: care
+      business-capability: "BC-CARE-4"
+      taxonomy-paths: "business/healthcare/heim-pflege/mitarbeiter,business/healthcare/heim-pflege/pflege"
+    summary-de: Skill-basierte Schichtbesetzung, Tour-Optimierung Spitex, Krankheits-/Ferien-Vertretung.
+
+  - id: cap-care-medikation
+    type: faehigkeit
+    label-de: Medikamenten-Verwaltung
+    tags: { cluster: care-vertical, industry: care, business-capability: "BC-CARE-5" }
+    summary-de: Verordnung → Stellen → Vergabe → Quittierung, Wechselwirkungs-Check.
+
+  # ── AI-Agenten (die Sovaia-Differentiatoren) ────────────────────────
+
+  - id: ai-pflegedoc
+    type: ki-agent
+    label-de: AI-Pflegedoc
+    tags:
+      status: released
+      cluster: care-vertical
+      industry: care
+      perspective: ai-use-case
+      ownership: sovaia-baseline
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+    summary-de: Erfasst Pflege-Verlaufseinträge per Sprache, schlägt strukturierte Dokumentation vor, signalisiert Auffälligkeiten.
+    impact:
+      automation-grade: 75
+      headcount-delta: -0.35
+      cost-delta: -0.30
+      time-to-value: short
+      operational-status: released
+      available-from: immediately
+      evidence: "Spitex-Pilot, Q1/2026"
+
+  - id: ai-mobile-companion
+    type: ki-agent
+    label-de: AI-Mobile-Companion
+    tags:
+      status: planned
+      cluster: care-vertical
+      industry: care
+      perspective: ai-use-case
+      ownership: sovaia-baseline
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+    summary-de: Mobile-Companion für Spitex-Tour oder Bewohner-Begleitung — Sprachsteuerung, Off-line-Modus, Tour-Optimierung.
+    impact:
+      automation-grade: 60
+      headcount-delta: -0.20
+      cost-delta: -0.25
+      time-to-value: medium
+      operational-status: planned
+      available-from: "2026-Q4"
+      evidence: "Konzept-Phase"
+
+  - id: ai-qm-agent
+    type: ki-agent
+    label-de: AI-QM-Agent
+    tags:
+      status: planned
+      cluster: care-vertical
+      industry: care
+      perspective: ai-use-case
+      ownership: sovaia-baseline
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+    summary-de: Audit-Companion — schlägt Stichproben vor, prüft Doku-Vollständigkeit, schlägt Massnahmen vor.
+    impact:
+      automation-grade: 70
+      headcount-delta: -0.15
+      cost-delta: -0.20
+      time-to-value: medium
+      operational-status: planned
+      available-from: "2027-Q1"
+      evidence: ""
+
+  - id: ai-schicht-personal
+    type: ki-agent
+    label-de: AI-Schicht- und Personalplanung
+    tags:
+      status: planned
+      cluster: care-vertical
+      industry: care
+      perspective: ai-use-case
+      ownership: sovaia-baseline
+      taxonomy-paths: "business/healthcare/heim-pflege/mitarbeiter,business/healthcare/heim-pflege/pflege"
+    summary-de: Erstellt Schicht-Vorschläge unter Wahrung von ArG, AZG-Pflege, Skill-Match und Bewohner-Kontinuität.
+    impact:
+      automation-grade: 80
+      headcount-delta: -0.55
+      cost-delta: -0.40
+      time-to-value: short
+      operational-status: planned
+      available-from: "2026-Q3"
+      evidence: ""
+
+  # ── Data-Spaces ─────────────────────────────────────────────────────
+
+  - id: bewohner-akte
+    type: datenraum
+    label-de: Bewohner- / Klienten-Akte
+    tags:
+      cluster: care-vertical
+      industry: care
+      ownership: sovaia-baseline
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege,business/healthcare/heim-pflege/heim/belegung"
+    summary-de: Stammdaten, Diagnosen, Anamnese, Bezugspersonen, Verfügungen.
+
+  - id: pflegeprotokoll
+    type: datenraum
+    label-de: Pflegeprotokoll
+    tags:
+      cluster: care-vertical
+      industry: care
+      ownership: sovaia-baseline
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+    summary-de: Verlaufseinträge, Vitalwerte, Beobachtungen, Interventionen.
+
+  - id: medikationsplan
+    type: datenraum
+    label-de: Medikationsplan
+    tags:
+      cluster: care-vertical
+      industry: care
+      ownership: sovaia-baseline
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+    summary-de: Aktuelle Verordnungen, Stellen-Plan, Quittierungs-Historie.
+
+  - id: schichtplan
+    type: datenraum
+    label-de: Schicht- und Tourenplan
+    tags:
+      cluster: care-vertical
+      industry: care
+      ownership: sovaia-baseline
+      taxonomy-paths: "business/healthcare/heim-pflege/mitarbeiter"
+    summary-de: Schichten, Touren (Spitex), Mitarbeitende, Skills, Abwesenheiten.
+
+  # ── Process-Blueprints ──────────────────────────────────────────────
+
+  - id: proc-pflege-doku-runde
+    type: prozess
+    label-de: Pflege-Dokumentations-Runde
+    tags: { cluster: care-vertical, industry: care, ownership: sovaia-baseline }
+    summary-de: Spätschicht erfasst Verlaufseinträge per Sprache — Vorschlag → Review → freigeben.
+
+  - id: proc-qm-audit-zyklus
+    type: prozess
+    label-de: QM-Audit-Zyklus
+    tags: { cluster: care-vertical, industry: care, ownership: sovaia-baseline }
+    summary-de: Quartals-Audit mit AI-Stichprobenvorschlag und automatischem Doku-Check.
+
+  - id: proc-schichtwechsel-uebergabe
+    type: prozess
+    label-de: Schichtwechsel-Übergabe
+    tags: { cluster: care-vertical, industry: care, ownership: sovaia-baseline }
+    summary-de: AI-erzeugte Übergabe-Notiz aus Pflegeprotokoll + Vitalwert-Trends.
+
+  - id: proc-medikation-stellen
+    type: prozess
+    label-de: Medikamenten-Stellen und Vergabe
+    tags: { cluster: care-vertical, industry: care, ownership: sovaia-baseline }
+    summary-de: Stellen → Doppelkontrolle (Vier-Augen, ADR-080) → Vergabe → Quittierung.
+
+  # ── Touchpoints ─────────────────────────────────────────────────────
+
+  - id: tp-pflege-mobile-cockpit
+    type: touchpoint
+    label-de: Pflege-Mobile-Cockpit
+    tags: { cluster: care-vertical, industry: care, ownership: sovaia-baseline }
+    summary-de: Tablet/Smartphone-App für die Pflegekraft — Sprache primär, Touch sekundär.
+
+  - id: tp-bewohner-app
+    type: touchpoint
+    label-de: Bewohner-/Angehörigen-App
+    tags: { cluster: care-vertical, industry: care, ownership: sovaia-baseline }
+    summary-de: Optionale App für Bewohner und Angehörige — Tagesplan, Nachrichten, Foto-Updates.
+
+  # ── Compliance-Anker (CH-spezifisch) ────────────────────────────────
+
+  - id: comp-kvg
+    type: compliance-anker
+    label-de: KVG (Krankenversicherungsgesetz)
+    tags: { cluster: care-vertical, industry: care, perspective: governance, ownership: sovaia-baseline }
+    summary-de: KVG-konforme Leistungs- und Abrechnungsdokumentation.
+
+  - id: comp-mepv
+    type: compliance-anker
+    label-de: MepV (Medizinprodukteverordnung)
+    tags: { cluster: care-vertical, industry: care, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Medizinprodukte-Konformität für eingesetzte Geräte und Software.
+
+  - id: comp-ehealth-ch
+    type: compliance-anker
+    label-de: eHealth Suisse / EPD
+    tags: { cluster: care-vertical, industry: care, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Anbindbarkeit an elektronisches Patientendossier (EPD).
+
+  - id: comp-ndg-ch
+    type: compliance-anker
+    label-de: nDSG (CH-Datenschutz)
+    tags: { cluster: care-vertical, industry: care, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Schweizer Datenschutzgesetz, besondere Personendaten.
+
+edges:
+
+  # Capabilities werden von Agents erfüllt
+  - { from: ai-pflegedoc,       to: cap-care-pflegeplanung, type: erfuellt }
+  - { from: ai-mobile-companion, to: cap-care-betreuung,    type: erfuellt }
+  - { from: ai-qm-agent,        to: cap-care-qm,            type: erfuellt }
+  - { from: ai-schicht-personal, to: cap-care-schicht,      type: erfuellt }
+
+  # Agents nutzen Data-Spaces
+  - { from: ai-pflegedoc,       to: pflegeprotokoll,        type: nutzt }
+  - { from: ai-pflegedoc,       to: bewohner-akte,          type: nutzt }
+  - { from: ai-mobile-companion, to: bewohner-akte,         type: nutzt }
+  - { from: ai-qm-agent,        to: pflegeprotokoll,        type: nutzt }
+  - { from: ai-schicht-personal, to: schichtplan,           type: nutzt }
+
+  # Processes nutzen Agents
+  - { from: proc-pflege-doku-runde, to: ai-pflegedoc,       type: nutzt }
+  - { from: proc-qm-audit-zyklus,   to: ai-qm-agent,        type: nutzt }
+  - { from: proc-schichtwechsel-uebergabe, to: ai-pflegedoc, type: nutzt }
+  - { from: proc-medikation-stellen, to: medikationsplan,   type: nutzt }
+
+  # Touchpoints liefern UX
+  - { from: tp-pflege-mobile-cockpit, to: ai-mobile-companion, type: liefert }
+  - { from: tp-bewohner-app,        to: bewohner-akte,      type: liefert }
+
+  # Compliance-Erfüllung
+  - { from: pflegeprotokoll,    to: comp-kvg,               type: erfuellt }
+  - { from: pflegeprotokoll,    to: comp-ehealth-ch,        type: erfuellt }
+  - { from: bewohner-akte,      to: comp-ndg-ch,            type: erfuellt }
+  - { from: tp-pflege-mobile-cockpit, to: comp-mepv,        type: erfuellt }

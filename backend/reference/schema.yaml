@@ -1,0 +1,281 @@
+# Architecture-Modeler — Meta-Modell-Schema (C-Level/Marketing-Tonalität)
+# ADR-082, Iteration 0. Wird vom Modeler-Frontend + Backend geladen.
+#
+# Schema-Version steuert Migrationspfade (Iteration 0 = 0.1.0).
+# Voller ArchiMate kommt als "Architect-Profile" in späterer Iteration (Lizenz-Stufe Pro).
+
+schema-version: "0.1.0"
+meta-model-name: sovaia-c-level
+language: de-CH primary, en secondary
+
+# ── Node-Typen ──────────────────────────────────────────────────────────
+node-types:
+
+  - id: anwendung
+    label-de: Anwendung
+    label-en: Application
+    description-de: End-User-Anwendung — sieht der Mensch direkt.
+    icon: app-window
+    archimate-projection: ApplicationComponent
+    examples: [LibreChat, web-core-website, BLM-UI, efx-erp-Frontend]
+
+  - id: service
+    label-de: Service
+    label-en: Service
+    description-de: Funktion im Hintergrund — liefert Daten oder Logik.
+    icon: server
+    archimate-projection: ApplicationService
+    examples: [web-core-gateway, auth-core, license-core]
+
+  - id: ki-agent
+    label-de: KI-Agent
+    label-en: AI Agent
+    description-de: Autonomer Agent (LLM-getrieben), löst spezifische Aufgaben.
+    icon: bot
+    archimate-projection: ApplicationFunction
+    archimate-stereotype: Agent
+    examples: [document-agent, rag-agent, settlement-agent]
+
+  - id: datenraum
+    label-de: Datenraum
+    label-en: Data Space
+    description-de: Persistenter Datenbestand — strukturiert oder unstrukturiert.
+    icon: database
+    archimate-projection: DataObject
+    examples: [pgvector, MinIO-Bucket, PostgreSQL-DB]
+
+  - id: dokument
+    label-de: Dokument
+    label-en: Document
+    description-de: Konkretes Dokument-Artefakt (Brief, Rechnung, Akte).
+    icon: file-text
+    archimate-projection: BusinessObject
+    examples: [Angebot, Vertrag, Personalakte]
+
+  - id: prozess
+    label-de: Prozess / Ablauf
+    label-en: Process / Workflow
+    description-de: Sequenzieller Ablauf — vollautomatisch, semi oder manuell.
+    icon: workflow
+    archimate-projection: BusinessProcess
+    examples: [Quote-to-Cash, Onboarding, Document-Approval]
+
+  - id: nutzer-rolle
+    label-de: Nutzer / Rolle
+    label-en: User / Role
+    description-de: Menschlicher Akteur mit Rolle und Berechtigungen.
+    icon: user
+    archimate-projection: BusinessRole
+    examples: [COO, Sachbearbeiter, Endkunde]
+
+  - id: mandant
+    label-de: Mandant / Organisation
+    label-en: Tenant / Organization
+    description-de: Eigenständige Organisationseinheit mit isolierten Daten.
+    icon: building
+    archimate-projection: BusinessActor
+    examples: [efexcon AG, kunde-x GmbH, Sovaia]
+
+  - id: schnittstelle
+    label-de: Schnittstelle
+    label-en: Integration / Interface
+    description-de: Brücke zu externem System (API, Bridge, Webhook).
+    icon: plug
+    archimate-projection: ApplicationInterface
+    examples: [teams-bridge, smtp-bridge, M365-Connector]
+
+  - id: touchpoint
+    label-de: Erlebnis / Touchpoint
+    label-en: Experience / Touchpoint
+    description-de: Konkrete UX-Berührung mit dem Nutzer.
+    icon: hand
+    archimate-projection: BusinessInterface
+    examples: [Chat-Widget, Email-Versand, Self-Service-Portal]
+
+  - id: faehigkeit
+    label-de: Fähigkeit
+    label-en: Capability
+    description-de: Geschäftsfähigkeit — was die Organisation kann (TOGAF Business Capability).
+    icon: target
+    archimate-projection: Capability
+    examples: [Kundenakquise, Liefersteuerung, Risikobewertung]
+    notes-de: Capability-Mapping erfolgt über TOGAF Business Layer (User-Entscheid 2026-05-29).
+
+  - id: ai-use-case
+    label-de: AI-Use-Case
+    label-en: AI Use Case
+    description-de: Benannter AI-getriebener Anwendungsfall mit Outcome.
+    icon: sparkles
+    archimate-projection: ApplicationFunction
+    archimate-stereotype: AI-Use-Case
+    examples: [Automatische Vertragsprüfung, Voice-to-CRM-Update]
+
+  - id: compliance-anker
+    label-de: Compliance-Anker
+    label-en: Compliance Anchor
+    description-de: Regulatorische oder vertragliche Anforderung (DSGVO, ISO, branchenspezifisch).
+    icon: shield-check
+    archimate-projection: Requirement
+    examples: [DSGVO Art. 32, ISO 27001, FINMA]
+
+  - id: sicherheits-zone
+    label-de: Sicherheits-Zone
+    label-en: Security Zone
+    description-de: Sicherheitsperimeter mit definiertem Zugriffsmodell.
+    icon: shield
+    archimate-projection: Location
+    archimate-stereotype: SecurityZone
+    examples: [Public, DMZ, Tenant-isolated, Air-gapped]
+
+  - id: datenfluss
+    label-de: Datenfluss
+    label-en: Data Flow
+    description-de: Bewegung von Daten zwischen Komponenten — als eigenständiges Element für Governance/Audit-Sichten.
+    icon: arrow-right-left
+    archimate-projection: Flow
+    examples: [Customer-Data → CRM → Email-Service]
+
+# ── Edge-Typen ──────────────────────────────────────────────────────────
+edge-types:
+  - { id: nutzt,           label-de: nutzt,           label-en: uses,            description-de: A ruft B auf / hängt von B ab. }
+  - { id: liefert,         label-de: liefert,         label-en: provides,        description-de: A produziert Output für B. }
+  - { id: fliesst-zu,      label-de: fließt zu,       label-en: flows-to,        description-de: Daten fließen von A nach B. }
+  - { id: gehoert-zu,      label-de: gehört zu,       label-en: belongs-to,      description-de: Hierarchische Zugehörigkeit (Tenant, Bündel). }
+  - { id: ersetzt,         label-de: ersetzt,         label-en: replaces,        description-de: Sovaia-Modul übernimmt Funktion von Customer-IST-Modul (SOLL-Annotation). }
+  - { id: integriert-mit,  label-de: integriert mit,  label-en: integrates-with, description-de: A und B bleiben getrennt, sind aber verbunden. }
+  - { id: erfuellt,        label-de: erfüllt,         label-en: fulfills,        description-de: Anwendung/Service erfüllt eine Fähigkeit oder Compliance-Anker. }
+
+# ── Tag-Achsen für Knoten ───────────────────────────────────────────────
+node-tags:
+  status:
+    values: [planned, released, live, deprecated]
+    description-de: Lifecycle-Stadium (zeigt sich als Badge).
+  layer:
+    values: [L0, L1, L2, L3, L4, L5, L6]
+    description-de: Plattform-Layer (siehe ADR-067).
+  perspective:
+    values: [marketing, architektur, integration, governance, ai-use-case, multi-tenancy]
+    description-de: Welche der 6 Plattform-Perspektiven (Plattform-Navigator-Memo 2026-05-27).
+  industry:
+    values: [logistics, care, service-provider, finance, manufacturing, public-sector, generic]
+    description-de: Branchen-Kontext (Filter für Storyteller).
+  maturity:
+    values: [showcase, validated, reference-customer]
+    description-de: Für SOLL-Aussagen — wie verifiziert ist die Aussage?
+  ownership:
+    values: [sovaia-baseline, tenant-custom, tenant-derived]
+    description-de: Wer hat den Knoten erstellt (Sovaia vs. Lizenznehmer).
+  business-capability:
+    free-text: true
+    description-de: TOGAF Business Capability-Code (z.B. "BC-2.1.3 Order-Management"). Capability-Mapping läuft über diesen Tag, nicht über eigenen Node-Typ.
+  cluster:
+    free-text: true
+    description-de: Logische Gruppierung (z.B. care-vertical, logistics-vertical, core-ai-stack, pm-blm-stack, erp-core, portals). Wird in View-Profilen für Collapse/Expand und für Lazy-Loading der Detail-Files verwendet.
+  taxonomy-paths:
+    free-text: true
+    multi-value: true
+    description-de: |
+      Liste von Pfaden in den Schichten-Bäumen (taxonomy/*.yaml), z.B.
+      ["business/healthcare/heim-pflege/pflege", "business/healthcare/heim-pflege/mitarbeiter"].
+      Ein Knoten kann mehreren Pfaden zugeordnet sein. Wird vom Navigator
+      für Drill-Down-Filterung verwendet. Pfad-Schema: "{layer}/{level1}/{level2}/..."
+
+# ── Optionale strukturierte Felder pro Knoten ───────────────────────────
+optional-node-fields:
+
+  classic-counterpart:
+    description-de: |
+      Eingebettete Classic-Beschreibung am Sovaia-Knoten. Alternative zur
+      separaten classic-reference.yaml. Wird verwendet wenn der Sovaia-
+      Knoten DIREKT ein Classic-Werkzeug ersetzt.
+    fields:
+      label-de: string
+      description-de: string
+      typical-tools: list<string>
+      operational-status: enum [in-use-everywhere, declining, niche, obsolete]
+      seeded-by: enum [human-architect, llm-generated, user-edit]
+
+  impact:
+    description-de: |
+      Wirkung des Sovaia-Knotens vs Classic-Stack — wird im Navigator-
+      Compare-Panel als Footer-Metrik gezeigt und auf höheren Taxonomie-
+      Ebenen client-seitig aggregiert.
+    fields:
+      automation-grade: int          # 0-100, 0 = manuell, 100 = vollautomatisch
+      headcount-delta: float         # -1.0 bis +1.0 (Personalbedarf-Veränderung)
+      cost-delta: float              # -1.0 bis +1.0 (Cost-Veränderung)
+      time-to-value: enum [short, medium, long]
+      operational-status: enum [planned, beta, live]
+      available-from: string         # "immediately" | "YYYY-Q1" | "YYYY-Q3"
+      evidence: string               # Pilot-Referenz, Customer-Case
+
+# ── View-Profile (Granularitätsstufen, Use Case 1) ──────────────────────
+view-profiles:
+
+  c-level:
+    label-de: C-Level / Marketing
+    label-en: C-Level / Marketing
+    target-persona: decision-maker
+    granularity: niedrig
+    rules:
+      - Zeige max ~12 Knoten gleichzeitig.
+      - Cluster L2-L6-Services in L1-Sammel-Boxen.
+      - Edges nur falls Use Case "Datenfluss" oder "ersetzt" (für SOLL).
+      - Outcome-Badges (Time-to-Market, Compliance, Cost) sichtbar.
+    default: true   # Iteration-0-Default
+
+  architect:
+    label-de: Architekt / TOGAF
+    label-en: Architect / TOGAF
+    target-persona: architect
+    granularity: hoch
+    rules:
+      - Alle Knoten sichtbar, alle Edges, alle Tags.
+      - ADR-Refs als Klick-Anker.
+      - ArchiMate-Projektion sichtbar (Stereotype-Labels).
+      - Layer-Spalten L0-L6.
+    available-from-iteration: 1
+
+  functional:
+    label-de: Funktional / Use-Case
+    label-en: Functional / Use-Case
+    target-persona: end-user
+    granularity: mittel
+    rules:
+      - Fokus auf Prozesse, Rollen, Touchpoints, Agent-Touchpoints.
+      - Document-Flows als animierte Edges.
+      - Profile-Overlay (welche Rolle sieht was, P7-Profile-Governance).
+    available-from-iteration: 1
+
+# ── Story-Schema (Use Case 4) ───────────────────────────────────────────
+story-schema:
+
+  story:
+    fields:
+      id: string                                    # kebab-case
+      title: string
+      industry-tag: enum (siehe node-tags.industry)
+      persona-target: enum [decision-maker, architect, functional]
+      status: enum [planned, released, live]
+      maturity-claim: enum (siehe node-tags.maturity)
+      ownership: enum (siehe node-tags.ownership)
+      brand-allowed: list<string>  # default [sovaia, efexcon]
+      beats: list<Beat>
+
+  beat:
+    fields:
+      id: string
+      narrative-md: string         # Markdown, empfohlen <= 240 Zeichen
+      anchors: list<node-id>       # Welche Modell-Knoten der Beat highlighted
+      camera:
+        view-profile: enum [c-level, architect, functional]
+        zoom: float
+        pan: { x: float, y: float }
+      overlay: enum? [data-flow, agent-glow, document-flow, none]
+      prototype-embed: optional   # ADR-041 prototype-postmessage-Pattern
+        stage: enum [A, B, C]
+        key: string                # Prototype-Key in sovaia-prototypes
+        version: string
+      cta: optional
+        type: enum [next-beat, external-link, start-trial, contact-sales]
+        target: string

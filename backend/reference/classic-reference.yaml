@@ -1,0 +1,170 @@
+# Classic-Reference — was Stakeholder heute typischerweise nutzen.
+# ADR-082 §"Classic-Reference-Modell".
+#
+# Quelle V1: human-architect (gesetzt für Demo-Pfad business/healthcare/heim-pflege/pflege).
+# Quelle ab V1b: LLM-Generator + User-Pflege via Navigator-UI.
+#
+# Schema: dasselbe wie Sovaia-Reference (15 Node-Typen, 7 Edge-Typen, Tags).
+# Convention: jeder Knoten trägt taxonomy-paths (Pflicht) und ownership: classic.
+
+reference-version: "0.1.0"
+brand: classic-baseline
+view-profile-default: c-level
+
+nodes:
+
+  # ── Heim & Pflege → Pflege (gesetzt zur Demonstration) ──────────────
+
+  - id: cls-excel-schichtplan
+    type: anwendung
+    label-de: Excel-Schichtplan
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege,business/healthcare/heim-pflege/mitarbeiter"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Schichtplan wird im Excel/Sheet von der Pflegedienst-Leitung manuell gepflegt, ausgedruckt, am Aushang angeschlagen.
+
+  - id: cls-papier-pflegedoku
+    type: dokument
+    label-de: Papier-Pflegedokumentation
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+      operational-status: declining
+      seeded-by: human-architect
+    summary-de: Verlaufseinträge auf Bewohner-Mappe in Papier. Hand-Übergabe zwischen Schichten.
+
+  - id: cls-pdms-light
+    type: anwendung
+    label-de: PDMS-Light (lokale Pflege-Dokumentations-Software)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Lokale Klick-Dokumentations-Software mit Formular-Eingabe — Pflegende klicken statt zu sprechen.
+
+  - id: cls-wochendispenser
+    type: prozess
+    label-de: Medikamenten-Wochendispenser
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Wochendispenser werden am Wochenende manuell gestellt, Sicht-Kontrolle durch zweite Person.
+
+  - id: cls-uebergabe-besprechung
+    type: prozess
+    label-de: Schichtwechsel-Besprechung (mündlich)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: 15-30 Minuten Besprechung beim Schichtwechsel — mündliche Übergabe pro Bewohner.
+
+  - id: cls-call-center-pikett
+    type: schnittstelle
+    label-de: Telefonisches Pikett
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Bei Notfall oder Frage ruft Pflegekraft die Pikett-Person an — keine strukturierte Doku.
+
+  # ── Heim & Pflege → Mitarbeiter ──────────────────────────────────────
+
+  - id: cls-excel-dienstplan
+    type: anwendung
+    label-de: Excel-Dienstplan + Aushang
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/mitarbeiter"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Dienstplanung in Excel mit manueller Vertretungs-Suche per Telefon und WhatsApp.
+
+  - id: cls-hr-software-light
+    type: anwendung
+    label-de: HR-Software (Lohn + Zeiterfassung)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/mitarbeiter,business/healthcare/heim-pflege/finanzen"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Klassische Lohn- und Zeiterfassungs-Software ohne Skill-Matching oder Tour-Optimierung.
+
+  # ── Heim & Pflege → Finanzen ─────────────────────────────────────────
+
+  - id: cls-kvg-abrechnung-manuell
+    type: prozess
+    label-de: KVG-Abrechnung manuell
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/finanzen"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Pflegestufen werden monatlich manuell aus Pflege-Doku ins Abrechnungs-System übertragen.
+
+  - id: cls-buchhaltung-mandant
+    type: anwendung
+    label-de: Mandanten-Buchhaltung (z.B. Sage / Abacus)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/finanzen"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Klassische Buchhaltungs-Software ohne AI-Settlement-Intelligence.
+
+  # ── Heim & Pflege → Hotellerie / Küche ───────────────────────────────
+
+  - id: cls-reinigungs-rapport
+    type: dokument
+    label-de: Reinigungs-Rapport Papier
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/hotellerie/reinigung"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Reinigungs-Rapport-Karten an der Tür, manuell abgehakt.
+
+  - id: cls-speiseplan-aushang
+    type: dokument
+    label-de: Wochen-Speiseplan-Aushang
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/kueche/speiseplanung"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Wochen-Speiseplan im Aushang, Diät- und Allergen-Listen separat in Ordnern.
+
+  # ── Logistik → Zoll ──────────────────────────────────────────────────
+
+  - id: cls-edec-manuell
+    type: prozess
+    label-de: e-dec / eVV-Anmeldung manuell
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/logistik/zoll"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Zoll-Anmeldungen werden manuell aus Handelsrechnung gefüllt, HS-Codes per Hand-Recherche.
+
+  - id: cls-zoll-spedi-formulare
+    type: dokument
+    label-de: Klassische Spedi-Formulare
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/logistik/zoll,business/logistik/spedition"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Papier- bzw PDF-Formulare für Begleitdokumente, CMR, Carnet TIR.
+
+  # Weitere Pfade (Services, Energie&Umwelt, weitere Logistik-Sub-Bereiche)
+  # werden vom LLM nachgeladen und vom User gepflegt — siehe ADR-082
+  # §"Classic-Reference-Modell".
+
+edges: []

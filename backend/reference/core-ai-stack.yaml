@@ -1,0 +1,120 @@
+# Sovaia Core AI-Stack — Detail-Modell
+# Cross-Vertical AI-Bausteine. Werden von allen Verticals + Business-Apps konsumiert.
+# Cluster-Parent: sovaia-reference.yaml → core-ai-stack-cluster.
+# ADR-082, Schema 0.1.0.
+
+cluster-id: core-ai-stack
+cluster-version: "0.1.0"
+view-profile-default: c-level
+
+nodes:
+
+  # ── Anwendungen (End-User-sichtbar) ─────────────────────────────────
+
+  - id: ai-chat
+    type: anwendung
+    label-de: AI-Chat (Widget + Standalone)
+    tags: { status: live, layer: L3, perspective: marketing, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Eingebettetes Chat-Widget für Brand-Sites + Standalone-Chat — Demand-Capture und Konversion (ADR-041/043).
+
+  - id: ai-workplace
+    type: anwendung
+    label-de: AI-Workplace (LibreChat-basiert)
+    tags: { status: live, layer: L3, perspective: marketing, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Agentischer Workplace für interne Nutzer — Sprache und Dokumente sind Hauptkanal.
+
+  - id: ai-meeting-companion
+    type: anwendung
+    label-de: AI-Meeting-Companion
+    tags: { status: planned, layer: L3, perspective: marketing, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Begleiter für MS-Teams und Web-Meetings — Live-Transkription, Aktionspunkte, Folge-Tasks ins BLM/ERP.
+
+  - id: ai-document-manager
+    type: anwendung
+    label-de: AI-Document-Manager
+    tags: { status: released, layer: L3, perspective: marketing, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Dokumenten-Inbox mit AI-Klassifikation, OCR, Extraktion, Routing (verbindet zu document-core).
+
+  - id: ai-contract-manager
+    type: anwendung
+    label-de: AI-Contract-Manager
+    tags: { status: planned, layer: L3, perspective: marketing, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Vertrags-Lebenszyklus mit AI-Klauseln-Vergleich, Renewal-Tracking, Risiko-Flag — angebunden an ERP-Contracts.
+
+  - id: ai-finance-manager
+    type: anwendung
+    label-de: AI-Finance-Manager
+    tags: { status: planned, layer: L3, perspective: marketing, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Finanz-Cockpit mit Settlement-Intelligence, Bank-Auto-Match, Cross-Currency-FX, Cashflow-Prognose.
+
+  # ── Services (Hintergrund-Funktionen) ───────────────────────────────
+
+  - id: ai-translation
+    type: service
+    label-de: AI-Translation
+    tags: { status: live, layer: L3, perspective: ai-use-case, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Übersetzungs-Service (unidirektional), genutzt von web-core, doc-renderer, Workplace.
+
+  - id: ai-dualwindow-translation
+    type: service
+    label-de: AI-DualWindow-Translation
+    tags: { status: live, layer: L3, perspective: ai-use-case, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Bidirektionale Side-by-Side-Übersetzung mit Glossar und Lookup-Map (ADR-071).
+
+  - id: ai-transcription
+    type: service
+    label-de: AI-Transcription
+    tags: { status: planned, layer: L3, perspective: ai-use-case, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Voice-to-Text mit Sprecher-Diarisierung, Timecodes, Vokabular-Hints pro Tenant.
+
+  - id: ai-workflow
+    type: service
+    label-de: AI-Workflow-Orchestrator
+    tags: { status: planned, layer: L3, perspective: ai-use-case, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Workflow-Engine die Agenten + menschliche Schritte + System-Calls choreografiert (Orchestrator-Pattern).
+
+  - id: ai-agent-runtime
+    type: service
+    label-de: AI-Agent-Runtime
+    tags: { status: live, layer: L3, perspective: ai-use-case, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Agent-Execution-Layer (Tool-Use, Context-Capability-Map, Profile-Governance).
+
+  # ── Daten-/Inferenz-Substrat ────────────────────────────────────────
+
+  - id: ai-document-core
+    type: service
+    label-de: Document-Core
+    tags: { status: released, layer: L2, perspective: integration, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Pluggable-Storage-Backend (MinIO/Teams/SharePoint/OneDrive) für AI-Document-Workflows.
+
+  # ── Compliance/AI-Governance ────────────────────────────────────────
+
+  - id: ai-governance
+    type: compliance-anker
+    label-de: AI-Governance Pre-Write / Pre-Read
+    tags: { status: live, layer: L1, perspective: governance, cluster: core-ai-stack, ownership: sovaia-baseline }
+    summary-de: Pre-Write- und Pre-Read-Sicherheits- / Governance-Assessment als Grundlage für sichere Agent-/MCP-/LLM-Capabilities.
+
+edges:
+
+  # Alle End-User-Anwendungen nutzen Agent-Runtime
+  - { from: ai-chat,                to: ai-agent-runtime,   type: nutzt }
+  - { from: ai-workplace,           to: ai-agent-runtime,   type: nutzt }
+  - { from: ai-meeting-companion,   to: ai-agent-runtime,   type: nutzt }
+  - { from: ai-document-manager,    to: ai-agent-runtime,   type: nutzt }
+  - { from: ai-contract-manager,    to: ai-agent-runtime,   type: nutzt }
+  - { from: ai-finance-manager,     to: ai-agent-runtime,   type: nutzt }
+
+  # AI-Workflow orchestriert die Services
+  - { from: ai-workflow,            to: ai-agent-runtime,   type: nutzt }
+  - { from: ai-workflow,            to: ai-translation,     type: nutzt }
+  - { from: ai-workflow,            to: ai-transcription,   type: nutzt }
+
+  # Spezial-Verbindungen
+  - { from: ai-meeting-companion,   to: ai-transcription,   type: nutzt }
+  - { from: ai-dualwindow-translation, to: ai-translation,  type: nutzt }
+  - { from: ai-document-manager,    to: ai-document-core,   type: nutzt }
+  - { from: ai-contract-manager,    to: ai-document-core,   type: nutzt }
+
+  # Governance ist Voraussetzung für jeden AI-Call
+  - { from: ai-agent-runtime,       to: ai-governance,      type: erfuellt }

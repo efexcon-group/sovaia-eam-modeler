@@ -1,0 +1,60 @@
+# Story: Multimodaler Lauf CH → Singapur mit Sovaia
+# Baseline-Story für Free-Tier-Player. Industry-Tag: logistics.
+# Anchors zeigen auf Knoten in verticals/logistics.yaml.
+
+id: logistics-multimodal-ch-asien
+title: Multimodaler Lauf CH → Singapur mit Sovaia
+industry-tag: logistics
+persona-target: decision-maker
+status: planned
+maturity-claim: showcase
+ownership: sovaia-baseline
+brand-allowed: [sovaia, efexcon]
+summary-de: Spedition disponiert Sea-Air-Mix, verzollt automatisch, hält den Versender in seiner Sprache informiert.
+
+beats:
+
+  - id: buchung
+    ordinal: 1
+    narrative-md: |
+      **Tag 1, 09:00.** Versender erfasst Auftrag im Portal: 4 Paletten Spezialgerät,
+      CH → Singapur, in 14 Tagen vor Ort. **AI-Multimodal-Planner** schlägt Sea-bis-Suez +
+      Air-Suez-Singapur vor — 38 Prozent günstiger als reines Air, 2 Tage Puffer.
+    anchors: [tp-shipper-portal, ai-multimodal-planner, shipment-master]
+    camera: { view-profile: c-level, zoom: 1.2, pan: { x: 0, y: 0 } }
+    overlay: agent-glow
+    cta: { type: next-beat }
+
+  - id: verzollung
+    ordinal: 2
+    narrative-md: |
+      **Tag 1, 14:00.** Handelsrechnung und Lieferschein liegen vor. **AI-Customs-Doc**
+      erzeugt die e-dec-Ausfuhr-Anmeldung in 90 Sekunden, schlägt HS-Codes vor und
+      flaggt drei Positionen für Sachbearbeiter-Review.
+    anchors: [ai-customs-doc, customs-records, comp-zollgesetz-ch]
+    camera: { view-profile: c-level, zoom: 1.3, pan: { x: 80, y: -20 } }
+    overlay: document-flow
+    cta: { type: next-beat }
+
+  - id: track-trace
+    ordinal: 3
+    narrative-md: |
+      **Tag 9.** Schiff erreicht Suez. Verzögerung 6 Stunden. **AI-Track-Companion**
+      erkennt das aus AIS-Feed, schreibt ein Update an den Versender — in seiner
+      Sprache, mit neuer ETA und „kein Eingriff nötig". Sachbearbeiter sieht nur die
+      Aktion, nicht die Routinemail.
+    anchors: [ai-track-companion, tnt-events, shipment-master]
+    camera: { view-profile: c-level, zoom: 1.1, pan: { x: 0, y: 0 } }
+    overlay: data-flow
+    cta: { type: next-beat }
+
+  - id: pod
+    ordinal: 4
+    narrative-md: |
+      **Tag 14.** Auslieferung in Singapur. Fahrer fotografiert die signierte Quittung,
+      AI-OCR liest Empfänger und Zeitstempel, Auftrag schliesst sich automatisch,
+      Rechnung wird vorbereitet. Versender sieht POD im Portal, bevor er fragt.
+    anchors: [tp-fahrer-app, proc-pod, shipment-master]
+    camera: { view-profile: c-level, zoom: 1.0, pan: { x: 0, y: 0 } }
+    overlay: none
+    cta: { type: contact-sales, target: "/contact?topic=logistics" }

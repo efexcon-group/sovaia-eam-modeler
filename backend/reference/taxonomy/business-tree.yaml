@@ -1,0 +1,101 @@
+# Business-Layer-Baum (V1) — User-Entscheid 2026-05-30.
+# ADR-082 §"Industry-Tree V1".
+# Tieferer Detail-Stand und Befüllung weiterer Branchen kommen iterativ.
+
+taxonomy-id: business
+taxonomy-version: "0.1.0"
+layer: business
+
+# Baum-Struktur: jeder Knoten hat id, label-de, optional summary-de und children.
+# Pfad-Schema im Navigator: "business/{id}/{child-id}/..."
+
+roots:
+
+  - id: services
+    label-de: Services
+    summary-de: Klassische Dienstleistungs-Branchen — B2B und B2C Service-Provider.
+    children:
+      - { id: it-services, label-de: IT-Services }
+      - { id: consulting,  label-de: Consulting }
+      - { id: facility-services, label-de: Facility Services }
+      - { id: legal-tax,   label-de: Legal & Tax }
+
+  - id: healthcare
+    label-de: Gesundheitswesen
+    summary-de: Medizin, Pflege, Pharma — eines der V1-Schwerpunkt-Verticals.
+    children:
+
+      - id: medizin
+        label-de: Medizin
+        summary-de: Praxen, Spitäler, ambulante Versorgung.
+
+      - id: heim-pflege
+        label-de: Heim & Pflege
+        summary-de: Stationäre Heime, Spitex, mobile Pflege.
+        children:
+
+          - id: finanzen
+            label-de: Finanzen
+            summary-de: Abrechnung, KVG-Leistungen, Bewohner-Konten.
+            children:
+              - { id: kvg-abrechnung, label-de: KVG-Leistungsabrechnung }
+              - { id: bewohner-konto, label-de: Bewohner-Konten }
+              - { id: lieferanten,    label-de: Lieferanten- und Honorar-Verträge }
+
+          - id: pflege
+            label-de: Pflege
+            summary-de: Pflegeplanung, Doku, Übergabe, Medikation.
+
+          - id: heim-betrieb
+            label-de: Heim
+            summary-de: Belegung, Wohnform-Wechsel, Tagesstruktur.
+            children:
+              - { id: belegung,        label-de: Belegung & Aufnahme }
+              - { id: wohnform-wechsel,label-de: Wohnform-Wechsel }
+              - { id: tagesstruktur,   label-de: Tagesstruktur / Aktivierung }
+
+          - id: mitarbeiter
+            label-de: Mitarbeiter
+            summary-de: Schichtplanung, Skills, Personalbedarf.
+
+          - id: projekte
+            label-de: Projekte
+            summary-de: Bauprojekte, Renovierungen, IT-Vorhaben.
+
+          - id: hotellerie
+            label-de: Hotellerie
+            summary-de: Reinigung, Wäscherei, Empfang, Besucher.
+            children:
+              - { id: reinigung,  label-de: Reinigung }
+              - { id: waescherei, label-de: Wäscherei }
+              - { id: empfang,    label-de: Empfang & Besucher }
+
+          - id: kueche
+            label-de: Küche
+            summary-de: Speiseplanung, Diät, Allergene, Einkauf.
+            children:
+              - { id: speiseplanung,    label-de: Speiseplanung }
+              - { id: diaet-allergene,  label-de: Diät & Allergene }
+              - { id: einkauf,          label-de: Lebensmittel-Einkauf }
+
+      - id: pharma
+        label-de: Pharma
+        summary-de: Pharma-Hersteller, -Vertrieb, klinische Forschung.
+
+  - id: logistik
+    label-de: Logistik
+    summary-de: Multimodaler Transport und Supply-Chain — eines der V1-Schwerpunkt-Verticals.
+    children:
+      - { id: spedition,    label-de: Spedition }
+      - { id: kep,          label-de: KEP (Kurier/Express/Paket) }
+      - { id: contract-log, label-de: Contract Logistics }
+      - { id: zoll,         label-de: Zoll & Verzollung }
+
+  - id: energie-umwelt
+    label-de: Energie & Umwelt
+    summary-de: Energieversorger, Cleantech, Umwelt-Services.
+    children:
+      - { id: energieversorgung,  label-de: Energieversorgung }
+      - { id: erneuerbare,        label-de: Erneuerbare Energien }
+      - { id: abfall-recycling,   label-de: Abfall & Recycling }
+      - { id: wasser,             label-de: Wasserwirtschaft }

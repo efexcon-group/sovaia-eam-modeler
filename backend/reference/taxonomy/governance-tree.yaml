@@ -1,0 +1,52 @@
+# Governance / Compliance / Security — cross-cutting durch alle Schichten.
+# V1-Stub. Detail-Bäume werden iterativ angereichert.
+
+taxonomy-id: governance-compliance-security
+taxonomy-version: "0.1.0"
+layer: governance-compliance-security
+
+roots:
+
+  - id: ai-governance
+    label-de: AI-Governance
+    summary-de: Pre-Write / Pre-Read Sicherheits- und Governance-Assessment für Agent-/MCP-/LLM-Calls.
+    children:
+      - { id: pre-write,  label-de: Pre-Write-Assessment }
+      - { id: pre-read,   label-de: Pre-Read-Assessment }
+      - { id: ai-audit,   label-de: AI-Audit-Log }
+      - { id: ai-bias,    label-de: Bias / Fairness }
+
+  - id: data-privacy
+    label-de: Daten-Schutz
+    summary-de: DSGVO, nDSG, eHealth-Spezifika, besondere Personendaten.
+    children:
+      - { id: dsgvo,        label-de: DSGVO (EU) }
+      - { id: ndsg-ch,      label-de: nDSG (Schweiz) }
+      - { id: ehealth-ch,   label-de: eHealth Suisse / EPD }
+      - { id: special-data, label-de: Besondere Personendaten }
+
+  - id: security
+    label-de: Security
+    summary-de: Encrypted Communication + Persistence, Tenant-Isolation, Vier-Augen-Pattern.
+    children:
+      - { id: encryption,   label-de: Encryption (transit + at-rest) }
+      - { id: tenancy-iso,  label-de: Tenant-Isolation }
+      - { id: four-eyes,    label-de: Vier-Augen-Approval }
+      - { id: identity,     label-de: Identity & Access }
+
+  - id: regulatory
+    label-de: Regulatorisch
+    summary-de: Branchen-Pflichten — KVG, MepV, FINMA, Zollgesetz, ArG, etc.
+    children:
+      - { id: healthcare,   label-de: Gesundheits-Regulatorik }
+      - { id: financial,    label-de: Finanz-Regulatorik }
+      - { id: logistics,    label-de: Logistik-Regulatorik }
+      - { id: labor,        label-de: Arbeitsrecht }
+
+  - id: audit
+    label-de: Audit & Transparenz
+    summary-de: Audit-Trails, Beweisführung, Rückverfolgbarkeit.
+    children:
+      - { id: trail,        label-de: Audit-Trails }
+      - { id: provenance,   label-de: Daten-Provenance }
+      - { id: tenant-audit, label-de: Tenant-Audit-Log }

@@ -1,0 +1,34 @@
+# Cluster → Default-Taxonomy-Path-Mapping.
+# Wenn ein Knoten keine explizite taxonomy-paths-Tag hat, aber einen cluster-Tag,
+# verwendet der Navigator-Endpoint diesen Default-Pfad als Fallback.
+#
+# Explizite taxonomy-paths am Knoten HABEN VORRANG — Cluster-Defaults greifen nur
+# wenn keine vorhanden sind.
+#
+# Eine Liste pro Cluster — ein Knoten kann mehreren Default-Pfaden zugeordnet sein.
+
+defaults:
+
+  # Verticals (Business-Layer)
+  care-vertical:
+    - business/healthcare/heim-pflege
+
+  logistics-vertical:
+    - business/logistik
+
+  field-service-vertical:
+    - business/services/facility-services
+
+  # AI-Plattform (Application-Layer)
+  core-ai-stack:
+    - application/ai-stack
+
+  # Business-Apps (Application-Layer)
+  pm-blm-stack:
+    - application/business-apps/pm-blm
+
+  erp-core:
+    - application/business-apps/erp
+
+  portals:
+    - application/business-apps/portals

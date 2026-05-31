@@ -1,0 +1,132 @@
+# Business-App-Modell: Project-Management + BLM-Stack
+# Nahtlose Integration mit ERP-Core (User-Vorgabe 2026-05-29).
+# Cluster-Parent: sovaia-reference.yaml → pm-blm-cluster.
+# ADR-082, Schema 0.1.0.
+
+cluster-id: pm-blm-stack
+cluster-version: "0.1.0"
+view-profile-default: c-level
+
+nodes:
+
+  # ── Container ────────────────────────────────────────────────────────
+
+  - id: pm-blm-root
+    type: anwendung
+    label-de: PM + BLM-Stack
+    tags: { status: live, layer: L3, perspective: marketing, cluster: pm-blm-stack, ownership: sovaia-baseline }
+    summary-de: Portfolio- bis Resource-Management — autark, mit ERP-Anbindung über blm-bridge.
+
+  # ── BLM-Module ──────────────────────────────────────────────────────
+
+  - id: blm-portfolio
+    type: service
+    label-de: BLM Portfolio-Layer
+    tags: { status: live, layer: L3, perspective: marketing, cluster: pm-blm-stack, ownership: sovaia-baseline }
+    summary-de: Portfolio-Sicht über Projekte, Programme, strategische Buckets.
+
+  - id: blm-project
+    type: service
+    label-de: BLM Project-Layer
+    tags: { status: live, layer: L3, perspective: marketing, cluster: pm-blm-stack, ownership: sovaia-baseline }
+    summary-de: Projekt-CRUD, Tasks, Dependencies, Status-Tracking.
+
+  - id: blm-resource
+    type: service
+    label-de: BLM Resource-Layer
+    tags: { status: released, layer: L3, perspective: marketing, cluster: pm-blm-stack, ownership: sovaia-baseline }
+    summary-de: Personen + Skills + Auslastung — Welle-3-Refinement (Matrix Person × Zeit).
+
+  - id: blm-timeline
+    type: service
+    label-de: BLM Timeline-View
+    tags: { status: live, layer: L3, perspective: marketing, cluster: pm-blm-stack, ownership: sovaia-baseline }
+    summary-de: Zeit-Achse mit Ebenen-Filter, adaptiver Achse, Milestones, Markern.
+
+  - id: blm-risk
+    type: service
+    label-de: BLM Risk-Layer
+    tags: { status: released, layer: L3, perspective: marketing, cluster: pm-blm-stack, ownership: sovaia-baseline }
+    summary-de: Risiken pro Projekt mit Context-Refinement.
+
+  - id: blm-finance
+    type: service
+    label-de: BLM Finance-Layer
+    tags: { status: planned, layer: L3, perspective: marketing, cluster: pm-blm-stack, ownership: sovaia-baseline }
+    summary-de: Finanz-Labels, Budgets, Forecast pro Projekt — Spiegel-Buchung zu ERP-Core.
+
+  - id: blm-profile-governance
+    type: service
+    label-de: BLM Profile-Governance (P7)
+    tags: { status: live, layer: L3, perspective: governance, cluster: pm-blm-stack, ownership: sovaia-baseline }
+    summary-de: Profile (Portfolio-Manager/Project-Manager/Engineer/…) als Visibility-Scope + Governance-Template.
+
+  # ── AI-Agenten ──────────────────────────────────────────────────────
+
+  - id: ai-blm-refinement
+    type: ki-agent
+    label-de: AI-BLM-Refinement
+    tags: { status: planned, cluster: pm-blm-stack, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Schlägt Projekt-Strukturierung, Task-Splits, Dependencies aus Beschreibung vor.
+
+  - id: ai-blm-risk-companion
+    type: ki-agent
+    label-de: AI-Risk-Companion
+    tags: { status: planned, cluster: pm-blm-stack, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Erkennt Risiken aus Status-Updates, schlägt Mitigations vor.
+
+  - id: ai-blm-resource-optimizer
+    type: ki-agent
+    label-de: AI-Resource-Optimizer
+    tags: { status: planned, cluster: pm-blm-stack, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Optimiert Person × Projekt × Zeit unter Skill-Match und Auslastung.
+
+  # ── Schnittstellen (ERP-Verbindung) ─────────────────────────────────
+
+  - id: blm-bridge
+    type: schnittstelle
+    label-de: blm-bridge (ERP ↔ BLM)
+    tags: { status: live, layer: L2, perspective: integration, cluster: pm-blm-stack, ownership: sovaia-baseline }
+    summary-de: Sync-Service zwischen efx-erp und BLM (ensureBlmProject, syncProjectFromBlm, pushTimesheetEntry).
+
+  # ── Data-Spaces ─────────────────────────────────────────────────────
+
+  - id: ds-blm-projects
+    type: datenraum
+    label-de: BLM Projekt-Datenraum
+    tags: { cluster: pm-blm-stack, ownership: sovaia-baseline }
+    summary-de: Projekte, Tasks, Resources, Timeline-Events, Risks, Audit-Log.
+
+edges:
+
+  # BLM-Module sind Teile des Stacks
+  - { from: pm-blm-root,           to: blm-portfolio,      type: gehoert-zu }
+  - { from: pm-blm-root,           to: blm-project,        type: gehoert-zu }
+  - { from: pm-blm-root,           to: blm-resource,       type: gehoert-zu }
+  - { from: pm-blm-root,           to: blm-timeline,       type: gehoert-zu }
+  - { from: pm-blm-root,           to: blm-risk,           type: gehoert-zu }
+  - { from: pm-blm-root,           to: blm-finance,        type: gehoert-zu }
+
+  # Governance durchdringt alle Module
+  - { from: blm-profile-governance, to: blm-portfolio,     type: erfuellt }
+  - { from: blm-profile-governance, to: blm-project,       type: erfuellt }
+  - { from: blm-profile-governance, to: blm-resource,      type: erfuellt }
+  - { from: blm-profile-governance, to: blm-finance,       type: erfuellt }
+
+  # Agents helfen Modulen
+  - { from: ai-blm-refinement,     to: blm-project,        type: nutzt }
+  - { from: ai-blm-risk-companion, to: blm-risk,           type: nutzt }
+  - { from: ai-blm-resource-optimizer, to: blm-resource,   type: nutzt }
+
+  # Data
+  - { from: blm-project,           to: ds-blm-projects,    type: nutzt }
+  - { from: blm-portfolio,         to: ds-blm-projects,    type: nutzt }
+  - { from: blm-timeline,          to: ds-blm-projects,    type: nutzt }
+  - { from: blm-resource,          to: ds-blm-projects,    type: nutzt }
+  - { from: blm-risk,              to: ds-blm-projects,    type: nutzt }
+  - { from: blm-finance,           to: ds-blm-projects,    type: nutzt }
+
+  # ERP-Brücke (cross-cluster integration nach erp-core)
+  - { from: blm-bridge,            to: ds-blm-projects,    type: nutzt }
+  - { from: pm-blm-root,           to: blm-bridge,         type: integriert-mit }
+  # → blm-bridge verbindet zu erp-core.yaml::erp-core-root via cross-cluster-edge

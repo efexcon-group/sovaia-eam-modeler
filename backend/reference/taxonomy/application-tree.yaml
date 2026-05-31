@@ -1,0 +1,53 @@
+# Application-Layer-Baum (V1).
+# Top-Level: ai-stack, business-apps, reference-apps, bridges.
+# Detail wird iterativ angereichert (LLM + User-Pflege).
+
+taxonomy-id: application
+taxonomy-version: "0.1.0"
+layer: application
+
+roots:
+
+  - id: ai-stack
+    label-de: AI-Stack
+    summary-de: Cross-Vertical AI-Bausteine — Chat, Workplace, Translation, Agenten-Runtime, Workflow.
+    children:
+      - { id: chat,            label-de: AI-Chat,                summary-de: Eingebettetes Chat-Widget + Standalone-Chat. }
+      - { id: workplace,       label-de: AI-Workplace,           summary-de: LibreChat-basierter Agentic-Workplace. }
+      - { id: translation,     label-de: AI-Translation,         summary-de: Translation-Service uni- und bidirektional. }
+      - { id: transcription,   label-de: AI-Transcription,       summary-de: Voice-to-Text mit Sprecher-Diarisierung. }
+      - { id: agent-runtime,   label-de: AI-Agent-Runtime,       summary-de: Agent-Execution-Layer mit Tool-Use. }
+      - { id: workflow,        label-de: AI-Workflow,            summary-de: Orchestrator-Engine für Agenten + Menschen + Systeme. }
+      - { id: meeting,         label-de: AI-Meeting-Companion,   summary-de: Live-Transkription, Aktionspunkte, Folge-Tasks. }
+      - { id: document,        label-de: AI-Document-Manager,    summary-de: AI-Klassifikation, OCR, Extraktion, Routing. }
+      - { id: contract,        label-de: AI-Contract-Manager,    summary-de: Vertrags-Lebenszyklus mit AI-Klauseln. }
+      - { id: finance,         label-de: AI-Finance-Manager,     summary-de: Finanz-Cockpit mit Settlement-Intelligence. }
+
+  - id: business-apps
+    label-de: Business-Apps
+    summary-de: Lizenzierbare End-User-Anwendungen — BLM, ERP, Portals, Architecture-Modeler.
+    children:
+      - { id: pm-blm,    label-de: Project Mgmt + BLM, summary-de: Portfolio/Project/Resource/Timeline/Risk/Finance. }
+      - { id: erp,       label-de: ERP-Core,            summary-de: efx-erp-Module + Bridges. }
+      - { id: portals,   label-de: Self-Service-Portale, summary-de: Customer/Supplier/Employee-Portale. }
+      - { id: modeler,   label-de: Architecture-Modeler, summary-de: Dieses Werkzeug. }
+      - { id: workplace, label-de: Workplace,           summary-de: Interner Agentic-Workplace. }
+
+  - id: reference-apps
+    label-de: Brand-Reference-Apps
+    summary-de: Multi-Brand-Websites, AI-Chat-Widget, RAG-Pipeline.
+    children:
+      - { id: websites,  label-de: Brand-Websites, summary-de: Multi-Brand-Frontends auf einer Codebasis. }
+      - { id: chat-widget, label-de: Web-Chat-Widget, summary-de: Eingebettet auf Brand-Sites — Demand-Capture. }
+      - { id: rag,       label-de: RAG-Pipeline, summary-de: Retrieval-Augmented Generation für Content. }
+
+  - id: bridges
+    label-de: Integration-Bridges
+    summary-de: Schnittstellen zu externen Systemen — Teams, SMTP, Brief, Portal, BLM.
+    children:
+      - { id: teams,   label-de: teams-bridge }
+      - { id: smtp,    label-de: smtp-bridge }
+      - { id: letter,  label-de: letter-bridge }
+      - { id: portal,  label-de: portal-bridge }
+      - { id: blm,     label-de: blm-bridge }
+      - { id: eam-llm, label-de: eam-llm-bridge }

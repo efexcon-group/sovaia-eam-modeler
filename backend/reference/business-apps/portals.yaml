@@ -1,0 +1,117 @@
+# Business-App-Modell: Self-Service-Portale (Customer / Supplier / Employee)
+# Cluster-Parent: sovaia-reference.yaml → portals-cluster.
+# Pattern: Customer-Master-First (ADR-081). Auth: identity-kc.
+# ADR-082, Schema 0.1.0.
+
+cluster-id: portals
+cluster-version: "0.1.0"
+view-profile-default: c-level
+
+nodes:
+
+  # ── Container ────────────────────────────────────────────────────────
+
+  - id: portals-root
+    type: touchpoint
+    label-de: Sovaia Self-Service-Portale
+    tags: { status: released, layer: L3, perspective: marketing, cluster: portals, ownership: sovaia-baseline }
+    summary-de: Drei Portale (Customer/Supplier/Employee) auf identity-kc + portal-bridge.
+
+  # ── Portale ─────────────────────────────────────────────────────────
+
+  - id: portal-customer
+    type: touchpoint
+    label-de: Customer-Self-Service-Portal
+    tags: { status: live, layer: L3, perspective: marketing, cluster: portals, ownership: sovaia-baseline }
+    summary-de: Kunde sieht Belege, Verträge, Settlement-Status, eröffnet Tickets, lädt Dokumente hoch.
+
+  - id: portal-supplier
+    type: touchpoint
+    label-de: Supplier-Portal
+    tags: { status: released, layer: L3, perspective: marketing, cluster: portals, ownership: sovaia-baseline }
+    summary-de: Lieferant erfasst Angebote, sieht Bestellungen, lädt Lieferscheine und Rechnungen hoch.
+
+  - id: portal-employee
+    type: touchpoint
+    label-de: Employee-Portal
+    tags: { status: planned, layer: L3, perspective: marketing, cluster: portals, ownership: sovaia-baseline }
+    summary-de: Mitarbeiter sieht Abrechnungen, Spesen, Zeit, eröffnet HR-Anliegen.
+
+  # ── Capabilities pro Portal ─────────────────────────────────────────
+
+  - id: cap-portal-self-doc
+    type: faehigkeit
+    label-de: Self-Service-Dokumenten-Zugriff
+    tags: { cluster: portals, business-capability: "BC-PORTAL-1" }
+    summary-de: Alle Dokumente im Kontext der Beziehung sichtbar.
+
+  - id: cap-portal-self-action
+    type: faehigkeit
+    label-de: Self-Service-Aktionen
+    tags: { cluster: portals, business-capability: "BC-PORTAL-2" }
+    summary-de: Ticket eröffnen, Dokument hochladen, Vier-Augen-Approval auslösen.
+
+  - id: cap-portal-onboarding
+    type: faehigkeit
+    label-de: Customer-Master-First-Onboarding
+    tags: { cluster: portals, business-capability: "BC-PORTAL-3" }
+    summary-de: ERP-Stammsatz vor Portal-Aktivierung (ADR-081), kontrollierte Admin-Einladung.
+
+  # ── AI-Agenten ──────────────────────────────────────────────────────
+
+  - id: ai-portal-companion
+    type: ki-agent
+    label-de: AI-Portal-Companion
+    tags: { status: planned, cluster: portals, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Begleitet Nutzer im Portal — beantwortet Fragen aus seinen Dokumenten, eröffnet passende Anliegen.
+
+  - id: ai-portal-translator
+    type: ki-agent
+    label-de: AI-Portal-Translator
+    tags: { status: planned, cluster: portals, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Übersetzt Dokumente und Konversationen in die Sprache des Nutzers (nutzt AI-DualWindow).
+
+  # ── Schnittstelle ───────────────────────────────────────────────────
+
+  - id: portal-bridge
+    type: schnittstelle
+    label-de: portal-bridge
+    tags: { status: live, layer: L2, perspective: integration, cluster: portals, ownership: sovaia-baseline }
+    summary-de: identity-kc-Provisionierung, Magic-Link-Versand, Reconciler ERP → Portal-Events.
+
+  # ── Compliance ──────────────────────────────────────────────────────
+
+  - id: comp-portal-master-first
+    type: compliance-anker
+    label-de: Customer-Master-First-Regel
+    tags: { cluster: portals, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Niemand registriert sich am Portal, bevor er im ERP als Contact eines aktivierten Accounts existiert (ADR-081).
+
+edges:
+
+  # Portale gehören zum Root
+  - { from: portals-root,          to: portal-customer,    type: gehoert-zu }
+  - { from: portals-root,          to: portal-supplier,    type: gehoert-zu }
+  - { from: portals-root,          to: portal-employee,    type: gehoert-zu }
+
+  # Portale erfüllen Capabilities
+  - { from: portal-customer,       to: cap-portal-self-doc, type: erfuellt }
+  - { from: portal-customer,       to: cap-portal-self-action, type: erfuellt }
+  - { from: portal-supplier,       to: cap-portal-self-doc, type: erfuellt }
+  - { from: portal-supplier,       to: cap-portal-self-action, type: erfuellt }
+  - { from: portal-employee,       to: cap-portal-self-doc, type: erfuellt }
+  - { from: portals-root,          to: cap-portal-onboarding, type: erfuellt }
+
+  # Agents helfen Portalen
+  - { from: ai-portal-companion,   to: portal-customer,    type: liefert }
+  - { from: ai-portal-companion,   to: portal-supplier,    type: liefert }
+  - { from: ai-portal-companion,   to: portal-employee,    type: liefert }
+  - { from: ai-portal-translator,  to: portal-customer,    type: liefert }
+  - { from: ai-portal-translator,  to: portal-supplier,    type: liefert }
+
+  # Portal-Bridge ist die Onboarding-Schnittstelle
+  - { from: portals-root,          to: portal-bridge,      type: integriert-mit }
+  - { from: portal-bridge,         to: cap-portal-onboarding, type: erfuellt }
+
+  # Compliance
+  - { from: cap-portal-onboarding, to: comp-portal-master-first, type: erfuellt }

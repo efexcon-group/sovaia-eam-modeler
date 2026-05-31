@@ -1,0 +1,183 @@
+# Sovaia-Reference-Architektur — Baseline für den Architecture-Modeler
+# ADR-082. C-Level/Marketing-Granularität (~12 Knoten).
+# Voll-Detail (alle ~28 Services) kommt im "Architect-Profile" (Iteration 1+).
+#
+# Knoten und Edges hier sind die Single-Source-of-Truth für die Sovaia-Reference.
+# Wird vom Modeler beim Boot geladen. Aktualisierung per ADR-Acceptance.
+
+reference-version: "0.1.0"
+brand: sovaia
+view-profile-default: c-level
+
+nodes:
+
+  # ── L1-Sammel-Boxen (C-Level-Granularität) ──────────────────────────
+
+  - id: sovaia-platform
+    type: mandant
+    label-de: Sovaia-Plattform
+    tags: { status: live, layer: L0, perspective: marketing, ownership: sovaia-baseline }
+    summary-de: Multi-Tenant-Plattform mit Sovaia-Reference-Modul-Set.
+
+  - id: agent-layer
+    type: ki-agent
+    label-de: KI-Agenten-Schicht
+    tags: { status: live, layer: L3, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Autonome Agenten — funktionale Spezialisierung pro Branche und Use-Case.
+    examples-de: [document-agent, rag-agent, settlement-agent, blm-refinement-agent]
+
+  - id: identity-layer
+    type: service
+    label-de: Identitäts- und Zugriffsschicht
+    tags: { status: live, layer: L2, perspective: integration, ownership: sovaia-baseline }
+    summary-de: Dual-Keycloak (interne Mitarbeiter + Customer-Self-Service), Multi-Brand-Personas.
+
+  - id: governance-layer
+    type: service
+    label-de: Governance + Sicherheit
+    tags: { status: live, layer: L1, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Pre-Write / Pre-Read AI-Governance, Encrypted Persistence, Swiss-local Redundancy.
+
+  - id: dgx-stack
+    type: service
+    label-de: AI-Inferenz (DGX-Stack)
+    tags: { status: live, layer: L3, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: On-prem LLM + Embedding-Inferenz auf DGX-Servern (souverän, kein externer LLM-Call).
+
+  # ── L3-Produkte (Lizenz-Bausteine) ──────────────────────────────────
+
+  - id: web-core
+    type: anwendung
+    label-de: Web-Core (CMS + AI-Chat)
+    tags: { status: live, layer: L3, perspective: marketing, ownership: sovaia-baseline }
+    summary-de: Multi-Brand-Websites mit Editor, AI-Chat-Widget, RAG-Pipeline.
+
+  - id: workplace
+    type: anwendung
+    label-de: Sovaia Workplace (LibreChat-basiert)
+    tags: { status: live, layer: L3, perspective: marketing, ownership: sovaia-baseline }
+    summary-de: Agentischer Workplace für interne Nutzer — Sprache und Dokumente sind Hauptkanal.
+
+  - id: blm
+    type: anwendung
+    label-de: BLM (Business Lifecycle Manager)
+    tags: { status: live, layer: L3, perspective: marketing, ownership: sovaia-baseline }
+    summary-de: Multi-Profile-Portfolio/Project-Management — autark, ADR-077 P7.
+    version: "0.6.1"
+
+  - id: efx-erp
+    type: anwendung
+    label-de: efx-erp (Service-Provider-OS)
+    tags: { status: live, layer: L3, perspective: marketing, ownership: sovaia-baseline }
+    summary-de: Service-Provider-ERP mit Belegen, Settlement, MS-Teams-Bridge, BLM-Bridge.
+
+  - id: architecture-modeler
+    type: anwendung
+    label-de: Architecture-Modeler (dieses Werkzeug)
+    tags: { status: planned, layer: L3, perspective: marketing, ownership: sovaia-baseline }
+    summary-de: Lizenzierbares Werkzeug für Architektur-Visualisierung, Customer-IST/SOLL, Industry-Storyteller.
+
+  # ── Cluster-Anchors (lazy-loaded via detail-ref) ────────────────────
+
+  - id: core-ai-stack-cluster
+    type: service
+    label-de: Sovaia Core AI-Stack
+    tags: { status: live, layer: L3, perspective: ai-use-case, cluster: core-ai-stack, ownership: sovaia-baseline }
+    detail-ref: core-ai-stack.yaml
+    summary-de: Cross-Vertical AI-Bausteine (Chat, Workplace, Translation, DualWindow, Transcription, Workflow, Agent-Runtime, Meeting/Document/Contract/Finance-Manager).
+
+  - id: care-vertical-cluster
+    type: mandant
+    label-de: Branchen-Modell Care/Pflege/Medizin
+    tags: { status: released, layer: L3, perspective: marketing, industry: care, cluster: care-vertical, ownership: sovaia-baseline }
+    detail-ref: verticals/care.yaml
+    summary-de: Schweizer Heim/Pflege/Medizin mit AI-Pflegedoc, AI-Mobile-Companion, AI-QM, AI-Schicht-/Personalplanung.
+
+  - id: logistics-vertical-cluster
+    type: mandant
+    label-de: Branchen-Modell Logistik
+    tags: { status: released, layer: L3, perspective: marketing, industry: logistics, cluster: logistics-vertical, ownership: sovaia-baseline }
+    detail-ref: verticals/logistics.yaml
+    summary-de: Air/Sea/River/Street-Transport inkl. Verzollung und Track & Trace mit AI-Tarif-, Customs-Doc- und Track-Companion-Agenten.
+
+  - id: field-service-vertical-cluster
+    type: mandant
+    label-de: Branchen-Modell Field-Service / Aussendienst
+    tags: { status: released, layer: L3, perspective: marketing, industry: service-provider, cluster: field-service-vertical, ownership: sovaia-baseline }
+    detail-ref: verticals/field-service.yaml
+    summary-de: Property-Services, Hausmeister, Handwerker, Service-Kräfte mit AI-Disposition, AI-Vor-Ort-Doc, AI-Wartungsplanung, AI-Rapport-Generator.
+
+  - id: pm-blm-cluster
+    type: anwendung
+    label-de: Project-Management + BLM-Stack
+    tags: { status: live, layer: L3, perspective: marketing, cluster: pm-blm-stack, ownership: sovaia-baseline }
+    detail-ref: business-apps/pm-blm.yaml
+    summary-de: Portfolio/Project/Resource/Timeline/Risk/Finance — nahtlos integriert mit ERP-Core.
+
+  - id: erp-core-cluster
+    type: anwendung
+    label-de: ERP-Core (efx-erp Module)
+    tags: { status: live, layer: L3, perspective: marketing, cluster: erp-core, ownership: sovaia-baseline }
+    detail-ref: business-apps/erp-core.yaml
+    summary-de: Accounts, Quotes, Orders, Invoices, Settlement, Contracts, Documents-on-Object + Bridges (teams, blm, smtp, letter, portal).
+
+  - id: portals-cluster
+    type: touchpoint
+    label-de: Self-Service-Portale
+    tags: { status: released, layer: L3, perspective: marketing, cluster: portals, ownership: sovaia-baseline }
+    detail-ref: business-apps/portals.yaml
+    summary-de: Customer-, Supplier- und Employee-Portale auf Customer-Master-First-Pattern (ADR-081).
+
+  # ── Touchpoints (UX-Schicht) ────────────────────────────────────────
+
+  - id: chat-widget
+    type: touchpoint
+    label-de: Web-Chat-Widget
+    tags: { status: live, layer: L3, perspective: marketing, ownership: sovaia-baseline }
+    summary-de: Eingebettetes Chat auf Brand-Sites — Demand-Capture + LLM-Konversion.
+
+  - id: self-service-portal
+    type: touchpoint
+    label-de: Customer-Self-Service-Portal (/portal)
+    tags: { status: released, layer: L3, perspective: marketing, ownership: sovaia-baseline }
+    summary-de: Customer-Master-First-Onboarding (ADR-081), Vier-Augen-Approval.
+
+  # ── Compliance-Anker (für Governance-Perspektive) ───────────────────
+
+  - id: dsgvo
+    type: compliance-anker
+    label-de: DSGVO
+    tags: { status: live, layer: L1, perspective: governance, ownership: sovaia-baseline }
+    summary-de: EU-Datenschutz-Grundverordnung — by-design durchgesetzt.
+
+  - id: ch-sovereign
+    type: compliance-anker
+    label-de: Swiss-local Sovereignty
+    tags: { status: live, layer: L1, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Daten und Inferenz on-prem in der Schweiz.
+
+edges:
+
+  # Identität ist Grundvoraussetzung für alle End-User-Anwendungen
+  - { from: web-core,              to: identity-layer,    type: nutzt }
+  - { from: workplace,             to: identity-layer,    type: nutzt }
+  - { from: blm,                   to: identity-layer,    type: nutzt }
+  - { from: efx-erp,               to: identity-layer,    type: nutzt }
+  - { from: architecture-modeler,  to: identity-layer,    type: nutzt }
+  - { from: self-service-portal,   to: identity-layer,    type: nutzt }
+
+  # Governance durchdringt alles (cross-cutting, ADR-067)
+  - { from: sovaia-platform,       to: governance-layer,  type: erfuellt }
+  - { from: governance-layer,      to: dsgvo,             type: erfuellt }
+  - { from: governance-layer,      to: ch-sovereign,      type: erfuellt }
+
+  # AI-Layer wird von Agenten und Anwendungen genutzt
+  - { from: agent-layer,           to: dgx-stack,         type: nutzt }
+  - { from: web-core,              to: agent-layer,       type: nutzt }
+  - { from: workplace,             to: agent-layer,       type: nutzt }
+  - { from: efx-erp,               to: agent-layer,       type: nutzt }
+  - { from: architecture-modeler,  to: agent-layer,       type: nutzt }
+
+  # Touchpoints liefern UX an Brand-Anwendungen
+  - { from: chat-widget,           to: web-core,          type: liefert }
+  - { from: self-service-portal,   to: web-core,          type: liefert }

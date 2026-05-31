@@ -1,0 +1,61 @@
+# Story: Property-Tag mit Sovaia
+# Baseline-Story für Free-Tier-Player. Industry-Tag: service-provider.
+# Anchors zeigen auf Knoten in verticals/field-service.yaml.
+
+id: field-service-property-day
+title: Property-Tag mit Sovaia — Heizung defekt, Rapport vor dem Feierabend
+industry-tag: service-provider
+persona-target: decision-maker
+status: planned
+maturity-claim: showcase
+ownership: sovaia-baseline
+brand-allowed: [sovaia, efexcon]
+summary-de: Liegenschaftsverwaltung meldet Heizungsdefekt, AI disponiert, dokumentiert, rapportiert — alles vor 17 Uhr.
+
+beats:
+
+  - id: anfrage
+    ordinal: 1
+    narrative-md: |
+      **08:14 Uhr.** Hausverwaltung meldet im Portal: Heizung im 3. Stock kalt. Foto +
+      Audio. **AI-Disposition** liest die Objekt-Historie (Therme 2019, letzte Wartung
+      Q3), findet drei verfügbare Handwerker im Umkreis mit passendem Skill, schlägt
+      den Vorzug vor. Zuweisung in einem Klick.
+    anchors: [tp-eigentumer-portal, ai-disposition, kunden-objekt-map, einsatz-historie]
+    camera: { view-profile: c-level, zoom: 1.2, pan: { x: 0, y: 0 } }
+    overlay: agent-glow
+    cta: { type: next-beat }
+
+  - id: vor-ort
+    ordinal: 2
+    narrative-md: |
+      **09:50 Uhr.** Handwerker vor Ort. Sprach-Befund: „Zündelektrode oxidiert,
+      Brennkammer sauber, Wartungsintervall in 4 Monaten ohnehin fällig — gleich
+      mitmachen?" **AI-Vor-Ort-Doc** erzeugt strukturierte Doku, schlägt vor: Wartung
+      vorziehen, spart Anfahrt.
+    anchors: [tp-handwerker-app, ai-vor-ort-doc, einsatz-historie, objektkatalog]
+    camera: { view-profile: c-level, zoom: 1.4, pan: { x: 60, y: 30 } }
+    overlay: data-flow
+    cta: { type: next-beat }
+
+  - id: rapport
+    ordinal: 3
+    narrative-md: |
+      **15:30 Uhr.** Rückfahrt. **AI-Rapport-Generator** hat den Kunden-Rapport schon
+      formuliert — in der Sprache der Verwaltung, mit Foto-Belegen, Material-Spiegel,
+      Wartungs-Empfehlung. Handwerker prüft, drei Korrekturen per Sprache, fertig.
+    anchors: [ai-rapport-generator, materialverbrauch, proc-abrechnungsflow]
+    camera: { view-profile: c-level, zoom: 1.1, pan: { x: 0, y: 0 } }
+    overlay: document-flow
+    cta: { type: next-beat }
+
+  - id: abrechnung
+    ordinal: 4
+    narrative-md: |
+      **16:45 Uhr.** Im Backoffice geht der Rapport ein, Rechnungs-Entwurf entsteht
+      automatisch, Vier-Augen-Freigabe ist drei Klicks weit. Versand via Portal — der
+      Kunde sieht die Rechnung in seinem Self-Service, bevor er das Büro verlässt.
+    anchors: [proc-abrechnungsflow, comp-or-werkvertrag]
+    camera: { view-profile: c-level, zoom: 1.0, pan: { x: 0, y: 0 } }
+    overlay: none
+    cta: { type: contact-sales, target: "/contact?topic=field-service" }
