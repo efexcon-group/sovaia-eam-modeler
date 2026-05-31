@@ -165,10 +165,11 @@ async def navigator(
     classic_baseline = [_strip_internal(n) for n in all_nodes if _is_classic(n)]
     sovaia_all = [_strip_internal(n) for n in all_nodes if not _is_classic(n)]
 
-    # Tenant-Overlay anwenden — nur Classic.
+    # Tenant-Overlay anwenden — Classic UND Sovaia.
     tenant = (x_eam_tenant or settings.tenant_default).strip().lower() or settings.tenant_default
     overlay = overlay_store.load_overlay(Path(settings.overlay_dir).resolve(), tenant)
     classic_effective = overlay_store.apply_overlay_to_classic(classic_baseline, overlay)
+    sovaia_effective = overlay_store.apply_overlay_to_sovaia(sovaia_all, overlay)
 
     # Filter nach Pfad.
     def _node_matches(n: dict) -> bool:
@@ -177,7 +178,15 @@ async def navigator(
         return _matches_path(paths, full_path)
 
     classic = [n for n in classic_effective if _node_matches(n)]
-    sovaia = [n for n in sovaia_all if _node_matches(n)]
+    sovaia = [n for n in sovaia_effective if _node_matches(n)]
+
+    # Mappings auf diesen Pfad filtern.
+    classic_ids = {n["id"] for n in classic if n.get("id")}
+    sovaia_ids = {n["id"] for n in sovaia if n.get("id")}
+    mappings = overlay_store.filter_mappings_for_paths(overlay, classic_ids, sovaia_ids)
+
+    # Vorher/Nachher-Aggregat über Mappings.
+    cost_aggregate = _aggregate_costs(mappings)
 
     return {
         "path": full_path,
@@ -187,7 +196,36 @@ async def navigator(
         "children": [_shape_child(c, full_path) for c in children],
         "classic": classic,
         "sovaia": sovaia,
+        "mappings": mappings,
         "impact-aggregate": _aggregate_impact(sovaia),
+        "cost-aggregate": cost_aggregate,
+    }
+
+
+def _aggregate_costs(mappings: list[dict]) -> dict[str, Any]:
+    """Summiert Vorher/Nachher OPEX/CAPEX über die geladenen Mappings."""
+    if not mappings:
+        return {}
+
+    def _sum(side: str, key: str) -> float | None:
+        vals = []
+        for m in mappings:
+            block = m.get(side) or {}
+            v = block.get(key)
+            if v is not None:
+                vals.append(v)
+        return round(sum(vals), 2) if vals else None
+
+    return {
+        "vorher": {
+            "capex": _sum("vorher", "capex"),
+            "opex-monatlich": _sum("vorher", "opex-monatlich"),
+        },
+        "nachher": {
+            "capex": _sum("nachher", "capex"),
+            "opex-monatlich": _sum("nachher", "opex-monatlich"),
+        },
+        "mapping-count": len(mappings),
     }
 
 

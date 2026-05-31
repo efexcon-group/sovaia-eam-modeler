@@ -1,14 +1,7 @@
-"""LLM-Batch-Generator für Classic-Knoten an einem Taxonomie-Pfad.
+"""LLM-Endpoints — Batch (generate-classic) + Per-Card (refine-description).
 
-POST /v1/intake/generate-classic
-Body: { "path": "business/healthcare/finanzen", "limit": 5 }
-Header: X-EAM-Tenant
-
-Ablauf:
-  1. Aktuelle Sovaia-Module + existierende Classic-Knoten am Pfad sammeln (Kontext für LLM)
-  2. eam-llm-bridge POST /v1/generate-classic anrufen
-  3. Vorschlags-Liste in Overlay als `added` mit Prefix `llm-` ablegen
-  4. Aktualisierten Navigator-Stand zurückgeben
+POST /v1/intake/generate-classic — N Vorschläge für Classic-Knoten an Pfad
+POST /v1/intake/refine-description — verbessert/erweitert/kürzt eine Beschreibung
 """
 from __future__ import annotations
 
@@ -19,7 +12,7 @@ from typing import Any
 import httpx
 import yaml
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.config import Settings, get_settings
 from app.storage import overlay as overlay_store
@@ -32,11 +25,21 @@ class GenerateClassicRequest(BaseModel):
     limit: int = Field(default=5, ge=1, le=10)
 
 
+class RefineDescriptionRequest(BaseModel):
+    """Verbessert/erweitert/kürzt eine bestehende oder leere Beschreibung."""
+    model_config = ConfigDict(populate_by_name=True)
+    label_de: str = Field(alias="label-de")
+    summary_de: str | None = Field(default=None, alias="summary-de")
+    intent: str = Field(default="improve", description="improve | expand | shorten | from-keywords")
+    persona: str = Field(default="decision-maker", description="decision-maker | architect | functional")
+    extra_hint: str | None = Field(default=None, alias="extra-hint")
+
+
 def _tenant_from(header: str | None, settings: Settings) -> str:
     return (header or settings.tenant_default).strip().lower() or "sovaia-internal"
 
 
-# ── Pfad-Kontext einsammeln (lokal, ohne navigator.py-Reuse für Loose Coupling) ──
+# ── Pfad-Kontext sammeln (für generate-classic) ─────────────────────────
 
 def _load_yaml(p: Path) -> dict:
     if not p.exists():
@@ -63,7 +66,8 @@ def _collect_context(settings: Settings, path: str) -> dict[str, Any]:
     def _match(node: dict) -> bool:
         tags = node.get("tags") or {}
         raw = tags.get("taxonomy-paths") or ""
-        paths = [s.strip() for s in str(raw).split(",") if s.strip()] if not isinstance(raw, list) else [str(s) for s in raw]
+        paths = ([s.strip() for s in str(raw).split(",") if s.strip()]
+                 if not isinstance(raw, list) else [str(s) for s in raw])
         for p in paths:
             if p == path or p.startswith(path + "/"):
                 return True
@@ -80,15 +84,11 @@ def _collect_context(settings: Settings, path: str) -> dict[str, Any]:
     return {"sovaia": sovaia_at_path, "classic": classic_at_path}
 
 
-# ── Bridge-Call ─────────────────────────────────────────────────────────
+# ── Bridge-Calls ────────────────────────────────────────────────────────
 
-async def _call_bridge(
-    bridge_url: str,
-    timeout: float,
-    path: str,
-    sovaia: list[dict],
-    existing_classic: list[dict],
-    limit: int,
+async def _call_bridge_generate(
+    bridge_url: str, timeout: float, path: str,
+    sovaia: list[dict], existing_classic: list[dict], limit: int,
 ) -> list[dict]:
     payload = {
         "path": path,
@@ -105,18 +105,27 @@ async def _call_bridge(
     url = bridge_url.rstrip("/") + "/v1/generate-classic"
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.post(url, json=payload)
-        if r.status_code >= 500:
-            raise HTTPException(
-                status_code=502,
-                detail=f"eam-llm-bridge upstream error {r.status_code}: {r.text[:200]}",
-            )
         if r.status_code >= 400:
-            raise HTTPException(status_code=r.status_code, detail=r.text[:400])
-        data = r.json()
-        return data.get("proposals", [])
+            raise HTTPException(
+                status_code=502 if r.status_code >= 500 else r.status_code,
+                detail=f"eam-llm-bridge {r.status_code}: {r.text[:300]}",
+            )
+        return r.json().get("proposals", [])
 
 
-# ── Endpoint ────────────────────────────────────────────────────────────
+async def _call_bridge_refine(bridge_url: str, timeout: float, payload: dict) -> dict:
+    url = bridge_url.rstrip("/") + "/v1/refine-description"
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        r = await client.post(url, json=payload)
+        if r.status_code >= 400:
+            raise HTTPException(
+                status_code=502 if r.status_code >= 500 else r.status_code,
+                detail=f"eam-llm-bridge {r.status_code}: {r.text[:300]}",
+            )
+        return r.json()
+
+
+# ── Endpoints ───────────────────────────────────────────────────────────
 
 @router.post("/generate-classic")
 async def generate_classic(
@@ -129,17 +138,13 @@ async def generate_classic(
     tenant = _tenant_from(x_eam_tenant, settings)
 
     ctx = _collect_context(settings, body.path)
-    proposals = await _call_bridge(
-        settings.llm_bridge_url,
-        settings.llm_bridge_timeout,
-        body.path,
-        ctx["sovaia"],
-        ctx["classic"],
-        body.limit,
+    proposals = await _call_bridge_generate(
+        settings.llm_bridge_url, settings.llm_bridge_timeout,
+        body.path, ctx["sovaia"], ctx["classic"], body.limit,
     )
 
     if not proposals:
-        return {"added": [], "rationale": "LLM lieferte keine Vorschläge.", "proposals-raw": []}
+        return {"added": [], "count": 0}
 
     overlay = overlay_store.load_overlay(Path(settings.overlay_dir).resolve(), tenant)
     added_nodes: list[dict] = []
@@ -164,3 +169,23 @@ async def generate_classic(
 
     overlay_store.save_overlay(Path(settings.overlay_dir).resolve(), overlay)
     return {"added": added_nodes, "count": len(added_nodes)}
+
+
+@router.post("/refine-description")
+async def refine_description(
+    body: RefineDescriptionRequest,
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Per-Card-LLM-Helper. Verbessert Label + Summary basierend auf Intent.
+
+    Returnt: { "label-de", "summary-de" } als Vorschlag — Frontend zeigt zur Review.
+    """
+    if body.intent not in {"improve", "expand", "shorten", "from-keywords"}:
+        raise HTTPException(status_code=400, detail=f"unknown intent: {body.intent}")
+    if body.persona not in {"decision-maker", "architect", "functional"}:
+        raise HTTPException(status_code=400, detail=f"unknown persona: {body.persona}")
+
+    payload = body.model_dump(by_alias=True)
+    return await _call_bridge_refine(
+        settings.llm_bridge_url, settings.llm_bridge_timeout, payload
+    )

@@ -97,6 +97,19 @@ def _normalize(s: str) -> str:
     return s.lower().replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
 
 
+def stub_refine_description(label: str, summary: str, intent: str) -> dict[str, str]:
+    """Stub-Modus für /v1/refine-description — kein LLM, simple Heuristik."""
+    if intent == "shorten" and summary:
+        words = summary.split()
+        return {"label-de": label, "summary-de": " ".join(words[: max(8, len(words) // 2)]) + " [STUB-gekürzt]"}
+    if intent == "expand" and summary:
+        return {"label-de": label, "summary-de": summary + " [STUB-erweitert: weitere Details folgen sobald LLM erreichbar.]"}
+    if intent == "from-keywords":
+        return {"label-de": label, "summary-de": f"[STUB] Beschreibung für '{label}' folgt sobald LLM erreichbar."}
+    # improve (default)
+    return {"label-de": label, "summary-de": (summary or "") + " [STUB-verbessert: Inhalt unverändert bis LLM erreichbar.]"}
+
+
 def stub_classic_proposals(path: str, limit: int) -> list[dict[str, Any]]:
     """Wählt eine Pattern-Liste basierend auf Pfad-Segmenten + returnt limit-viele Vorschläge."""
     segs = [_normalize(s) for s in path.split("/")]

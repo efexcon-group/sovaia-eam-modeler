@@ -17,10 +17,10 @@ from typing import Any
 
 import httpx
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.config import Settings, get_settings
-from app.stub import stub_classic_proposals
+from app.stub import stub_classic_proposals, stub_refine_description
 
 
 app = FastAPI(
@@ -66,6 +66,22 @@ class GenerateClassicResponse(BaseModel):
     proposals: list[dict[str, Any]]
     model: str
     raw_used: bool = False
+
+
+class RefineDescriptionRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    label_de: str = Field(alias="label-de")
+    summary_de: str | None = Field(default=None, alias="summary-de")
+    intent: str = "improve"
+    persona: str = "decision-maker"
+    extra_hint: str | None = Field(default=None, alias="extra-hint")
+
+
+class RefineDescriptionResponse(BaseModel):
+    label_de: str = Field(alias="label-de")
+    summary_de: str = Field(alias="summary-de")
+    model: str
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ── Prompt-Loading ──────────────────────────────────────────────────────
@@ -181,6 +197,49 @@ async def generate_classic(req: GenerateClassicRequest) -> GenerateClassicRespon
     content = await _call_dgx(settings, system, user)
     proposals = _parse_proposals(content)
     return GenerateClassicResponse(proposals=proposals, model=settings.dgx_model)
+
+
+@app.post("/v1/refine-description", response_model=RefineDescriptionResponse)
+async def refine_description(req: RefineDescriptionRequest) -> RefineDescriptionResponse:
+    settings = get_settings()
+    if settings.llm_mode.lower() == "stub":
+        out = stub_refine_description(req.label_de, req.summary_de or "", req.intent)
+        return RefineDescriptionResponse(**out, model="stub")
+
+    system = (_PROMPT_DIR / "refine_description_system.txt").read_text(encoding="utf-8")
+    user = (
+        f"Intent: {req.intent}\n"
+        f"Persona: {req.persona}\n"
+        f"Label: {req.label_de}\n"
+        f"Beschreibung: {req.summary_de or '(leer)'}\n"
+        + (f"Extra-Hinweis: {req.extra_hint}\n" if req.extra_hint else "")
+    )
+    content = await _call_dgx(settings, system, user)
+    parsed = _parse_json_object(content)
+    return RefineDescriptionResponse(
+        **{"label-de": parsed.get("label-de", req.label_de),
+           "summary-de": parsed.get("summary-de", "")},
+        model=settings.dgx_model,
+    )
+
+
+def _parse_json_object(content: str) -> dict:
+    s = content.strip()
+    if s.startswith("```"):
+        s = s.strip("`")
+        nl = s.find("\n")
+        if nl >= 0:
+            s = s[nl + 1 :]
+        if s.endswith("```"):
+            s = s[:-3]
+        s = s.strip()
+    try:
+        parsed = json.loads(s)
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=502, detail=f"LLM returned non-JSON: {s[:200]}") from e
+    if not isinstance(parsed, dict):
+        raise HTTPException(status_code=502, detail="LLM returned non-object")
+    return parsed
 
 
 @app.post("/v1/extract")
