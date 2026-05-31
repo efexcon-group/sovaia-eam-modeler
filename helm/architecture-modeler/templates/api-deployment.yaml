@@ -17,29 +17,76 @@ spec:
       labels:
         app.kubernetes.io/name: {{ include "am.name" . }}
         app.kubernetes.io/component: api
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+
+      # Init-Container clont sovaia-contracts in ein emptyDir-Volume.
+      # Auth via Secret (GH-PAT mit Contents:Read).
+      initContainers:
+        - name: clone-contracts
+          image: "{{ .Values.images.initGit.repository }}:{{ .Values.images.initGit.tag }}"
+          imagePullPolicy: {{ .Values.images.initGit.pullPolicy }}
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.contracts.secretRef.name }}
+                  key: token
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              cd /reference
+              # falls vorhanden, sauberen Klon erzwingen
+              rm -rf .git ./* 2>/dev/null || true
+              git clone --depth={{ .Values.contracts.depth }} \
+                --branch={{ .Values.contracts.branch }} \
+                https://x-access-token:${GH_TOKEN}@{{ .Values.contracts.repoUrl }} \
+                .
+              echo "✓ sovaia-contracts ${{ .Values.contracts.branch }} cloned"
+          volumeMounts:
+            - name: reference
+              mountPath: /reference
+
       containers:
         - name: api
-          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
-          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          image: "{{ .Values.images.api.repository }}:{{ .Values.images.api.tag }}"
+          imagePullPolicy: {{ .Values.images.api.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.api.port }}
+            - name: http
+              containerPort: {{ .Values.api.port }}
           env:
             {{- range $k, $v := .Values.api.env }}
             - name: {{ $k }}
               value: {{ $v | quote }}
             {{- end }}
-            - name: EAM_DATABASE_URL
+            {{- if .Values.oidc.enabled }}
+            - name: EAM_OIDC_ISSUER
+              value: {{ .Values.oidc.issuer | quote }}
+            - name: EAM_OIDC_AUDIENCE
+              value: {{ .Values.oidc.audience | quote }}
+            - name: EAM_AUTH_REQUIRED
+              value: {{ .Values.oidc.authRequired | quote }}
+            {{- end }}
+            {{- if .Values.license.enabled }}
+            - name: EAM_LICENSE_URL
+              value: {{ .Values.license.url | quote }}
+            - name: EAM_LICENSE_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.postgres.secretName }}
-                  key: {{ .Values.postgres.secretKey }}
-          {{- if .Values.referenceConfigMap.enabled }}
+                  name: {{ .Values.license.secretRef.name }}
+                  key: {{ .Values.license.secretRef.key }}
+            {{- end }}
           volumeMounts:
             - name: reference
               mountPath: /etc/sovaia-reference
               readOnly: true
-          {{- end }}
+            - name: overlays
+              mountPath: /data/overlays
           livenessProbe:
             httpGet: { path: /v1/health, port: {{ .Values.api.port }} }
             initialDelaySeconds: 10
@@ -49,9 +96,31 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.api.resources | nindent 12 }}
-      {{- if .Values.referenceConfigMap.enabled }}
+
       volumes:
         - name: reference
-          configMap:
-            name: {{ .Values.referenceConfigMap.name }}
-      {{- end }}
+          emptyDir: {}
+        - name: overlays
+          {{- if .Values.overlays.pvc.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "am.fullname" . }}-overlays
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+
+---
+{{- if .Values.overlays.pvc.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "am.fullname" . }}-overlays
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "am.labels" . | nindent 4 }}
+spec:
+  accessModes: [{{ .Values.overlays.pvc.accessMode }}]
+  storageClassName: {{ .Values.overlays.pvc.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.overlays.pvc.size }}
+{{- end }}

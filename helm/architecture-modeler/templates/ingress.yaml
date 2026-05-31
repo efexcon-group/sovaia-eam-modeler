@@ -6,16 +6,16 @@ metadata:
   namespace: {{ .Values.namespace }}
   labels:
     {{- include "am.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
   annotations:
-    {{- range $k, $v := .Values.ingress.annotations }}
-    {{ $k }}: {{ $v | quote }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
-  {{- if .Values.ingress.tls }}
+  {{- if .Values.ingress.tls.enabled }}
   tls:
     - hosts: [{{ .Values.ingress.host | quote }}]
-      secretName: {{ include "am.fullname" . }}-tls
+      secretName: {{ .Values.ingress.tls.secretName }}
   {{- end }}
   rules:
     - host: {{ .Values.ingress.host }}

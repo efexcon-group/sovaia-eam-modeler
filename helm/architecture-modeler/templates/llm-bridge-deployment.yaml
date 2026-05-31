@@ -7,7 +7,7 @@ metadata:
     {{- include "am.labels" . | nindent 4 }}
     app.kubernetes.io/component: llm-bridge
 spec:
-  replicas: {{ .Values.eamLlmBridge.replicas }}
+  replicas: {{ .Values.bridge.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "am.name" . }}
@@ -20,21 +20,45 @@ spec:
     spec:
       containers:
         - name: llm-bridge
-          image: "{{ .Values.eamLlmBridge.image.repository }}:{{ .Values.eamLlmBridge.image.tag }}"
-          imagePullPolicy: {{ .Values.eamLlmBridge.image.pullPolicy }}
+          image: "{{ .Values.images.bridge.repository }}:{{ .Values.images.bridge.tag }}"
+          imagePullPolicy: {{ .Values.images.bridge.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.eamLlmBridge.port }}
+            - name: http
+              containerPort: {{ .Values.bridge.port }}
           env:
-            {{- range $k, $v := .Values.eamLlmBridge.env }}
+            {{- range $k, $v := .Values.bridge.env }}
             - name: {{ $k }}
               value: {{ $v | quote }}
             {{- end }}
+            # DGX-Sensitivdaten aus Secret (auch wenn LLM_MODE=stub — bleibt
+            # leer wenn Secret nicht gesetzt, das ist OK).
+            - name: DGX_LLM_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bridge.dgxSecretRef.name }}
+                  key: DGX_LLM_URL
+                  optional: true
+            - name: DGX_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bridge.dgxSecretRef.name }}
+                  key: DGX_MODEL
+                  optional: true
+            - name: DGX_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bridge.dgxSecretRef.name }}
+                  key: DGX_API_KEY
+                  optional: true
           livenessProbe:
-            httpGet: { path: /v1/health, port: {{ .Values.eamLlmBridge.port }} }
+            httpGet: { path: /v1/health, port: {{ .Values.bridge.port }} }
             initialDelaySeconds: 10
             periodSeconds: 20
+          readinessProbe:
+            httpGet: { path: /v1/health, port: {{ .Values.bridge.port }} }
+            periodSeconds: 10
           resources:
-            {{- toYaml .Values.eamLlmBridge.resources | nindent 12 }}
+            {{- toYaml .Values.bridge.resources | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service
@@ -51,5 +75,5 @@ spec:
     app.kubernetes.io/component: llm-bridge
   ports:
     - name: http
-      port: {{ .Values.eamLlmBridge.port }}
-      targetPort: {{ .Values.eamLlmBridge.port }}
+      port: {{ .Values.bridge.port }}
+      targetPort: {{ .Values.bridge.port }}

@@ -23,27 +23,31 @@ legacy/             v2-v9 HTML-Prototypes (UX-Konzept-Referenz, read-only)
 - Iteration-0-Spec in [docs/iteration-0.md](docs/iteration-0.md)
 - Reference-Modell in [sovaia-contracts/registry/architecture-modeler/](https://github.com/efexcon-group/sovaia-contracts/tree/main/registry/architecture-modeler)
 
-## Lokal starten (Empfohlen: Docker Compose)
+## Deployment
 
-Voraussetzung: `sovaia-contracts` liegt als Geschwister-Repo daneben
-(`~/sovaia-contracts/`). Dann:
+Production-Pfad ist **K3S + ArgoCD** wie der Rest der Plattform (ADR-082,
+ADR-066). Definition liegt in
+[sovaia-platform/gitops/platform/architecture-modeler-app.yaml](https://github.com/efexcon-group/sovaia-platform/blob/main/gitops/platform/architecture-modeler-app.yaml).
 
+Helm-Chart-Quelle: [helm/architecture-modeler/](helm/architecture-modeler/).
+
+Image-Build: GitHub-Actions pushen automatisch nach `ghcr.io/efexcon-group/`
+- `architecture-modeler-api`
+- `architecture-modeler-frontend`
+- `eam-llm-bridge`
+
+Lokal Helm preview:
 ```bash
-make up
-# oder:  docker compose up --build -d
+make helm-render             # rendert Manifests
+make helm-diff               # diff gegen Cluster-Stand
 ```
 
-URLs:
-- Frontend:  `http://localhost:5173/`  (bzw. `http://<tailscale-ip>:5173/`)
-- Backend:   `http://localhost:8003/v1/health`
+Reference-Verteilung in Pods: Init-Container git-cloned `sovaia-contracts`
+beim Pod-Start (kein Snapshot, keine Kopie). Auth via Secret
+`architecture-modeler-contracts-token` (read-only GH-PAT, in Rancher
+gepflegt — siehe [bootstrap/secrets-templates.yaml](https://github.com/efexcon-group/sovaia-platform/blob/main/bootstrap/secrets-templates.yaml)).
 
-Logs: `make logs`  ·  Stop: `make down`
-
-LLM-Modus per Default `stub` (Template-Vorschläge ohne DGX). Echter
-DGX-Call: `.env`-Datei aus `.env.example` ableiten, `EAM_LLM_MODE=dgx`
-+ `DGX_LLM_URL` setzen, dann `make rebuild`.
-
-## Alternative: ohne Docker
+## Lokal entwickeln (ohne Docker)
 
 ```bash
 # Backend

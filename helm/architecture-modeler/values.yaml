@@ -1,72 +1,116 @@
-# Default-Werte für architecture-modeler Helm-Chart.
-# Werden in values-internal.yaml (Sovaia-internal) bzw. values-tenant-template.yaml
-# (Lizenz-Tenants) überschrieben.
+# Defaults für architecture-modeler. Wird durch values-internal.yaml bzw
+# values-tenant-template.yaml überschrieben.
 
 namespace: platform
 tenant: sovaia-internal
 
-api:
-  image:
+# ── Container-Images (CI pusht nach jedem main-merge) ───────────────────
+images:
+  api:
     repository: ghcr.io/efexcon-group/architecture-modeler-api
-    tag: "0.1.0"
+    tag: latest
+    pullPolicy: Always
+  frontend:
+    repository: ghcr.io/efexcon-group/architecture-modeler-frontend
+    tag: latest
+    pullPolicy: Always
+  bridge:
+    repository: ghcr.io/efexcon-group/eam-llm-bridge
+    tag: latest
+    pullPolicy: Always
+  initGit:
+    repository: alpine/git
+    tag: 2.45.2
     pullPolicy: IfNotPresent
+
+# ── API ─────────────────────────────────────────────────────────────────
+api:
   replicas: 1
   port: 8000
   env:
-    EAM_ENV: "dev"
-    EAM_REFERENCE_REPO_PATH: "/etc/sovaia-reference"
-    EAM_LLM_BRIDGE_URL: "http://architecture-modeler-llm-bridge:8001"
-    EAM_LICENSE_CORE_URL: "http://license-core.platform:8080"
+    EAM_ENV: cluster
+    EAM_REFERENCE_REPO_PATH: /etc/sovaia-reference/registry/architecture-modeler
+    EAM_LLM_BRIDGE_URL: http://architecture-modeler-llm-bridge:8001
+    EAM_LLM_BRIDGE_TIMEOUT: "180"
+    EAM_OVERLAY_DIR: /data/overlays
+    EAM_TENANT_DEFAULT: sovaia-internal
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits:   { cpu: 500m, memory: 512Mi }
 
+# ── Frontend (nginx + statisches React-Bundle) ──────────────────────────
 frontend:
-  image:
-    repository: ghcr.io/efexcon-group/architecture-modeler-frontend
-    tag: "0.1.0"
-    pullPolicy: IfNotPresent
   replicas: 1
   port: 80
   resources:
     requests: { cpu: 50m,  memory: 64Mi }
     limits:   { cpu: 200m, memory: 128Mi }
 
-eamLlmBridge:
-  image:
-    repository: ghcr.io/efexcon-group/eam-llm-bridge
-    tag: "0.1.0"
-    pullPolicy: IfNotPresent
+# ── Bridge (LLM → DGX) ──────────────────────────────────────────────────
+bridge:
   replicas: 1
   port: 8001
   env:
-    DGX_GATEWAY_URL: "http://dgx-gateway.sovaia:8000"
+    EAM_LLM_MODE: stub             # stub | dgx — Override per values-internal
+    DGX_TIMEOUT_SECONDS: "150"
+  # DGX-Sensitivdaten (URL, MODEL, API_KEY) kommen aus secretRef:
+  dgxSecretRef:
+    name: architecture-modeler-dgx-config
+    # erwartete Keys: DGX_LLM_URL, DGX_MODEL, DGX_API_KEY
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits:   { cpu: 500m, memory: 512Mi }
 
-postgres:
-  external: true
-  host: platform-postgresql.platform
-  port: 5432
-  database: architecture_modeler
-  secretName: architecture-modeler-postgres
-  secretKey: dsn
+# ── Sovaia-Reference (Init-Container clont sovaia-contracts pro Pod) ────
+# Production-Pfad ohne Snapshot-Kopien.
+contracts:
+  repoUrl: github.com/efexcon-group/sovaia-contracts.git
+  branch: main
+  depth: 1
+  secretRef:
+    name: architecture-modeler-contracts-token
+    # erwarteter Key: token (GH-PAT mit "Contents: Read" auf sovaia-contracts)
 
+# ── Overlay-Persistenz (Tenant-Edits) ───────────────────────────────────
+overlays:
+  pvc:
+    enabled: true
+    storageClass: local-path        # K3S-Default
+    size: 1Gi
+    accessMode: ReadWriteOnce
+
+# ── OIDC (Keycloak intern) ──────────────────────────────────────────────
+# Env wird gesetzt, Backend-Validierung kommt mit nächster Backend-Iteration.
+oidc:
+  enabled: true
+  issuer: https://keycloak.int.efexcon.com/realms/efexcon-group
+  audience: architecture-modeler-api
+  authRequired: false              # bis Backend OIDC-Middleware integriert ist
+
+# ── License-Core (für Tenant-Stufen) ────────────────────────────────────
+license:
+  enabled: false                   # values-internal: false. values-tenant-template: true.
+  url: ""
+  secretRef:
+    name: ""
+    key: ""
+
+# ── Ingress ─────────────────────────────────────────────────────────────
 ingress:
   enabled: true
   className: nginx
+  host: architektur-modeler.int.efexcon.com
+  tls:
+    enabled: true
+    secretName: architecture-modeler-tls
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-  host: architektur-modeler.int.efexcon.com
-  tls: true
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
 
-oidc:
-  issuer: "https://keycloak.int.efexcon.com/realms/efexcon-group"
-  clientId: architecture-modeler-frontend
-  audience: architecture-modeler-api
+# ── Labels & Annotations ────────────────────────────────────────────────
+podAnnotations: {}
 
-referenceConfigMap:
-  enabled: true
-  name: architecture-modeler-reference
-  # Inhalt wird per CI-Job aus sovaia-contracts/registry/architecture-modeler/ befüllt.
+serviceAccount:
+  create: false                    # nutzt default-SA im Namespace
+  name: ""

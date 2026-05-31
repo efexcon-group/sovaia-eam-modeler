@@ -1,22 +1,31 @@
-# Tenant-Template — pro Lizenz-Tenant aus diesem File ableiten und Platzhalter
-# {{TENANT_SLUG}}, {{TENANT_REALM}} ersetzen.
+# Tenant-Template — pro Lizenz-Tenant aus diesem File ableiten.
+# Platzhalter ersetzen: {{TENANT_SLUG}}, {{TENANT_REALM}}
 
 namespace: eam-modeler-{{TENANT_SLUG}}
 tenant: "{{TENANT_SLUG}}"
 
 api:
   env:
-    EAM_ENV: "tenant"
+    EAM_ENV: tenant
     EAM_TENANT_DEFAULT: "{{TENANT_SLUG}}"
+
+bridge:
+  env:
+    EAM_LLM_MODE: dgx
+    DGX_TIMEOUT_SECONDS: "150"
+
+oidc:
+  enabled: true
+  issuer: https://identity-kc.int.efexcon.com/auth/realms/{{TENANT_REALM}}
+  audience: architecture-modeler-api
+  authRequired: true               # Customer-Tenants Pflicht-Auth
+
+license:
+  enabled: true
+  url: http://license-core.platform:8080
+  secretRef:
+    name: architecture-modeler-license-token
+    key: token
 
 ingress:
   host: "{{TENANT_SLUG}}.architektur.sovaia.ch"
-
-oidc:
-  issuer: "https://identity-kc.int.efexcon.com/auth/realms/{{TENANT_REALM}}"
-  clientId: architecture-modeler-frontend
-  audience: architecture-modeler-api
-
-# License-Core-Check ist im Tenant-Mode Pflicht (im internal-Mode deaktiviert).
-licenseCheck:
-  required: true
