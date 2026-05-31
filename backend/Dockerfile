@@ -7,8 +7,12 @@ RUN uv pip install --system -r pyproject.toml
 
 COPY app /app/app
 
-# Alembic-Migrations folgen wenn Postgres-Persistenz hinzukommt; aktuell
-# nutzen wir JSON-Overlays (siehe app/storage/overlay.py).
+# Baked-in Sovaia-Reference. CI kopiert vor `docker build`:
+#   sovaia-contracts/registry/architecture-modeler/. → backend/reference/
+# Lokal docker build: backend/reference/ muss vorher manuell befüllt sein.
+# Dev ohne Docker: uvicorn nutzt EAM_REFERENCE_REPO_PATH (default
+# zeigt aufs Geschwister-Repo) — kein bake nötig.
+COPY reference /etc/sovaia-reference
 
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

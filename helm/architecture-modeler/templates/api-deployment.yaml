@@ -22,36 +22,6 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-
-      # Init-Container clont sovaia-contracts in ein emptyDir-Volume.
-      # Auth via Secret (GH-PAT mit Contents:Read).
-      initContainers:
-        - name: clone-contracts
-          image: "{{ .Values.images.initGit.repository }}:{{ .Values.images.initGit.tag }}"
-          imagePullPolicy: {{ .Values.images.initGit.pullPolicy }}
-          env:
-            - name: GH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.contracts.secretRef.name }}
-                  key: token
-          command:
-            - /bin/sh
-            - -c
-            - |
-              set -e
-              cd /reference
-              # falls vorhanden, sauberen Klon erzwingen
-              rm -rf .git ./* 2>/dev/null || true
-              git clone --depth={{ .Values.contracts.depth }} \
-                --branch={{ .Values.contracts.branch }} \
-                https://x-access-token:${GH_TOKEN}@{{ .Values.contracts.repoUrl }} \
-                .
-              echo "✓ sovaia-contracts ${{ .Values.contracts.branch }} cloned"
-          volumeMounts:
-            - name: reference
-              mountPath: /reference
-
       containers:
         - name: api
           image: "{{ .Values.images.api.repository }}:{{ .Values.images.api.tag }}"
@@ -82,9 +52,6 @@ spec:
                   key: {{ .Values.license.secretRef.key }}
             {{- end }}
           volumeMounts:
-            - name: reference
-              mountPath: /etc/sovaia-reference
-              readOnly: true
             - name: overlays
               mountPath: /data/overlays
           livenessProbe:
@@ -98,8 +65,6 @@ spec:
             {{- toYaml .Values.api.resources | nindent 12 }}
 
       volumes:
-        - name: reference
-          emptyDir: {}
         - name: overlays
           {{- if .Values.overlays.pvc.enabled }}
           persistentVolumeClaim:

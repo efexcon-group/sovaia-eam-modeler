@@ -18,18 +18,18 @@ images:
     repository: ghcr.io/efexcon-group/eam-llm-bridge
     tag: latest
     pullPolicy: Always
-  initGit:
-    repository: alpine/git
-    tag: 2.45.2
-    pullPolicy: IfNotPresent
 
 # ── API ─────────────────────────────────────────────────────────────────
+# Sovaia-Reference ist im API-Image gebaked unter /etc/sovaia-reference
+# (CI kopiert vor docker build aus sovaia-contracts). Keine Init-Container,
+# keine K8s-Secrets, keine Runtime-Cloning — alles via Image-Updater
+# + Image-Tag-Bumps versioniert.
 api:
   replicas: 1
   port: 8000
   env:
     EAM_ENV: cluster
-    EAM_REFERENCE_REPO_PATH: /etc/sovaia-reference/registry/architecture-modeler
+    EAM_REFERENCE_REPO_PATH: /etc/sovaia-reference
     EAM_LLM_BRIDGE_URL: http://architecture-modeler-llm-bridge:8001
     EAM_LLM_BRIDGE_TIMEOUT: "180"
     EAM_OVERLAY_DIR: /data/overlays
@@ -60,16 +60,6 @@ bridge:
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits:   { cpu: 500m, memory: 512Mi }
-
-# ── Sovaia-Reference (Init-Container clont sovaia-contracts pro Pod) ────
-# Production-Pfad ohne Snapshot-Kopien.
-contracts:
-  repoUrl: github.com/efexcon-group/sovaia-contracts.git
-  branch: main
-  depth: 1
-  secretRef:
-    name: architecture-modeler-contracts-token
-    # erwarteter Key: token (GH-PAT mit "Contents: Read" auf sovaia-contracts)
 
 # ── Overlay-Persistenz (Tenant-Edits) ───────────────────────────────────
 overlays:

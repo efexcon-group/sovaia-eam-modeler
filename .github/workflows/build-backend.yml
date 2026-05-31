@@ -6,6 +6,8 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/build-backend.yml'
+  # Reference-Updates triggern auch einen Build via workflow_dispatch
+  # bzw via Cross-Repo-Workflow in sovaia-contracts.
   workflow_dispatch:
 
 permissions:
@@ -19,7 +21,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout sovaia-eam-modeler
+        uses: actions/checkout@v4
+
+      - name: Checkout sovaia-contracts (reference)
+        uses: actions/checkout@v4
+        with:
+          repository: efexcon-group/sovaia-contracts
+          token: ${{ secrets.CONTRACTS_READ_TOKEN }}
+          path: _contracts
+          ref: main
+
+      - name: Bake reference into backend build context
+        run: |
+          mkdir -p backend/reference
+          cp -r _contracts/registry/architecture-modeler/. backend/reference/
+          echo "Reference content baked:"
+          ls -la backend/reference/
 
       - uses: docker/setup-buildx-action@v3
 
