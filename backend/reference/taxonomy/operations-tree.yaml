@@ -1,0 +1,51 @@
+# Operations-Layer-Baum.
+# Betrieb, Monitoring, Incident-Mgmt, Release-Management.
+# V1-Stub.
+
+taxonomy-id: operations
+taxonomy-version: "0.1.0"
+layer: operations
+
+roots:
+
+  - id: monitoring
+    label-de: Monitoring & Observability
+    summary-de: Metriken, Logs, Traces, Dashboards, Alerting.
+    children:
+      - { id: metrics,      label-de: Metriken,                summary-de: Prometheus + Grafana — Service-, Pod-, Business-Metriken. }
+      - { id: logs,         label-de: Log-Aggregation,         summary-de: Loki + Promtail — strukturierte Logs pro Pod/Tenant. }
+      - { id: tracing,      label-de: Distributed Tracing,     summary-de: Request-Spans über Service-Grenzen (OpenTelemetry). }
+      - { id: alerting,     label-de: Alerting,                summary-de: AlertManager + Eskalations-Pfad (Slack/Teams/Mail). }
+
+  - id: incident-mgmt
+    label-de: Incident-Management
+    summary-de: Wenn was kaputt geht — wer macht was, wie schnell.
+    children:
+      - { id: pager,        label-de: On-Call-Rotation,        summary-de: Wer ist erreichbar — Übergabe und Pikett-Plan. }
+      - { id: runbooks,     label-de: Runbooks,                summary-de: Schritt-für-Schritt-Recovery pro bekanntem Failure-Mode. }
+      - { id: postmortem,   label-de: Post-Mortem-Kultur,      summary-de: Blameless Reviews, Aktion-Tracking, lessons-learned. }
+
+  - id: release-mgmt
+    label-de: Release-Management
+    summary-de: Wie kommt Code in Produktion.
+    children:
+      - { id: gitops,       label-de: GitOps-Flow,             summary-de: ArgoCD + Image-Updater + sha-tags pro Commit. }
+      - { id: feature-flag, label-de: Feature-Flags,           summary-de: Rollout-Steuerung pro Tenant/User-Bucket. }
+      - { id: canary,       label-de: Canary / Blue-Green,     summary-de: Schrittweise Rollouts mit Auto-Rollback. }
+      - { id: rollback,     label-de: Rollback-Pfade,          summary-de: Image-Tag-Pin, Helm-Rollback, DB-Migrations-Revert. }
+
+  - id: capacity
+    label-de: Capacity-Planung
+    summary-de: Wann reichen Ressourcen nicht mehr.
+    children:
+      - { id: hpa,          label-de: Horizontal-Pod-Autoscaler, summary-de: K8s-basiertes Pod-Scaling auf Metriken. }
+      - { id: forecasting,  label-de: Forecasting,             summary-de: Trend-Analyse Compute/Storage/Network. }
+      - { id: cost-attr,    label-de: Cost-Attribution,        summary-de: Wer verbraucht wieviel — pro Tenant/App. }
+
+  - id: backup-dr
+    label-de: Backup & Disaster-Recovery
+    summary-de: Was wenn alles weg ist.
+    children:
+      - { id: backup-strategy, label-de: Backup-Strategie,    summary-de: Velero + MinIO + Off-Site, RPO/RTO definiert. }
+      - { id: dr-drills,    label-de: DR-Drills,               summary-de: Regelmäßige Test-Restores in Test-Cluster. }
+      - { id: chaos,        label-de: Chaos-Engineering,       summary-de: Geplante Failure-Injektion zum Lernen. }

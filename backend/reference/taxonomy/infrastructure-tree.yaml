@@ -1,0 +1,59 @@
+# Infrastructure-Layer-Baum.
+# Compute, Storage, Network, Identity, Tenancy.
+# V1-Stub.
+
+taxonomy-id: infrastructure
+taxonomy-version: "0.1.0"
+layer: infrastructure
+
+roots:
+
+  - id: compute
+    label-de: Compute
+    summary-de: Server, GPUs, Container-Hosts.
+    children:
+      - { id: cpu-cluster,  label-de: CPU-Cluster (K3S),       summary-de: General-purpose-Workload auf Bare-Metal/VMs. }
+      - { id: gpu-cluster,  label-de: GPU-Cluster (DGX),       summary-de: AI-Inferenz, Embeddings, Training. }
+      - { id: serverless,   label-de: Serverless / Function,   summary-de: Event-getriebene Mini-Workloads (z.B. Cloudflare-Workers). }
+
+  - id: storage
+    label-de: Storage
+    summary-de: Speicher-Schichten — block, object, archival.
+    children:
+      - { id: block,        label-de: Block-Storage (PVC),     summary-de: K8s-PVC für Datenbanken, Stateful-Services. }
+      - { id: object,       label-de: Object-Storage (MinIO),  summary-de: Dokumente, Backups, AI-Embedding-Files. }
+      - { id: archive,      label-de: Archiv-Storage,          summary-de: Cold-Storage für Audit-Retention, Legal-Hold. }
+
+  - id: network
+    label-de: Network
+    summary-de: Konnektivität, DNS, Edge.
+    children:
+      - { id: ingress,      label-de: Ingress (Nginx),         summary-de: HTTP/HTTPS-Routing zu Cluster-Services. }
+      - { id: dns,          label-de: DNS (CoreDNS + Cloudflare), summary-de: Internal-DNS + External-DNS via Cloudflare. }
+      - { id: vpn-tailnet,  label-de: Tailscale-Tailnet,       summary-de: Zero-Trust-VPN für Admin-Zugriff + Cross-Site. }
+      - { id: tunnel,       label-de: Cloudflared-Tunnel,      summary-de: Sicherer Outbound-Tunnel für extern erreichbare Ingresses. }
+
+  - id: identity-infra
+    label-de: Identity-Infrastruktur
+    summary-de: Auth-Server, Federation-Endpoints.
+    children:
+      - { id: kc-internal,  label-de: Keycloak Internal,       summary-de: Mitarbeiter-Identitäten + Entra-Federation. }
+      - { id: kc-customer,  label-de: Identity-KC Customer,    summary-de: Customer-Self-Service, Multi-Brand-Personas. }
+      - { id: pki,          label-de: TLS / cert-manager,      summary-de: Wildcard-Certs + Let's-Encrypt, automatische Rotation. }
+
+  - id: tenancy
+    label-de: Tenancy & Isolation
+    summary-de: Wie sind Tenants getrennt — Namespace, DB, Encryption.
+    children:
+      - { id: ns-isolation, label-de: Namespace-Isolation,     summary-de: 1 NS pro Tenant für L3-Services, NetworkPolicies. }
+      - { id: db-tenancy,   label-de: DB-Tenancy,              summary-de: Schema-pro-Tenant + Row-Level-Security in pgvector. }
+      - { id: encrypt-rest, label-de: Encryption at Rest,      summary-de: Disk-/Volume-Encryption für PVCs + MinIO. }
+      - { id: encrypt-tx,   label-de: Encryption in Transit,   summary-de: mTLS innerhalb des Clusters + TLS zu Ingresses. }
+
+  - id: regions
+    label-de: Regionen & Redundanz
+    summary-de: Wo läuft was — Souveränität, Multi-Site.
+    children:
+      - { id: ch-onprem,    label-de: CH On-Premises,          summary-de: Souveränes Rechenzentrum in der Schweiz. }
+      - { id: ch-secondary, label-de: CH Secondary-Site,       summary-de: Sekundär-Site für DR + Multi-Site-Workloads. }
+      - { id: edge-points,  label-de: Edge-Points (Tailscale), summary-de: Customer-Site-Connectivity über Tailnet. }

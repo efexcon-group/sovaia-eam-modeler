@@ -1,0 +1,52 @@
+# Data-Layer-Baum.
+# Datenklassen + Domänen die durch Sovaia abgebildet werden.
+# V1-Stub — Inhalt wird redaktionell vertieft.
+
+taxonomy-id: data
+taxonomy-version: "0.1.0"
+layer: data
+
+roots:
+
+  - id: master-data
+    label-de: Stammdaten
+    summary-de: Wer/Was/Wo — Personen, Organisationen, Objekte, Artikel.
+    children:
+      - { id: persons,      label-de: Personen,                summary-de: Mitarbeiter, Kunden, Lieferanten — kanonische Identitäten. }
+      - { id: organisations,label-de: Organisationen,          summary-de: Mandanten, Tochterfirmen, Brands, Holdings. }
+      - { id: articles,     label-de: Artikel & Leistungen,    summary-de: Verkaufs-/Service-Katalog, Preise, Konditionen. }
+      - { id: objects,      label-de: Objekte/Anlagen,         summary-de: Liegenschaften, Geräte, Container, Schiffe, Wartungs-Items. }
+
+  - id: transactional-data
+    label-de: Transaktions-Daten
+    summary-de: Vorgangs- und Bewegungsdaten — was ist passiert.
+    children:
+      - { id: documents,    label-de: Belege,                  summary-de: Angebot, Auftrag, Rechnung, Vertrag, Pflegedoku. }
+      - { id: settlements,  label-de: Settlement,              summary-de: Zahlungen, Bank-Matches, Abrechnungen, Verbuchungen. }
+      - { id: events,       label-de: Events / Audit-Trail,    summary-de: Activity-Log, Workflow-Schritte, Domain-Events. }
+      - { id: ledger,       label-de: Buchhaltung,             summary-de: GL/AR/AP-Buchungssätze, Periodenabschlüsse. }
+
+  - id: ai-data
+    label-de: AI-Daten
+    summary-de: Embeddings, Vektoren, Knowledge-Sources, AI-Audit-Spuren.
+    children:
+      - { id: embeddings,   label-de: Embedding-Vektoren,      summary-de: pgvector-Spaces pro Tenant/Domäne. }
+      - { id: knowledge,    label-de: Knowledge-Sources,       summary-de: Wiki, SharePoint, Dokumenten-Pools — kontextualisiert. }
+      - { id: ai-audit,     label-de: AI-Audit & Provenance,   summary-de: Welcher Agent hat wann auf welche Daten zugegriffen. }
+      - { id: ml-features,  label-de: ML-Feature-Store,        summary-de: Berechnete Features für Modelle, Lookback-Windows. }
+
+  - id: governance-data
+    label-de: Governance-Daten
+    summary-de: Permissions, Audit, Compliance-Sicht — wer darf was sehen/tun.
+    children:
+      - { id: permissions,  label-de: Permissions / Roles,     summary-de: RBAC-Rules, Profile, Mode-Caps. }
+      - { id: audit-log,    label-de: Audit-Log,               summary-de: Tamper-resistente Zugriffs-/Änderungs-Spuren. }
+      - { id: data-class,   label-de: Daten-Klassifizierung,   summary-de: PII-/sensitivity-Tags, Aufbewahrungsfristen. }
+
+  - id: external-data
+    label-de: Externe Daten
+    summary-de: Eingehende Datenströme von Lieferanten, Behörden, Märkten.
+    children:
+      - { id: edi,          label-de: EDI/EDIFACT,             summary-de: Standardisierte Geschäfts-Nachrichten (IFTSTA, INVOIC). }
+      - { id: open-data,    label-de: Open-Data / Behörden,    summary-de: Zollkurse, Geo-Daten, Wettervorhersagen, Statistiken. }
+      - { id: market-feeds, label-de: Markt-Feeds,             summary-de: Frachtraten, Energie-Preise, Wechselkurse, Indizes. }

@@ -57,6 +57,8 @@ function SourceBadge({ node }: { node: NavigatorNode }) {
   return null;
 }
 
+const DND_MIME = "application/x-eam-node";
+
 function NodeCard({
   node,
   side,
@@ -66,6 +68,7 @@ function NodeCard({
   onDelete,
   onRevert,
   onMap,
+  onCrossDrop,
 }: {
   node: NavigatorNode;
   side: "classic" | "sovaia";
@@ -75,6 +78,8 @@ function NodeCard({
   onDelete?: (n: NavigatorNode) => void;
   onRevert?: (n: NavigatorNode) => void;
   onMap?: (n: NavigatorNode) => void;
+  /** Drag&Drop: ein Knoten der anderen Seite wurde auf DIESEN Knoten gedroppt. */
+  onCrossDrop?: (receivingSide: "classic" | "sovaia", draggedSide: "classic" | "sovaia", draggedId: string) => void;
 }) {
   const tags = node.tags ?? {};
   const status =
@@ -83,8 +88,46 @@ function NodeCard({
       : node.impact?.["operational-status"] ?? tags.status;
   const availableFrom = side === "sovaia" ? node.impact?.["available-from"] : undefined;
 
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData(DND_MIME, `${side}:${node.id}`);
+    e.dataTransfer.effectAllowed = "link";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes(DND_MIME)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "link";
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => setDragOver(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const data = e.dataTransfer.getData(DND_MIME);
+    if (!data) return;
+    const [otherSide, otherId] = data.split(":");
+    if (!otherSide || !otherId) return;
+    if (otherSide === side) return;            // gleiche Seite → ignore
+    if (otherSide === side && otherId === node.id) return;  // identisch
+    onCrossDrop?.(side, otherSide as "classic" | "sovaia", otherId);
+  };
+
   return (
-    <div className="group rounded-md border border-slate-200 bg-white p-3 relative">
+    <div
+      className={[
+        "group rounded-md border bg-white p-3 relative cursor-grab active:cursor-grabbing transition-all",
+        dragOver ? "border-indigo-500 ring-2 ring-indigo-300 bg-indigo-50/30" : "border-slate-200",
+      ].join(" ")}
+      draggable
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="font-medium text-sm text-slate-900 flex items-center gap-2 flex-wrap">
           {node["label-de"]}
@@ -337,6 +380,7 @@ export function ComparePanel({
     }
   };
 
+
   if (classic.length === 0 && sovaia.length === 0) {
     return (
       <section className="px-4 py-4 border-t border-slate-200">
@@ -424,6 +468,15 @@ export function ComparePanel({
                   onEdit={(node) => setDrawer({ mode: "edit-classic", node })}
                   onDelete={handleDelete}
                   onMap={(node) => setMappingDrawer({ mode: "create", defaultClassicIds: [node.id] })}
+                  onCrossDrop={(_receivingSide, draggedSide, draggedId) => {
+                    if (draggedSide === "sovaia") {
+                      setMappingDrawer({
+                        mode: "create",
+                        defaultClassicIds: [n.id],
+                        defaultSovaiaIds: [draggedId],
+                      });
+                    }
+                  }}
                 />
               ))
             )}
@@ -452,6 +505,15 @@ export function ComparePanel({
                     onEdit={(node) => setDrawer({ mode: "edit-sovaia", node })}
                     onRevert={handleRevertSovaia}
                     onMap={(node) => setMappingDrawer({ mode: "create", defaultSovaiaIds: [node.id] })}
+                    onCrossDrop={(_receivingSide, draggedSide, draggedId) => {
+                      if (draggedSide === "classic") {
+                        setMappingDrawer({
+                          mode: "create",
+                          defaultClassicIds: [draggedId],
+                          defaultSovaiaIds: [n.id],
+                        });
+                      }
+                    }}
                   />
                 );
               })

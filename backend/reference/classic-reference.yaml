@@ -363,7 +363,250 @@ nodes:
       seeded-by: human-architect
     summary-de: Energie- und Wasserverbrauch wird monatlich von Hand abgelesen und in Excel rapportiert.
 
-  # Weitere Pfade werden vom LLM nachgeladen und vom User gepflegt —
-  # siehe ADR-082 §"Classic-Reference-Modell".
+  # ── Data-Layer (V1-Demo, zur redaktionellen Vertiefung) ─────────────
+
+  - id: cls-stammdaten-excel
+    type: anwendung
+    label-de: Stammdaten-Excel
+    tags:
+      ownership: classic
+      taxonomy-paths: "data/master-data,data/master-data/persons,data/master-data/articles"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Zentrales Stammdaten-Sheet pro Domäne — Kunden, Lieferanten, Artikel — mit hoher Drift-Rate über Filialen hinweg.
+
+  - id: cls-papier-buchungsblock
+    type: dokument
+    label-de: Papier-Buchungsblock + manueller Bank-Import
+    tags:
+      ownership: classic
+      taxonomy-paths: "data/transactional-data/ledger,data/transactional-data/settlements"
+      operational-status: declining
+      seeded-by: human-architect
+    summary-de: Buchungssätze handschriftlich, monatlich von Treuhänder ins Buchhaltungs-System eingegeben.
+
+  - id: cls-share-drive
+    type: anwendung
+    label-de: Shared-Drive für Dokumente
+    tags:
+      ownership: classic
+      taxonomy-paths: "data/transactional-data/documents,data/external-data"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Windows-Share oder OneDrive/SharePoint-Bibliothek mit Ordnerstruktur pro Kunde/Projekt — keine semantische Suche.
+
+  - id: cls-rolemanagement-ad
+    type: prozess
+    label-de: Active-Directory-Gruppen für Permissions
+    tags:
+      ownership: classic
+      taxonomy-paths: "data/governance-data/permissions"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: User-Berechtigungen über AD-Gruppen — granular, aber Audit-arm und nicht App-spezifisch.
+
+  # ── Technology-Layer ────────────────────────────────────────────────
+
+  - id: cls-vmware-rechenzentrum
+    type: anwendung
+    label-de: VMware-Rechenzentrum on-prem
+    tags:
+      ownership: classic
+      taxonomy-paths: "technology/runtimes,technology/runtimes/jvm"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Klassische VM-Plattform mit per-Hand-Provisionierung, Lifecycle ohne IaC.
+
+  - id: cls-jenkins-shell-skripte
+    type: prozess
+    label-de: Jenkins + Shell-Skripte für Releases
+    tags:
+      ownership: classic
+      taxonomy-paths: "technology/devops-tech"
+      operational-status: declining
+      seeded-by: human-architect
+    summary-de: Build-Server mit gewachsenen Pipeline-Skripten — wenig Reuse, hoher Maintenance-Aufwand.
+
+  - id: cls-oracle-db
+    type: anwendung
+    label-de: Oracle / SQL-Server
+    tags:
+      ownership: classic
+      taxonomy-paths: "technology/data-tech"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Klassisches RDBMS für ERP/CRM — kein Vector-Support, lizenzkostengetrieben.
+
+  # ── Operations-Layer ────────────────────────────────────────────────
+
+  - id: cls-nagios-monitoring
+    type: anwendung
+    label-de: Nagios / Zabbix Monitoring
+    tags:
+      ownership: classic
+      taxonomy-paths: "operations/monitoring,operations/monitoring/metrics"
+      operational-status: declining
+      seeded-by: human-architect
+    summary-de: Klassisches Monitoring mit Schwellen-Alerts, lokaler Konsole und Mail-Eskalation — keine Trace-Korrelation.
+
+  - id: cls-on-call-telefon
+    type: prozess
+    label-de: Telefonisches Pikett ohne strukturierte Übergabe
+    tags:
+      ownership: classic
+      taxonomy-paths: "operations/incident-mgmt/pager"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Pikett-Person wird angerufen, Übergabe per Mail/Word — kein zentrales Runbook-System.
+
+  - id: cls-backup-tape
+    type: prozess
+    label-de: Tape-Backup wöchentlich
+    tags:
+      ownership: classic
+      taxonomy-paths: "operations/backup-dr/backup-strategy"
+      operational-status: niche
+      seeded-by: human-architect
+    summary-de: Wöchentliche Magnetbänder, Off-Site-Lagerung in Bank-Safe — Restore selten getestet.
+
+  # ── Infrastructure-Layer ────────────────────────────────────────────
+
+  - id: cls-eigene-server
+    type: anwendung
+    label-de: Eigene Server im Keller-Rack
+    tags:
+      ownership: classic
+      taxonomy-paths: "infrastructure/compute,infrastructure/regions/ch-onprem"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Physische Server im eigenen Rack, USV ja, aber kein zweites Site und keine DR-Drills.
+
+  - id: cls-vpn-openvpn
+    type: anwendung
+    label-de: OpenVPN für Remote-Access
+    tags:
+      ownership: classic
+      taxonomy-paths: "infrastructure/network/vpn-tailnet"
+      operational-status: declining
+      seeded-by: human-architect
+    summary-de: Klassischer VPN-Concentrator mit pro-User-Cert — administrationsintensiv, fehleranfällig.
+
+  - id: cls-disk-encryption-bitlocker
+    type: prozess
+    label-de: Bitlocker auf Endgeräten
+    tags:
+      ownership: classic
+      taxonomy-paths: "infrastructure/tenancy/encrypt-rest"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Disk-Encryption auf Laptops — Schutz für mobile Geräte, jedoch keine Server-/PVC-Encryption.
+
+  # ── Governance / Compliance / Security ──────────────────────────────
+
+  - id: cls-iso-handbuch-papier
+    type: dokument
+    label-de: ISO-Handbuch in Papier-Ordner
+    tags:
+      ownership: classic
+      taxonomy-paths: "governance-compliance-security/regulatory,governance-compliance-security/audit"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: ISO-27001/9001-Doku in Word + Druck-Ordner — Audits konsumieren primär PDFs, nicht das gelebte System.
+
+  - id: cls-dsgvo-checkliste
+    type: dokument
+    label-de: DSGVO-Selbsterklärungs-Checkliste
+    tags:
+      ownership: classic
+      taxonomy-paths: "governance-compliance-security/data-privacy/dsgvo,governance-compliance-security/data-privacy"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Einmal jährlich ausgefüllt — kein laufendes Tracking von Verarbeitungs-Verzeichnissen, AVV-Status, Betroffenenrechten.
+
+  - id: cls-zugriffsmatrix-excel
+    type: dokument
+    label-de: Zugriffsmatrix in Excel
+    tags:
+      ownership: classic
+      taxonomy-paths: "governance-compliance-security/security/identity,governance-compliance-security/audit/trail"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Wer-darf-was-Matrix in Excel — gepflegt durch eine Person, oft drift gegenüber tatsächlich vergebenen Berechtigungen.
+
+  # ── Logistik-Erweiterungen ──────────────────────────────────────────
+
+  - id: cls-kep-handheld-papierscanner
+    type: anwendung
+    label-de: KEP-Handheld mit Papier-Scanner
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/logistik/kep"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Klassische Handheld-Scanner für POD und Routenpunkte, Synchronisation nur abends im Depot.
+
+  - id: cls-contract-log-lagerverwaltung-as400
+    type: anwendung
+    label-de: Lagerverwaltung auf AS/400 / IBM-i
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/logistik/contract-log"
+      operational-status: niche
+      seeded-by: human-architect
+    summary-de: Legacy-WMS auf AS/400 — stabil, aber kaum erweiterbar, knappes Know-how am Markt.
+
+  # ── Services-Erweiterungen ──────────────────────────────────────────
+
+  - id: cls-consulting-time-tracking
+    type: anwendung
+    label-de: Time-Tracking-Tool (Toggl/Clockify)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/services/consulting"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Pro Berater Zeit-Erfassung, manuell pro Projekt/Tag — Abrechnungs-Integration meist Excel-basiert.
+
+  - id: cls-legal-vertrags-ordner
+    type: dokument
+    label-de: Vertrags-Ordner-Schrank
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/services/legal-tax"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Physische Vertragsablage + Excel-Tracker für Verlängerungen/Kündigungs-Fristen.
+
+  # ── Energie & Umwelt ────────────────────────────────────────────────
+
+  - id: cls-energie-zählerablesung-papier
+    type: prozess
+    label-de: Manuelle Zählerablesung
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/energie-umwelt/energieversorgung"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Hausmeister oder Kundenservice liest Zähler vor Ort ab — geringe Frequenz, kein Lastprofil.
+
+  - id: cls-erneuerbare-anlagen-portal
+    type: anwendung
+    label-de: Hersteller-Portal pro PV-Anlage
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/energie-umwelt/erneuerbare"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Pro Wechselrichter-Hersteller eigenes Web-Portal — Aggregation über Flotte nur manuell oder via Drittsystem.
+
+  - id: cls-abfall-tour-excel
+    type: anwendung
+    label-de: Abfall-Touren-Excel
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/energie-umwelt/abfall-recycling"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Touren-Pläne in Excel, Fahrer melden Stati telefonisch — keine Realtime-Sicht für Disponent.
 
 edges: []

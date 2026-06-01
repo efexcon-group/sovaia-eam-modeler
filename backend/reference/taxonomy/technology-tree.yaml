@@ -1,0 +1,61 @@
+# Technology-Layer-Baum.
+# Plattformen, Frameworks, Sprachen, Runtimes, AI-Modelle.
+# V1-Stub.
+
+taxonomy-id: technology
+taxonomy-version: "0.1.0"
+layer: technology
+
+roots:
+
+  - id: ai-models
+    label-de: AI-Modelle
+    summary-de: LLMs, Embedding-Modelle, Inferenz-Stack.
+    children:
+      - { id: llm-host,     label-de: LLM-Hosting (DGX, vLLM), summary-de: On-prem Inferenz mit Qwen/Llama/Mistral. }
+      - { id: embed-models, label-de: Embedding-Modelle,       summary-de: Qwen-Embed-4B u.a. für RAG-Pipelines. }
+      - { id: agent-frame,  label-de: Agent-Framework,         summary-de: Tool-Use, MCP, Workflow-Engines. }
+
+  - id: runtimes
+    label-de: Runtimes
+    summary-de: Container-/Function-/Sprach-Runtimes.
+    children:
+      - { id: kubernetes,   label-de: Kubernetes (K3S, EKS),   summary-de: Container-Orchestrierung mit ArgoCD. }
+      - { id: nodejs,       label-de: Node.js,                 summary-de: TypeScript-Runtime für Web/API. }
+      - { id: python,       label-de: Python,                  summary-de: FastAPI, Data-Pipelines, ML-Inferenz. }
+      - { id: jvm,          label-de: JVM,                     summary-de: Legacy-Integration, Spark, Kafka-Streams. }
+
+  - id: frameworks
+    label-de: Frameworks
+    summary-de: Web, Backend, AI-Framework, UI-Komponenten.
+    children:
+      - { id: react,        label-de: React + Vite,            summary-de: Frontends mit React-Flow, Tailwind. }
+      - { id: nextjs,       label-de: Next.js,                 summary-de: SSR-Frontends, license-core, Admin-Panels. }
+      - { id: fastapi,      label-de: FastAPI,                 summary-de: Python-Backend-Services + OpenAPI. }
+      - { id: tailwind,     label-de: Tailwind CSS,            summary-de: UI-Token-System + Design-Sprache. }
+
+  - id: data-tech
+    label-de: Daten-Technologie
+    summary-de: Datenbanken, Such-Engines, Streams, ETL.
+    children:
+      - { id: postgres,     label-de: PostgreSQL + pgvector,   summary-de: Relationale DB + Vektor-Embeddings. }
+      - { id: minio,        label-de: MinIO / S3,              summary-de: Objektspeicher für Dokumente, Embeddings, Backups. }
+      - { id: redis,        label-de: Redis,                   summary-de: Cache, Pub/Sub, Rate-Limit-Backend. }
+      - { id: kafka,        label-de: Streaming / Kafka,       summary-de: Event-Streams für CDC, Realtime-Pipelines. }
+
+  - id: identity-tech
+    label-de: Identity-Tech
+    summary-de: Auth-/Identity-Provider und SSO.
+    children:
+      - { id: keycloak,     label-de: Keycloak (Internal + Identity-KC), summary-de: Dual-Realm-Setup für Mitarbeiter + Customer. }
+      - { id: entra,        label-de: Microsoft Entra,         summary-de: Federation-Quelle für interne Mitarbeiter. }
+      - { id: oidc,         label-de: OIDC-Standards,          summary-de: Standard-Auth-Flows, Tokens, JWKS. }
+
+  - id: devops-tech
+    label-de: DevOps-Tech
+    summary-de: CI/CD, IaC, Observability.
+    children:
+      - { id: argocd,       label-de: ArgoCD,                  summary-de: GitOps-Sync für alle Apps in der Plattform. }
+      - { id: github-act,   label-de: GitHub Actions,          summary-de: CI für Image-Builds, Tests, Releases. }
+      - { id: prometheus,   label-de: Prometheus + Grafana,    summary-de: Metriken, Dashboards, Alerting. }
+      - { id: cloudflared,  label-de: Cloudflared,             summary-de: Zero-Trust-Tunnel für extern-erreichbare Ingresses. }
