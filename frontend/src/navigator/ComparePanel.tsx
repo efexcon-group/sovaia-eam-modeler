@@ -454,7 +454,7 @@ export function ComparePanel({
       <EditDrawer
         open={!!drawer}
         mode={drawer?.mode ?? "create"}
-        node={drawer && "node" in drawer ? drawer.node : undefined}
+        node={drawer && drawer.mode !== "create" ? drawer.node : undefined}
         defaultPath={path}
         onClose={() => setDrawer(null)}
         onSaved={onMutate}
@@ -463,7 +463,7 @@ export function ComparePanel({
       <MappingDrawer
         open={!!mappingDrawer}
         mode={mappingDrawer?.mode ?? "create"}
-        mapping={mappingDrawer && "mapping" in mappingDrawer ? mappingDrawer.mapping : undefined}
+        mapping={mappingDrawer && mappingDrawer.mode === "edit" ? mappingDrawer.mapping : undefined}
         classicOptions={classic}
         sovaiaOptions={sovaia}
         onClose={() => setMappingDrawer(null)}
