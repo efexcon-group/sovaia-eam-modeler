@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import edit, health, intake, navigator, reference, taxonomy
+from app.routers import edit, health, intake, me, navigator, reference, taxonomy
 
 
 @asynccontextmanager
@@ -36,6 +36,7 @@ def create_app() -> FastAPI:
     app.include_router(navigator.router, prefix="/v1/navigator", tags=["navigator"])
     app.include_router(edit.router, prefix="/v1/edit", tags=["edit"])
     app.include_router(intake.router, prefix="/v1/intake", tags=["intake"])
+    app.include_router(me.router, prefix="/v1/me", tags=["me"])
 
     return app
 

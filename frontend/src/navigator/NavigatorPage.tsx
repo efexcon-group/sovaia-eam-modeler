@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+  getMe,
   getNavigator,
   getSchichten,
+  type License,
   type NavigatorResponse,
   type Schicht,
 } from "../api-client";
@@ -24,17 +26,24 @@ export default function NavigatorPage() {
 
   const [schichten, setSchichten] = useState<Schicht[] | null>(null);
   const [schichtenError, setSchichtenError] = useState<string | null>(null);
+  const [license, setLicense] = useState<License | null>(null);
+  const [tenant, setTenant] = useState<string | null>(null);
 
   const [navData, setNavData] = useState<CachedTree | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
 
-  // Schichten einmal laden.
+  // Schichten + Me einmal laden.
   useEffect(() => {
     getSchichten()
       .then((r) => setSchichten(r.schichten))
       .catch((e) => setSchichtenError(String(e)));
+    getMe()
+      .then((r) => { setLicense(r.license); setTenant(r.tenant); })
+      .catch(() => { /* /v1/me-Fehler nicht-kritisch */ });
   }, []);
+
+  const licenseActive = license && license.mode !== "open";
 
   // Navigator-Daten bei Pfadwechsel oder Mutation laden.
   useEffect(() => {
@@ -79,7 +88,20 @@ export default function NavigatorPage() {
             <div className="text-base font-semibold text-slate-900">
               Sovaia Architecture-Modeler
             </div>
-            <div className="text-xs text-slate-500">Stakeholder-Navigator</div>
+            <div className="text-xs text-slate-500 flex items-center gap-2">
+              <span>Stakeholder-Navigator</span>
+              {tenant && (
+                <span className="text-slate-400">· Tenant: <code className="text-slate-600">{tenant}</code></span>
+              )}
+              {licenseActive && (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-800"
+                  title={`Lizenz: ${license!["allowed-paths"].length} Pfad(e), ${license!["allowed-layers"].length} Layer (mode: ${license!.mode})`}
+                >
+                  Lizenz aktiv
+                </span>
+              )}
+            </div>
           </div>
           <Link
             to="/canvas"

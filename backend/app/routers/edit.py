@@ -346,3 +346,36 @@ async def get_overlay(
 ) -> dict:
     tenant = _tenant_from(x_eam_tenant, settings)
     return overlay_store.load_overlay(_overlay_dir(settings), tenant)
+
+
+# ── License (interim Option a — bis license-core-HTTP-Loader) ───────────
+
+class LicensePut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    mode: str = "strict"  # open | strict | preview
+    allowed_layers: list[str] = Field(default_factory=list, alias="allowed-layers")
+    allowed_paths: list[str] = Field(default_factory=list, alias="allowed-paths")
+    version: str = "0.1.0"
+
+
+@router.get("/license")
+async def get_license(
+    x_eam_tenant: str | None = Header(default=None),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    tenant = _tenant_from(x_eam_tenant, settings)
+    overlay = overlay_store.load_overlay(_overlay_dir(settings), tenant)
+    return overlay.get("license") or {}
+
+
+@router.put("/license")
+async def put_license(
+    body: LicensePut,
+    x_eam_tenant: str | None = Header(default=None),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    tenant = _tenant_from(x_eam_tenant, settings)
+    overlay = overlay_store.load_overlay(_overlay_dir(settings), tenant)
+    license_block = overlay_store.set_license(overlay, body.model_dump(by_alias=True))
+    overlay_store.save_overlay(_overlay_dir(settings), overlay)
+    return license_block

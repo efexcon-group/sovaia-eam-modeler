@@ -168,6 +168,15 @@ async def navigator(
     # Tenant-Overlay anwenden — Classic UND Sovaia.
     tenant = (x_eam_tenant or settings.tenant_default).strip().lower() or settings.tenant_default
     overlay = overlay_store.load_overlay(Path(settings.overlay_dir).resolve(), tenant)
+    license_block = overlay.get("license")
+
+    # License-Guard: 403 wenn Pfad nicht erlaubt.
+    if not overlay_store.is_path_allowed(license_block, full_path):
+        raise HTTPException(
+            status_code=403,
+            detail=f"path '{full_path}' not licensed for tenant '{tenant}'",
+        )
+
     classic_effective = overlay_store.apply_overlay_to_classic(classic_baseline, overlay)
     sovaia_effective = overlay_store.apply_overlay_to_sovaia(sovaia_all, overlay)
 
@@ -188,12 +197,18 @@ async def navigator(
     # Vorher/Nachher-Aggregat über Mappings.
     cost_aggregate = _aggregate_costs(mappings)
 
+    # Children durch License-Filter laufen lassen.
+    visible_children = [
+        c for c in children
+        if overlay_store.is_child_visible(license_block, full_path, c.get("id") or "")
+    ]
+
     return {
         "path": full_path,
         "layer": layer_id,
         "tenant": tenant,
         "current": _shape_current(current, full_path),
-        "children": [_shape_child(c, full_path) for c in children],
+        "children": [_shape_child(c, full_path) for c in visible_children],
         "classic": classic,
         "sovaia": sovaia,
         "mappings": mappings,

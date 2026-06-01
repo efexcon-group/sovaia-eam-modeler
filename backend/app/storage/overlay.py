@@ -40,6 +40,18 @@ def _empty_overlay(tenant: str) -> dict:
         "classic": {"overrides": {}, "added": [], "deleted": []},
         "sovaia": {"overrides": {}},
         "mappings": [],
+        "license": _default_license(),
+    }
+
+
+def _default_license() -> dict:
+    """Default = voller Zugriff (kein License-Filter aktiv).
+    Sovaia-internal-Tenant + Dev-Mode bekommen das automatisch."""
+    return {
+        "version": "0.1.0",
+        "mode": "open",          # open | strict | preview
+        "allowed-layers": [],     # leer + mode=open → alle erlaubt
+        "allowed-paths": [],
     }
 
 
@@ -76,7 +88,65 @@ def load_overlay(overlay_dir: Path, tenant: str) -> dict:
     # M:N-Migration: classic-node-id (Single) → classic-node-ids (Liste).
     for m in data["mappings"]:
         _normalize_mapping(m)
+    # License-Block: lazy default für ältere Overlays.
+    lic = data.setdefault("license", _default_license())
+    lic.setdefault("version", "0.1.0")
+    lic.setdefault("mode", "open")
+    lic.setdefault("allowed-layers", [])
+    lic.setdefault("allowed-paths", [])
     return data
+
+
+def set_license(overlay: dict, license_block: dict) -> dict:
+    """Setzt den License-Block — entweder vom Admin gepflegt oder vom
+    license-core-Loader übernommen (C5b)."""
+    overlay["license"] = {
+        "version": license_block.get("version", "0.1.0"),
+        "mode": license_block.get("mode", "open"),
+        "allowed-layers": list(license_block.get("allowed-layers") or []),
+        "allowed-paths": list(license_block.get("allowed-paths") or []),
+    }
+    return overlay["license"]
+
+
+# ── License-Guard-Helpers ───────────────────────────────────────────────
+
+def is_layer_allowed(license_block: dict | None, layer_id: str) -> bool:
+    if not license_block or license_block.get("mode") == "open":
+        return True
+    allowed_layers = license_block.get("allowed-layers") or []
+    if allowed_layers and layer_id in allowed_layers:
+        return True
+    # Auch erlaubt wenn irgendein erlaubter Pfad mit diesem Layer beginnt.
+    for p in license_block.get("allowed-paths") or []:
+        if p == layer_id or p.startswith(layer_id + "/"):
+            return True
+    return False
+
+
+def is_path_allowed(license_block: dict | None, full_path: str) -> bool:
+    if not license_block or license_block.get("mode") == "open":
+        return True
+    layer_id = full_path.split("/", 1)[0]
+    if not is_layer_allowed(license_block, layer_id):
+        return False
+    allowed = license_block.get("allowed-paths") or []
+    if not allowed:
+        return True  # nur Layer-Restriction, keine Path-Restriction
+    for prefix in allowed:
+        # Pfad ist Sub-Pfad eines erlaubten Prefix → erlaubt
+        if full_path == prefix or full_path.startswith(prefix + "/"):
+            return True
+        # Pfad ist Ancestor eines erlaubten Pfads → erlaubt (Drill-Path)
+        if prefix.startswith(full_path + "/"):
+            return True
+    return False
+
+
+def is_child_visible(license_block: dict | None, parent_path: str, child_id: str) -> bool:
+    """Sichtbarkeit eines Drill-Tile-Children im UI."""
+    full = f"{parent_path}/{child_id}"
+    return is_path_allowed(license_block, full)
 
 
 def _normalize_mapping(m: dict) -> dict:

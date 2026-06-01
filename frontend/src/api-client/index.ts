@@ -52,6 +52,44 @@ export async function getHealth(): Promise<HealthResponse> {
   return r.json();
 }
 
+// ── /v1/me und License (Iteration 1d-5 / C5) ────────────────────────────
+
+export type LicenseMode = "open" | "strict" | "preview";
+
+export interface License {
+  version: string;
+  mode: LicenseMode;
+  "allowed-layers": string[];
+  "allowed-paths": string[];
+}
+
+export interface MeResponse {
+  tenant: string;
+  license: License | null;
+}
+
+export async function getMe(): Promise<MeResponse> {
+  const r = await fetch(`${API}/me`);
+  if (!r.ok) throw new Error(`/v1/me failed: ${r.status}`);
+  return r.json();
+}
+
+export async function getLicense(): Promise<License> {
+  const r = await fetch(`${API}/edit/license`);
+  if (!r.ok) throw new Error(`getLicense failed: ${r.status}`);
+  return r.json();
+}
+
+export async function putLicense(license: Partial<License>): Promise<License> {
+  const r = await fetch(`${API}/edit/license`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(license),
+  });
+  if (!r.ok) throw new Error(`putLicense failed: ${r.status} ${await r.text()}`);
+  return r.json();
+}
+
 export async function getSovaiaReference(): Promise<ReferenceModel> {
   const r = await fetch(`${API}/reference/sovaia`);
   if (!r.ok) throw new Error(`reference/sovaia failed: ${r.status}`);
