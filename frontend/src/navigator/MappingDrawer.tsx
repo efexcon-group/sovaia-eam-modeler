@@ -14,14 +14,18 @@ interface Props {
   mapping?: NavigatorMapping;
   classicOptions: NavigatorNode[];
   sovaiaOptions: NavigatorNode[];
+  defaultClassicIds?: string[];
+  defaultSovaiaIds?: string[];
   onClose: () => void;
   onSaved: () => void;
 }
 
 export function MappingDrawer({
-  open, mode, mapping, classicOptions, sovaiaOptions, onClose, onSaved,
+  open, mode, mapping, classicOptions, sovaiaOptions,
+  defaultClassicIds = [], defaultSovaiaIds = [],
+  onClose, onSaved,
 }: Props) {
-  const [classicId, setClassicId] = useState<string>("");        // "" = Transformation
+  const [classicIds, setClassicIds] = useState<string[]>([]);
   const [sovaiaIds, setSovaiaIds] = useState<string[]>([]);
   const [narrative, setNarrative] = useState("");
   const [vorherCapex, setVorherCapex] = useState("");
@@ -38,7 +42,7 @@ export function MappingDrawer({
     if (!open) return;
     setError(null);
     if (mode === "edit" && mapping) {
-      setClassicId(mapping["classic-node-id"] ?? "");
+      setClassicIds(mapping["classic-node-ids"] ?? []);
       setSovaiaIds(mapping["sovaia-node-ids"] ?? []);
       setNarrative(mapping["narrative-de"] ?? "");
       setVorherCapex(mapping.vorher?.capex?.toString() ?? "");
@@ -49,20 +53,21 @@ export function MappingDrawer({
       setNachherAnn(mapping.nachher?.annahmen ?? "");
       setConfidence(mapping.confidence?.toString() ?? "0.6");
     } else {
-      setClassicId("");
-      setSovaiaIds([]);
+      setClassicIds(defaultClassicIds);
+      setSovaiaIds(defaultSovaiaIds);
       setNarrative("");
       setVorherCapex(""); setVorherOpex(""); setVorherAnn("");
       setNachherCapex(""); setNachherOpex(""); setNachherAnn("");
       setConfidence("0.6");
     }
-  }, [open, mode, mapping]);
+  }, [open, mode, mapping, defaultClassicIds.join(","), defaultSovaiaIds.join(",")]);
 
   if (!open) return null;
 
-  const toggleSovaia = (id: string) => {
+  const toggleClassic = (id: string) =>
+    setClassicIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  const toggleSovaia = (id: string) =>
     setSovaiaIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
-  };
 
   const buildPayload = (): MappingCreatePayload => {
     const num = (s: string) => (s === "" ? undefined : Number(s));
@@ -70,7 +75,7 @@ export function MappingDrawer({
     const nachher = { capex: num(nachherCapex), "opex-monatlich": num(nachherOpex), annahmen: nachherAnn || undefined };
     const stripUndef = (o: any) => Object.fromEntries(Object.entries(o).filter(([_, v]) => v !== undefined));
     return {
-      "classic-node-id": classicId || null,
+      "classic-node-ids": classicIds,
       "sovaia-node-ids": sovaiaIds,
       "narrative-de": narrative,
       vorher: Object.values(stripUndef(vorher)).length ? stripUndef(vorher) : undefined,
@@ -117,7 +122,7 @@ export function MappingDrawer({
   return (
     <>
       <div className="fixed inset-0 bg-slate-900/30 z-40" onClick={onClose} />
-      <aside className="fixed top-0 right-0 h-screen w-[520px] bg-white shadow-2xl border-l border-slate-200 overflow-y-auto z-50 flex flex-col">
+      <aside className="fixed top-0 right-0 h-screen w-[560px] bg-white shadow-2xl border-l border-slate-200 overflow-y-auto z-50 flex flex-col">
         <header className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
           <div className="text-sm font-medium text-slate-900">
             {mode === "create" ? "Mapping anlegen" : "Mapping bearbeiten"}
@@ -128,25 +133,28 @@ export function MappingDrawer({
         <form onSubmit={onSubmit} className="flex-1 flex flex-col">
           <div className="p-4 space-y-4 flex-1">
 
-            <Field label="Classic-Quelle (oder leer = Transformation/Mehrwert)">
-              <select value={classicId} onChange={(e) => setClassicId(e.target.value)}
-                className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm">
-                <option value="">— Transformation (kein klassisches Pendant) —</option>
+            <Field label={`Classic-Quellen (${classicIds.length} ausgewählt — leer = Transformation/Mehrwert)`}>
+              <div className="border border-slate-300 rounded-md max-h-40 overflow-y-auto divide-y divide-slate-100">
+                {classicOptions.length === 0 && (
+                  <div className="p-2 text-xs text-slate-400 italic">Keine Classic-Knoten am Pfad</div>
+                )}
                 {classicOptions.map((c) => (
-                  <option key={c.id} value={c.id}>{c["label-de"]}</option>
+                  <label key={c.id} className="flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer hover:bg-slate-50">
+                    <input type="checkbox" checked={classicIds.includes(c.id)} onChange={() => toggleClassic(c.id)} />
+                    <span>{c["label-de"]}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </Field>
 
-            <Field label="Sovaia-Targets (Mehrfachauswahl, mindestens eins)">
+            <Field label={`Sovaia-Targets (${sovaiaIds.length} ausgewählt — mindestens 1 Pflicht)`}>
               <div className="border border-slate-300 rounded-md max-h-40 overflow-y-auto divide-y divide-slate-100">
                 {sovaiaOptions.length === 0 && (
                   <div className="p-2 text-xs text-slate-400 italic">Keine Sovaia-Knoten am Pfad</div>
                 )}
                 {sovaiaOptions.map((s) => (
                   <label key={s.id} className="flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer hover:bg-slate-50">
-                    <input type="checkbox" checked={sovaiaIds.includes(s.id)}
-                      onChange={() => toggleSovaia(s.id)} />
+                    <input type="checkbox" checked={sovaiaIds.includes(s.id)} onChange={() => toggleSovaia(s.id)} />
                     <span>{s["label-de"]}</span>
                   </label>
                 ))}
@@ -154,9 +162,8 @@ export function MappingDrawer({
             </Field>
 
             <Field label="Narrativ (warum diese Transformation Sinn macht)">
-              <textarea value={narrative} onChange={(e) => setNarrative(e.target.value)} rows={4}
-                required
-                placeholder="z.B. Manuelle Excel-Dienstplanung wird durch AI-Schicht-Optimierer abgelöst. Schichtbesetzung berücksichtigt Skill, ArG, Bewohner-Kontinuität in Sekunden."
+              <textarea value={narrative} onChange={(e) => setNarrative(e.target.value)} rows={4} required
+                placeholder="z.B. Mehrere Excel-Listen werden zu einem zentralen AI-Schicht-Optimierer konsolidiert. Schichtbesetzung berücksichtigt Skill, ArG, Bewohner-Kontinuität in Sekunden."
                 className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm" />
             </Field>
 
@@ -203,9 +210,7 @@ export function MappingDrawer({
                 onChange={(e) => setConfidence(e.target.value)} className="w-full" />
             </Field>
 
-            {error && (
-              <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-md p-2">{error}</div>
-            )}
+            {error && <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-md p-2">{error}</div>}
           </div>
 
           <footer className="px-4 py-3 border-t border-slate-200 bg-slate-50 flex items-center gap-2">

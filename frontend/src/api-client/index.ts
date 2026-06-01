@@ -123,7 +123,7 @@ export interface NavigatorNode {
 
 export interface NavigatorMapping {
   id: string;
-  "classic-node-id"?: string | null;
+  "classic-node-ids": string[];   // M:N. Leer = Transformation/Mehrwert.
   "sovaia-node-ids": string[];
   "narrative-de": string;
   vorher?: { capex?: number; "opex-monatlich"?: number; annahmen?: string };
@@ -298,7 +298,7 @@ export async function refineDescription(req: RefineRequest): Promise<RefineRespo
 // ── Mappings (für C3 — bereits exportiert) ──────────────────────────────
 
 export interface MappingCreatePayload {
-  "classic-node-id"?: string | null;
+  "classic-node-ids": string[];
   "sovaia-node-ids": string[];
   "narrative-de": string;
   vorher?: { capex?: number; "opex-monatlich"?: number; annahmen?: string };

@@ -163,8 +163,207 @@ nodes:
       seeded-by: human-architect
     summary-de: Papier- bzw PDF-Formulare für Begleitdokumente, CMR, Carnet TIR.
 
-  # Weitere Pfade (Services, Energie&Umwelt, weitere Logistik-Sub-Bereiche)
-  # werden vom LLM nachgeladen und vom User gepflegt — siehe ADR-082
-  # §"Classic-Reference-Modell".
+  # ── Gesundheitswesen → Medizin ──────────────────────────────────────
+
+  - id: cls-praxissoftware-cassio
+    type: anwendung
+    label-de: Praxis-Software (Cassio/MediWin/Vitomed)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/medizin"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Lokal installierte Praxissoftware mit eigener Patientenakte, Termin- und Tarmed-Abrechnungsmodul.
+
+  - id: cls-kis-spital
+    type: anwendung
+    label-de: Klinik-Informations-System (KIS)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/medizin"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Spitalweites KIS mit elektronischer Patientenakte, OPS, Pflege-Doku — meist gekapselt, schwer integrierbar.
+
+  - id: cls-befund-fax
+    type: prozess
+    label-de: Befund-Übermittlung per Fax/Brief
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/medizin"
+      operational-status: declining
+      seeded-by: human-architect
+    summary-de: Externe Befunde kommen per Fax oder Brief, manuelle Erfassung ins KIS/PVA.
+
+  # ── Gesundheitswesen → Pharma ───────────────────────────────────────
+
+  - id: cls-bestand-excel
+    type: anwendung
+    label-de: Bestandsführung Excel
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/pharma"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Lager- und Verfallsdaten in Excel — manuelle Inventur, FIFO-Berechnung per Hand.
+
+  - id: cls-etiketten-druck
+    type: prozess
+    label-de: Etiketten-Druck am Arbeitsplatz
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/pharma"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Chargen- und Verfallsetiketten werden lokal gedruckt, oft ohne strukturierte Datenanbindung.
+
+  # ── Heim & Pflege → Heim/Belegung ───────────────────────────────────
+
+  - id: cls-belegungs-tabelle
+    type: anwendung
+    label-de: Belegungs-Excel (zentral gepflegt)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/heim/belegung,business/healthcare/heim-pflege/heim"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Aktuelle Belegung wird in einer zentralen Excel-Tabelle geführt, Status-Wechsel werden mündlich/telefonisch koordiniert.
+
+  - id: cls-aufnahme-papier
+    type: dokument
+    label-de: Aufnahme-Dossier Papier
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/heim/belegung"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Heim-Vertrag, Eintrittsformulare, Verfügungen werden auf Papier ausgefüllt und in einer Bewohnerakte abgelegt.
+
+  # ── Heim & Pflege → Hotellerie/Wäscherei ────────────────────────────
+
+  - id: cls-waescherei-extern
+    type: prozess
+    label-de: Externe Wäscherei mit Sammelrolli
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/hotellerie/waescherei"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Bewohner-Wäsche wird in Säcken pro Stockwerk gesammelt, extern verarbeitet, Rückgabe ohne Track & Trace.
+
+  # ── Heim & Pflege → Küche/Diät ──────────────────────────────────────
+
+  - id: cls-diaet-karten
+    type: dokument
+    label-de: Diät- und Allergen-Tablett-Karten
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/kueche/diaet-allergene,business/healthcare/heim-pflege/kueche"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Pro Bewohner eine Karte am Tablett mit Diät, Allergenen und Vorlieben — Pflege/Küche-Koordination per Papier.
+
+  # ── Heim & Pflege → Projekte ────────────────────────────────────────
+
+  - id: cls-ms-project
+    type: anwendung
+    label-de: MS Project / Excel-Gantt
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/projekte"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Projektpläne in MS Project oder Excel-Gantt-Chart, gepflegt durch eine Person, kaum Echtzeit-Update.
+
+  - id: cls-projekt-jour-fixe
+    type: prozess
+    label-de: Wöchentlicher Jour-Fixe
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/projekte"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Projektstand wird wöchentlich in einer Sitzung besprochen — Protokoll per Mail/Word.
+
+  # ── Logistik → Spedition (komplementär zu Zoll) ─────────────────────
+
+  - id: cls-tms-software
+    type: anwendung
+    label-de: TMS-Software (Transport-Management)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/logistik/spedition"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Klassisches TMS mit manueller Tour-Disposition, Excel-Export für Reporting.
+
+  - id: cls-dispo-telefon
+    type: prozess
+    label-de: Dispositions-Telefon (Fahrer-Koordination)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/logistik/spedition"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Fahrer-Statusupdates und Ad-hoc-Änderungen werden telefonisch koordiniert, ohne strukturierte Doku.
+
+  # ── Services → IT-Services ──────────────────────────────────────────
+
+  - id: cls-helpdesk-mail
+    type: prozess
+    label-de: Helpdesk per E-Mail
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/services/it-services"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: User-Anfragen kommen als E-Mail, Ticketing-Tool optional — Bearbeitung in Reihenfolge, keine Skill-Routing.
+
+  - id: cls-asset-inventory-excel
+    type: anwendung
+    label-de: Asset-Inventory in Excel
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/services/it-services"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Hardware, Lizenzen, User-Mapping in Excel — Pflege durch eine Person, hohe Drift-Rate.
+
+  # ── Services → Facility-Services ────────────────────────────────────
+
+  - id: cls-tourplan-facility
+    type: anwendung
+    label-de: Touren-Plan Excel (Reinigung/Hauswart)
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/services/facility-services"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Wochen-Touren in Excel, Soll/Ist-Abgleich per Hand am Wochenende.
+
+  # ── Energie & Umwelt ────────────────────────────────────────────────
+
+  - id: cls-scada-supervisory
+    type: anwendung
+    label-de: SCADA-Leitsystem
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/energie-umwelt/energieversorgung"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Klassisches SCADA für Netzüberwachung, lokale Visualisierung, kaum AI-Anomaliedetektion.
+
+  - id: cls-verbrauch-excel
+    type: dokument
+    label-de: Verbrauchsmessung & Reporting Excel
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/energie-umwelt"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    summary-de: Energie- und Wasserverbrauch wird monatlich von Hand abgelesen und in Excel rapportiert.
+
+  # Weitere Pfade werden vom LLM nachgeladen und vom User gepflegt —
+  # siehe ADR-082 §"Classic-Reference-Modell".
 
 edges: []

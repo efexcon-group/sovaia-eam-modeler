@@ -64,6 +64,7 @@ function NodeCard({
   onEdit,
   onDelete,
   onRevert,
+  onMap,
 }: {
   node: NavigatorNode;
   side: "classic" | "sovaia";
@@ -72,6 +73,7 @@ function NodeCard({
   onEdit?: (n: NavigatorNode) => void;
   onDelete?: (n: NavigatorNode) => void;
   onRevert?: (n: NavigatorNode) => void;
+  onMap?: (n: NavigatorNode) => void;
 }) {
   const tags = node.tags ?? {};
   const status =
@@ -124,8 +126,13 @@ function NodeCard({
       {availableFrom && (
         <div className="mt-1 text-[10px] text-slate-400">verfügbar ab {availableFrom}</div>
       )}
-      {(onEdit || onDelete || onRevert) && (
+      {(onEdit || onDelete || onRevert || onMap) && (
         <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2 flex gap-1 bg-white/80 rounded">
+          {onMap && (
+            <button type="button" onClick={() => onMap(node)}
+              className="text-[10px] px-1.5 py-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded"
+              title="Mit Sovaia/Classic verknüpfen">↔</button>
+          )}
           {onEdit && (
             <button type="button" onClick={() => onEdit(node)}
               className="text-[10px] px-1.5 py-0.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded"
@@ -221,16 +228,20 @@ function MappingsList({
       ) : (
         <div className="space-y-2">
           {mappings.map((m) => {
-            const cls = m["classic-node-id"] ? classicById.get(m["classic-node-id"]) : null;
+            const sources = (m["classic-node-ids"] ?? [])
+              .map((id) => classicById.get(id))
+              .filter(Boolean) as NavigatorNode[];
             const targets = m["sovaia-node-ids"].map((id) => sovaiaById.get(id)).filter(Boolean) as NavigatorNode[];
             return (
               <button key={m.id} onClick={() => onEdit(m)}
                 className="w-full text-left rounded-md border border-slate-200 bg-white p-3 hover:border-indigo-400 transition-colors">
                 <div className="flex items-center gap-2 text-xs text-slate-600 mb-1 flex-wrap">
-                  {cls ? (
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">{cls["label-de"]}</span>
-                  ) : (
+                  {sources.length === 0 ? (
                     <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Transformation (neu)</span>
+                  ) : (
+                    sources.map((s) => (
+                      <span key={s.id} className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">{s["label-de"]}</span>
+                    ))
                   )}
                   <span className="text-slate-400">→</span>
                   {targets.map((t) => (
@@ -256,11 +267,15 @@ function MappingsList({
   );
 }
 
+type MappingDrawerState =
+  | { mode: "create"; defaultClassicIds?: string[]; defaultSovaiaIds?: string[] }
+  | { mode: "edit"; mapping: NavigatorMapping };
+
 export function ComparePanel({
   path, classic, sovaia, impact, mappings = [], costAggregate, onMutate,
 }: Props) {
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
-  const [mappingDrawer, setMappingDrawer] = useState<{ mode: "create" } | { mode: "edit"; mapping: NavigatorMapping } | null>(null);
+  const [mappingDrawer, setMappingDrawer] = useState<MappingDrawerState | null>(null);
   const [llmBusy, setLlmBusy] = useState(false);
   const [llmError, setLlmError] = useState<string | null>(null);
 
@@ -274,8 +289,8 @@ export function ComparePanel({
     const classicById = new Map(classic.map((n) => [n.id, n]));
     const sovaiaById = new Map(sovaia.map((n) => [n.id, n]));
     for (const m of mappings) {
-      if (m["classic-node-id"]) {
-        classicMapCount.set(m["classic-node-id"], (classicMapCount.get(m["classic-node-id"]) ?? 0) + 1);
+      for (const cid of m["classic-node-ids"] ?? []) {
+        classicMapCount.set(cid, (classicMapCount.get(cid) ?? 0) + 1);
       }
       for (const sid of m["sovaia-node-ids"]) {
         sovaiaMapCount.set(sid, (sovaiaMapCount.get(sid) ?? 0) + 1);
@@ -407,6 +422,7 @@ export function ComparePanel({
                   mappingCount={classicMapCount.get(n.id) ?? 0}
                   onEdit={(node) => setDrawer({ mode: "edit-classic", node })}
                   onDelete={handleDelete}
+                  onMap={(node) => setMappingDrawer({ mode: "create", defaultClassicIds: [node.id] })}
                 />
               ))
             )}
@@ -434,6 +450,7 @@ export function ComparePanel({
                     isTransformation={count === 0 && mappings.length > 0}
                     onEdit={(node) => setDrawer({ mode: "edit-sovaia", node })}
                     onRevert={handleRevertSovaia}
+                    onMap={(node) => setMappingDrawer({ mode: "create", defaultSovaiaIds: [node.id] })}
                   />
                 );
               })
@@ -466,6 +483,8 @@ export function ComparePanel({
         mapping={mappingDrawer && mappingDrawer.mode === "edit" ? mappingDrawer.mapping : undefined}
         classicOptions={classic}
         sovaiaOptions={sovaia}
+        defaultClassicIds={mappingDrawer && mappingDrawer.mode === "create" ? mappingDrawer.defaultClassicIds : undefined}
+        defaultSovaiaIds={mappingDrawer && mappingDrawer.mode === "create" ? mappingDrawer.defaultSovaiaIds : undefined}
         onClose={() => setMappingDrawer(null)}
         onSaved={onMutate}
       />

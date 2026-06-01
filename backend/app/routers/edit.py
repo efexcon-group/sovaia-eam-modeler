@@ -72,8 +72,8 @@ class CostBlock(BaseModel):
 
 class MappingCreate(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    classic_node_id: str | None = Field(default=None, alias="classic-node-id",
-                                         description="None = Transformation/Mehrwert ohne klassisches Pendant.")
+    # M:N — beide Seiten als Listen. Leere classic-node-ids = Transformation/Mehrwert.
+    classic_node_ids: list[str] = Field(default_factory=list, alias="classic-node-ids")
     sovaia_node_ids: list[str] = Field(default_factory=list, alias="sovaia-node-ids")
     narrative_de: str = Field(alias="narrative-de")
     vorher: CostBlock | None = None
@@ -83,7 +83,7 @@ class MappingCreate(BaseModel):
 
 class MappingPatch(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    classic_node_id: str | None = Field(default=None, alias="classic-node-id")
+    classic_node_ids: list[str] | None = Field(default=None, alias="classic-node-ids")
     sovaia_node_ids: list[str] | None = Field(default=None, alias="sovaia-node-ids")
     narrative_de: str | None = Field(default=None, alias="narrative-de")
     vorher: CostBlock | None = None
@@ -148,10 +148,14 @@ def _sovaia_patch_to_node(patch: SovaiaNodePatch) -> dict:
 
 def _mapping_to_dict(mapping: MappingCreate | MappingPatch) -> dict:
     d: dict[str, Any] = {}
-    if mapping.classic_node_id is not None or (isinstance(mapping, MappingCreate)):
-        d["classic-node-id"] = mapping.classic_node_id
-    if mapping.sovaia_node_ids is not None:
-        d["sovaia-node-ids"] = mapping.sovaia_node_ids
+    if isinstance(mapping, MappingCreate):
+        d["classic-node-ids"] = list(mapping.classic_node_ids)
+        d["sovaia-node-ids"] = list(mapping.sovaia_node_ids)
+    else:
+        if mapping.classic_node_ids is not None:
+            d["classic-node-ids"] = list(mapping.classic_node_ids)
+        if mapping.sovaia_node_ids is not None:
+            d["sovaia-node-ids"] = list(mapping.sovaia_node_ids)
     if mapping.narrative_de is not None:
         d["narrative-de"] = mapping.narrative_de
     if mapping.vorher is not None:

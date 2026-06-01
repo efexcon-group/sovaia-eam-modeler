@@ -63,7 +63,7 @@ def load_overlay(overlay_dir: Path, tenant: str) -> dict:
         data = json.loads(p.read_text())
     except json.JSONDecodeError:
         return _empty_overlay(tenant)
-    # Forward-kompatible Schema-Migration: neue Sektionen lazy hinzufügen.
+    # Forward-kompatible Schema-Migration.
     data.setdefault("version", OVERLAY_VERSION)
     data.setdefault("tenant", tenant)
     classic = data.setdefault("classic", {})
@@ -73,7 +73,22 @@ def load_overlay(overlay_dir: Path, tenant: str) -> dict:
     sovaia = data.setdefault("sovaia", {})
     sovaia.setdefault("overrides", {})
     data.setdefault("mappings", [])
+    # M:N-Migration: classic-node-id (Single) → classic-node-ids (Liste).
+    for m in data["mappings"]:
+        _normalize_mapping(m)
     return data
+
+
+def _normalize_mapping(m: dict) -> dict:
+    """Bringt classic-node-id (Single) auf classic-node-ids (Liste).
+    Backward-kompatibel für Overlays die vor M:N-Migration entstanden sind."""
+    if "classic-node-ids" not in m:
+        single = m.get("classic-node-id")
+        m["classic-node-ids"] = [single] if single else []
+    m.pop("classic-node-id", None)
+    # sovaia-node-ids ist schon immer Liste.
+    m.setdefault("sovaia-node-ids", [])
+    return m
 
 
 def save_overlay(overlay_dir: Path, overlay: dict) -> None:
@@ -189,6 +204,7 @@ def revert_sovaia(overlay: dict, node_id: str) -> None:
 def add_mapping(overlay: dict, mapping: dict) -> dict:
     if not mapping.get("id"):
         raise ValueError("mapping.id required")
+    _normalize_mapping(mapping)
     overlay.setdefault("mappings", []).append(mapping)
     return mapping
 
@@ -197,7 +213,16 @@ def patch_mapping(overlay: dict, mapping_id: str, patch: dict) -> dict:
     mappings = overlay.setdefault("mappings", [])
     for i, m in enumerate(mappings):
         if m.get("id") == mapping_id:
+            # Wenn Patch eine 'classic-node-ids'-Liste enthält, ersetzt sie die
+            # alte komplett (deep_merge würde sonst Listen zusammenwerfen).
+            if "classic-node-ids" in patch:
+                m["classic-node-ids"] = list(patch["classic-node-ids"])
+                patch = {k: v for k, v in patch.items() if k != "classic-node-ids"}
+            if "sovaia-node-ids" in patch:
+                m["sovaia-node-ids"] = list(patch["sovaia-node-ids"])
+                patch = {k: v for k, v in patch.items() if k != "sovaia-node-ids"}
             mappings[i] = _deep_merge(m, patch)
+            _normalize_mapping(mappings[i])
             return mappings[i]
     raise KeyError(mapping_id)
 
@@ -211,13 +236,13 @@ def delete_mapping(overlay: dict, mapping_id: str) -> None:
 
 
 def filter_mappings_for_paths(overlay: dict, classic_ids: set[str], sovaia_ids: set[str]) -> list[dict]:
-    """Returnt nur Mappings, deren Classic-Quelle ODER mindestens ein
-    Sovaia-Target im aktuellen Pfad-Scope liegt."""
+    """Returnt nur Mappings, die im aktuellen Pfad-Scope liegen
+    (mindestens ein Classic ODER mindestens ein Sovaia trifft)."""
     mappings = overlay.get("mappings") or []
     out: list[dict] = []
     for m in mappings:
-        cls = m.get("classic-node-id")
+        cls = set(m.get("classic-node-ids") or [])
         sov = set(m.get("sovaia-node-ids") or [])
-        if (cls and cls in classic_ids) or (sov & sovaia_ids):
+        if (cls & classic_ids) or (sov & sovaia_ids):
             out.append(m)
     return out
