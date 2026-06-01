@@ -10,6 +10,7 @@ import {
 } from "../api-client";
 import { EditDrawer } from "./EditDrawer";
 import { MappingDrawer } from "./MappingDrawer";
+import { TimelinePanel } from "./TimelinePanel";
 
 interface Props {
   path: string;
@@ -459,6 +460,8 @@ export function ComparePanel({
         </div>
       </div>
       <ImpactFooter impact={impact} cost={costAggregate} />
+
+      <TimelinePanel sovaia={sovaia} mappings={mappings} />
 
       <MappingsList
         mappings={mappings}
