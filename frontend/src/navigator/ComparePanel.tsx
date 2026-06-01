@@ -350,7 +350,7 @@ export function ComparePanel({
         <EditDrawer
           open={!!drawer}
           mode={drawer?.mode ?? "create"}
-          node={drawer?.node}
+          node={drawer && drawer.mode !== "create" ? drawer.node : undefined}
           defaultPath={path}
           onClose={() => setDrawer(null)}
           onSaved={onMutate}
