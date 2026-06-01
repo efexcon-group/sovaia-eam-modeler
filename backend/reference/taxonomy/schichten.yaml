@@ -59,6 +59,6 @@ schichten:
     label-en: Governance / Compliance / Security
     description-de: Cross-cutting — durchdringt alle anderen Schichten. Pre-Write/Pre-Read AI-Governance, Audit, regulatorische Pflichten.
     icon: shield-check
-    tree-file: governance-tree.yaml
+    tree-file: governance-compliance-security-tree.yaml
     cross-cutting: true
     order: 7
