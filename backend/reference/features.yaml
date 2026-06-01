@@ -1,0 +1,486 @@
+# Feature-Catalog (Probe — Stand 2026-06-01)
+#
+# Source of Truth für die 4-stufige Effective-Visibility-Resolution:
+#   1. License-Group → ist Feature überhaupt verfügbar?
+#   2. Mode (BASIC/USER/EXPERT/ADMIN) → in diesem Mode sichtbar?
+#   3. Fachrollen-Profile → im aktiven Profile sichtbar?
+#   4. User-Custom-Override → delta-basiert, nur innerhalb Lizenz
+#
+# Schema bewusst flach gehalten — Feature-Gruppen werden als String-Tags
+# gepflegt, nicht als verschachtelte Hierarchie. Inheritance wird via
+# Tag-Composition (additiv) gelöst, nicht via Parent-Pointer.
+#
+# Bezug: ADR-083 (Feature-Catalog + License-Group-Bündelung), ADR-084
+# (Interaction-Mode-Spectrum), principles.md §11 (AI-First mit Boundaries).
+
+schema-version: "0.1.0"
+
+# ── License Feature Groups ──────────────────────────────────────────────
+# Flache Liste. Tenants kaufen eine oder mehrere Groups. Features tragen
+# group-Tags. Effective-License = Union aller gekauften Groups.
+
+license-groups:
+  - id: core-foundation
+    label-de: Plattform-Basis
+    description: Stammdaten, Settings, Profile, License, User-Mgmt — immer enthalten.
+    bundled-with: [every-license]
+
+  - id: sales-basic
+    label-de: Sales-Basis
+    description: Account/Contact/Lead/Opportunity + Quote-Workflow ohne Vier-Augen.
+
+  - id: sales-pro
+    label-de: Sales-Pro
+    description: Vier-Augen-Review, Reviewer-Picker, configurable Schwellen, Multi-Channel-Versand.
+    requires: [sales-basic]
+
+  - id: finance-core
+    label-de: Finance-Basis
+    description: Invoice + Payment + Settlement + Dunning + Multi-Currency.
+
+  - id: contracts-basic
+    label-de: Contracts-Basis
+    description: Contract-Templates + Lifecycle (DRAFT/REVIEW/SIGNED/ACTIVE/TERMINATED).
+
+  - id: documents-pro
+    label-de: Document-Pro
+    description: Standard-Attachments + Sort-Order + Final-PDF-Merge + Cover + TOC + Signaturen.
+
+  - id: ai-workflows
+    label-de: AI-Workflows
+    description: Intent-Parser, Workflow-Templates, AI-Anschreiben/Mailtext mit Edit-Preview.
+
+  - id: external-integration
+    label-de: External-Integration
+    description: MS-Graph/Teams/SharePoint Live-Link + Knowledge-Search.
+
+  - id: doc-pipeline-pro
+    label-de: Doc-Composition-Pro
+    description: 6-Phasen-Pipeline (ADR-086) mit Bundle-Registry, Format-/
+                 Destination-Module, Layout-Kaskade, Signatur-Inject,
+                 CORE-Master-Tenant-Fork-Pattern.
+    requires: [documents-pro]
+
+  # ── Architecture-Modeler (ADR-082) ─────────────────────────────────────
+
+  - id: modeler-foundation
+    label-de: Architecture-Modeler Foundation
+    description: Stakeholder-Navigator + Architect-Canvas + Read-Only-Stories.
+                 Pflicht für jede Modeler-Lizenz.
+
+  - id: modeler-business-healthcare
+    label-de: Modeler — Gesundheitswesen
+    description: Heim & Pflege, Medizin, Pharma — komplettes Healthcare-Vertical.
+    requires: [modeler-foundation]
+
+  - id: modeler-business-logistik
+    label-de: Modeler — Logistik
+    description: Spedition / KEP / Contract-Log / Zoll mit AI-Customs/Track/Tariff.
+    requires: [modeler-foundation]
+
+  - id: modeler-business-services
+    label-de: Modeler — Services
+    description: IT-Services, Consulting, Facility-Services, Legal & Tax.
+    requires: [modeler-foundation]
+
+  - id: modeler-business-energie
+    label-de: Modeler — Energie & Umwelt
+    description: Energieversorgung, Erneuerbare, Wasserwirtschaft, Recycling.
+    requires: [modeler-foundation]
+
+  - id: modeler-application-stack
+    label-de: Modeler — Application-Stack
+    description: Core-AI-Stack + Business-Apps + Reference-Apps + Bridges Detail-Sicht.
+    requires: [modeler-foundation]
+
+  - id: modeler-governance-layer
+    label-de: Modeler — Governance
+    description: AI-Governance, Data-Privacy, Security, Regulatorisches Detail.
+    requires: [modeler-foundation]
+
+  - id: modeler-mapping-pro
+    label-de: Modeler — Mapping Classic↔Sovaia
+    description: Vorher/Nachher-Erfassung, CAPEX/OPEX, Narrativ, N:M-Verbindungen.
+                 Investitions-Planung sichtbar machen.
+    requires: [modeler-foundation]
+
+  - id: modeler-llm-batch
+    label-de: Modeler — LLM-Vorschläge
+    description: ✨ LLM-Batch (Classic-Items pro Pfad), Per-Card-Refine-Description.
+                 Setzt sovaia-llm-bridge + DGX-Anbindung voraus.
+    requires: [modeler-foundation]
+
+  - id: modeler-storyteller-authoring
+    label-de: Modeler — Storyteller Authoring
+    description: Eigene Stories anlegen + Beats choreografieren + auf Sovaia-
+                 Reference verknüpfen. Read-Only-Player ist im foundation.
+    requires: [modeler-foundation]
+
+# ── Features ────────────────────────────────────────────────────────────
+# Jedes Feature trägt:
+#   - id          eindeutiger Slug
+#   - module      welches CORE/Industry-Modul es bereitstellt
+#   - license     license-group (genau eine — kein Feature in mehreren Gruppen)
+#   - modes       Set: BASIC/USER/EXPERT/ADMIN (in welchen Modes sichtbar)
+#   - profiles    Set: welche default-Fachrollen es initial sehen
+#   - status      planned / beta / stable / deprecated
+#   - dependencies optional: andere Feature-IDs die erforderlich sind
+#   - hooks       Hook-Points pro Operation (Foundation für ADR-084 Hook-Architecture)
+
+features:
+
+  # ── CORE Foundation ────────────────────────────────────────────────────
+  - id: company-onboarding
+    label-de: Company anlegen + wechseln
+    module: core/tenant-manager
+    license: core-foundation
+    modes: [ADMIN]
+    profiles: [admin]
+    status: stable
+
+  - id: user-mgmt
+    label-de: User-Management (Invite/Aktivieren/Rolle)
+    module: core/user-mgmt
+    license: core-foundation
+    modes: [ADMIN]
+    profiles: [admin]
+    status: planned
+    dependencies: [company-onboarding]
+
+  - id: profile-editor
+    label-de: Fachrollen-Profile editieren
+    module: core/profiles
+    license: core-foundation
+    modes: [ADMIN]
+    profiles: [admin]
+    status: stable
+
+  - id: license-activate
+    label-de: License-Activation + Self-Update
+    module: core/license
+    license: core-foundation
+    modes: [ADMIN]
+    profiles: [admin]
+    status: stable
+
+  - id: user-personal-profile
+    label-de: Persönliches Profil + Signatur
+    module: core/user-mgmt
+    license: core-foundation
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance, projects, admin]
+    status: planned
+
+  # ── Sales (CRM + Quotes) ───────────────────────────────────────────────
+  - id: account-crud
+    label-de: Account anlegen/bearbeiten
+    module: sales/account-master
+    license: sales-basic
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales]
+    status: stable
+    hooks: [pre-create, post-create, on-validate]
+
+  - id: quote-create
+    label-de: Angebot anlegen
+    module: sales/quotation
+    license: sales-basic
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales]
+    status: stable
+    hooks: [pre-create, post-create, on-compose, on-send]
+
+  - id: quote-review-foureye
+    label-de: Vier-Augen-Review für Angebote
+    module: sales/quotation
+    license: sales-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales]
+    status: stable
+    dependencies: [quote-create, user-mgmt]
+    hooks: [on-request-review, on-approve, on-reject]
+
+  - id: quote-reviewer-picker
+    label-de: Reviewer aus User-Liste wählen
+    module: sales/quotation
+    license: sales-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales]
+    status: stable
+    dependencies: [quote-review-foureye]
+
+  - id: quote-threshold-configurable
+    label-de: Configurable Review-Schwelle pro Company
+    module: sales/quotation
+    license: sales-pro
+    modes: [ADMIN]
+    profiles: [admin]
+    status: stable
+
+  - id: quote-cancel-send
+    label-de: Versand zurückziehen
+    module: sales/quotation
+    license: sales-basic
+    modes: [EXPERT, ADMIN]
+    profiles: [sales]
+    status: stable
+    dependencies: [quote-create]
+
+  - id: quote-line-item-edit-inline
+    label-de: Position inline bearbeiten
+    module: sales/quotation
+    license: sales-basic
+    modes: [EXPERT, ADMIN]
+    profiles: [sales]
+    status: stable
+
+  # ── Documents (Phase γ + ε) ────────────────────────────────────────────
+  - id: standard-attachments
+    label-de: Standard-Attachments pro Belegtyp (Company-konfig.)
+    module: documents/attachments
+    license: documents-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance, admin]
+    status: stable
+
+  - id: attachment-sort-order
+    label-de: Attachment-Reihenfolge im Final-PDF
+    module: documents/attachments
+    license: documents-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance, admin]
+    status: stable
+    dependencies: [standard-attachments]
+
+  - id: final-pdf-merge
+    label-de: Final-PDF aus Beleg + Attachments + Cover + TOC
+    module: documents/merge
+    license: documents-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance]
+    status: planned
+    dependencies: [standard-attachments]
+
+  - id: reviewer-signature-injection
+    label-de: Reviewer-Signatur ins Final-PDF
+    module: documents/merge
+    license: documents-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales]
+    status: planned
+    dependencies: [final-pdf-merge, user-personal-profile]
+
+  # ── AI / Workflow ──────────────────────────────────────────────────────
+  - id: ai-letter-generation
+    label-de: AI-Anschreiben + Mailtext mit Edit-Preview
+    module: ai/letter-agent
+    license: ai-workflows
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance]
+    status: planned
+
+  - id: intent-parser-quote
+    label-de: Angebot per Text/Voice anlegen
+    module: ai/intent-parser
+    license: ai-workflows
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales]
+    status: planned
+    dependencies: [quote-create]
+
+  - id: workflow-templates
+    label-de: Workflow als Template speichern + wiederverwenden
+    module: ai/workflow-composer
+    license: ai-workflows
+    modes: [EXPERT, ADMIN]
+    profiles: [sales, finance, projects]
+    status: planned
+
+  # ── External Integration ───────────────────────────────────────────────
+  - id: live-link-excel
+    label-de: Excel-Cell als Live-Source für Position
+    module: external/live-link
+    license: external-integration
+    modes: [EXPERT, ADMIN]
+    profiles: [sales, finance]
+    status: planned
+
+  - id: knowledge-search-teams
+    label-de: Knowledge-Search in Teams-Channels
+    module: external/ms-graph
+    license: external-integration
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales]
+    status: planned
+    dependencies: [intent-parser-quote]
+
+# ── Pflicht-Profile (Default-Fachrollen) ────────────────────────────────
+# Diese werden bei jedem neuen Tenant initial provisioniert. Tenant-Admin
+# kann sie umbenennen oder ergänzen, aber nicht löschen.
+
+  # ── Doc-Composition-Pipeline (ADR-086) ────────────────────────────────
+  - id: bundle-definition-editor
+    label-de: Bündel-Editor pro Belegtyp (Settings)
+    module: documents/bundle-registry
+    license: doc-pipeline-pro
+    modes: [ADMIN]
+    profiles: [admin]
+    status: planned
+    dependencies: [standard-attachments]
+
+  - id: bundle-versand-gate
+    label-de: Versand-Gate prüft Bündel-Pflichtinhalte
+    module: documents/bundle-registry
+    license: doc-pipeline-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance, admin]
+    status: planned
+    dependencies: [bundle-definition-editor]
+
+  - id: signature-injection
+    label-de: Signatur-Inject ins Final-Doc (User-Profil-Asset)
+    module: documents/signature
+    license: doc-pipeline-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance]
+    status: planned
+    dependencies: [user-personal-profile, final-pdf-merge]
+
+  - id: signature-multi-slot
+    label-de: Multi-Slot-Signaturen (Creator + Reviewer + Customer)
+    module: documents/signature
+    license: doc-pipeline-pro
+    modes: [EXPERT, ADMIN]
+    profiles: [sales, admin]
+    status: planned
+    dependencies: [signature-injection]
+
+  - id: core-template-fork
+    label-de: CORE-Templates forken + Tenant-Custom-Edits
+    module: documents/templates
+    license: doc-pipeline-pro
+    modes: [ADMIN]
+    profiles: [admin]
+    status: planned
+
+  - id: core-template-update-notification
+    label-de: Master-Update-Notification + Diff-View
+    module: documents/templates
+    license: doc-pipeline-pro
+    modes: [ADMIN]
+    profiles: [admin]
+    status: planned
+    dependencies: [core-template-fork]
+
+  - id: layout-cascade-resolver
+    label-de: 4-stufige Layout/Theme-Kaskade (CORE → App → Tenant → User)
+    module: documents/layout
+    license: doc-pipeline-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance, projects, admin]
+    status: planned
+
+  - id: format-module-pdf-pandoc
+    label-de: PDF-Format-Modul (Pandoc + lualatex, mit TOC + Bookmarks)
+    module: documents/formats/pdf-pandoc
+    license: documents-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance, projects, admin]
+    status: planned
+
+  - id: format-module-docx-pandoc
+    label-de: DOCX-Format-Modul (Pandoc)
+    module: documents/formats/docx-pandoc
+    license: documents-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance, projects, admin]
+    status: stable
+
+  - id: format-module-markdown-raw
+    label-de: Markdown-Raw-Format-Modul (für Persistence/Embedding)
+    module: documents/formats/markdown-raw
+    license: core-foundation
+    modes: [EXPERT, ADMIN]
+    profiles: [admin]
+    status: planned
+
+  - id: format-module-json-structured
+    label-de: JSON-Structured-Format-Modul (für Pipeline/Transformer)
+    module: documents/formats/json-structured
+    license: core-foundation
+    modes: [EXPERT, ADMIN]
+    profiles: [admin]
+    status: planned
+
+  - id: destination-minio
+    label-de: MinIO-Destination (Object-Storage)
+    module: documents/destinations/minio
+    license: core-foundation
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance, projects, admin]
+    status: stable
+
+  - id: destination-portal-push
+    label-de: Portal-Push-Destination (ADR-005)
+    module: documents/destinations/portal
+    license: documents-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance]
+    status: stable
+
+  - id: destination-embedder
+    label-de: Embedder-Destination (RAG pgvector, Markdown-raw)
+    module: documents/destinations/embedder
+    license: ai-workflows
+    modes: [EXPERT, ADMIN]
+    profiles: [admin]
+    status: planned
+
+  - id: source-module-agent-output
+    label-de: Agent-Output als Content-Source
+    module: documents/sources/agent
+    license: ai-workflows
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance]
+    status: planned
+
+  - id: source-module-external-link
+    label-de: External-Doc-Link als Content-Source (Live oder Snapshot)
+    module: documents/sources/external-link
+    license: external-integration
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, finance]
+    status: planned
+    dependencies: [live-link-excel]
+
+  - id: external-sign-skribble
+    label-de: Skribble-Integration (rechtsverbindliche Signatur, CH)
+    module: documents/signature/skribble
+    license: doc-pipeline-pro
+    modes: [USER, EXPERT, ADMIN]
+    profiles: [sales, admin]
+    status: planned
+    dependencies: [signature-injection]
+
+default-profiles:
+  - id: sales
+    label-de: Sales / Vertrieb
+    description: Account/Contact/Lead/Opp/Quote/Order
+  - id: finance
+    label-de: Finance / Buchhaltung
+    description: Invoice/Payment/Settlement/Dunning/Reporting
+  - id: projects
+    label-de: Projects / Delivery
+    description: Project/Timesheet/Milestone/Deliverable
+  - id: admin
+    label-de: Admin / System
+    description: User-Mgmt/License/Settings/Audit
+  - id: stakeholder-navigator
+    label-de: Stakeholder-Navigator (Modeler)
+    description: C-Level/Marketing-Sicht — Drill-Down + Compare-Panel
+  - id: architect-canvas
+    label-de: Architekt-Canvas (Modeler)
+    description: Architekten-Sicht — Graph mit Edges + Lazy-Detail-Cluster
+  - id: storyteller-author
+    label-de: Storyteller-Autor (Modeler)
+    description: Story-Beats schreiben + auf Reference verknüpfen

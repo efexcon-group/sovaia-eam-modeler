@@ -25,6 +25,7 @@ import yaml
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 
 from app.config import Settings, get_settings
+from app.services import license_resolver
 from app.storage import overlay as overlay_store
 
 router = APIRouter()
@@ -168,7 +169,10 @@ async def navigator(
     # Tenant-Overlay anwenden — Classic UND Sovaia.
     tenant = (x_eam_tenant or settings.tenant_default).strip().lower() or settings.tenant_default
     overlay = overlay_store.load_overlay(Path(settings.overlay_dir).resolve(), tenant)
-    license_block = overlay.get("license")
+    # ADR-083: Resolver resolved license-groups → allowed-paths/layers.
+    license_block = license_resolver.resolve_license(
+        overlay.get("license") or {}, settings.reference_repo_path
+    )
 
     # License-Guard: 403 wenn Pfad nicht erlaubt.
     if not overlay_store.is_path_allowed(license_block, full_path):

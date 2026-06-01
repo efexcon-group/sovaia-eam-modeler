@@ -353,6 +353,7 @@ async def get_overlay(
 class LicensePut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     mode: str = "strict"  # open | strict | preview
+    license_groups: list[str] = Field(default_factory=list, alias="license-groups")
     allowed_layers: list[str] = Field(default_factory=list, alias="allowed-layers")
     allowed_paths: list[str] = Field(default_factory=list, alias="allowed-paths")
     version: str = "0.1.0"

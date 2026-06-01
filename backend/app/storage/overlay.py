@@ -49,8 +49,9 @@ def _default_license() -> dict:
     Sovaia-internal-Tenant + Dev-Mode bekommen das automatisch."""
     return {
         "version": "0.1.0",
-        "mode": "open",          # open | strict | preview
-        "allowed-layers": [],     # leer + mode=open → alle erlaubt
+        "mode": "open",            # open | strict | preview
+        "license-groups": [],       # ADR-083: Group-IDs aus features.yaml
+        "allowed-layers": [],       # Legacy C5a (backward-compat)
         "allowed-paths": [],
     }
 
@@ -92,7 +93,8 @@ def load_overlay(overlay_dir: Path, tenant: str) -> dict:
     lic = data.setdefault("license", _default_license())
     lic.setdefault("version", "0.1.0")
     lic.setdefault("mode", "open")
-    lic.setdefault("allowed-layers", [])
+    lic.setdefault("license-groups", [])    # ADR-083
+    lic.setdefault("allowed-layers", [])     # Legacy C5a
     lic.setdefault("allowed-paths", [])
     return data
 
@@ -103,6 +105,7 @@ def set_license(overlay: dict, license_block: dict) -> dict:
     overlay["license"] = {
         "version": license_block.get("version", "0.1.0"),
         "mode": license_block.get("mode", "open"),
+        "license-groups": list(license_block.get("license-groups") or []),
         "allowed-layers": list(license_block.get("allowed-layers") or []),
         "allowed-paths": list(license_block.get("allowed-paths") or []),
     }
