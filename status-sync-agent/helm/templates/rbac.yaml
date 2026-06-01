@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "ssa.serviceAccountName" . }}
+  namespace: {{ .Values.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: status-sync-agent-read
+rules:
+  # Read-only auf Deployments (alle Namespaces — Modeler-Sicht ist cluster-weit)
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: status-sync-agent-read
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "ssa.serviceAccountName" . }}
+    namespace: {{ .Values.namespace }}
+roleRef:
+  kind: ClusterRole
+  name: status-sync-agent-read
+  apiGroup: rbac.authorization.k8s.io

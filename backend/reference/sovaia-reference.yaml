@@ -64,18 +64,27 @@ nodes:
     tags: { status: live, layer: L3, perspective: marketing, ownership: sovaia-baseline }
     summary-de: Multi-Profile-Portfolio/Project-Management — autark, ADR-077 P7.
     version: "0.6.1"
+    source-binding:
+      argocd-app: tenant-sovaia-blm
+      k8s-deployment: sovaia/sovaia-blm
 
   - id: efx-erp
     type: anwendung
     label-de: efx-erp (Service-Provider-OS)
     tags: { status: live, layer: L3, perspective: marketing, ownership: sovaia-baseline }
     summary-de: Service-Provider-ERP mit Belegen, Settlement, MS-Teams-Bridge, BLM-Bridge.
+    source-binding:
+      argocd-app: tenant-efx-erp-internal
+      k8s-deployment: efx-erp-internal/efx-erp
 
   - id: architecture-modeler
     type: anwendung
     label-de: Architecture-Modeler (dieses Werkzeug)
     tags: { status: planned, layer: L3, perspective: marketing, ownership: sovaia-baseline }
     summary-de: Lizenzierbares Werkzeug für Architektur-Visualisierung, Customer-IST/SOLL, Industry-Storyteller.
+    source-binding:
+      argocd-app: platform-architecture-modeler
+      k8s-deployment: platform/architecture-modeler-api
 
   # ── Cluster-Anchors (lazy-loaded via detail-ref) ────────────────────
 

@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: status-sync-agent
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: status-sync-agent
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  schedule: "{{ .Values.schedule }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: {{ include "ssa.serviceAccountName" . }}
+          containers:
+            - name: agent
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              env:
+                {{- range $k, $v := .Values.env }}
+                - name: {{ $k }}
+                  value: {{ $v | quote }}
+                {{- end }}
+                - name: SSA_ARGOCD_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.argocdSecret.name }}
+                      key: {{ .Values.argocdSecret.key }}
+                      optional: true
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}

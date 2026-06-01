@@ -1,0 +1,11 @@
+apiVersion: v2
+name: status-sync-agent
+description: Read-only Status-Sync-Agent für die Sovaia-Reference (ADR-088)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - architecture-modeler
+  - status-sync
+  - argocd
+home: https://github.com/efexcon-group/sovaia-eam-modeler

@@ -1,0 +1,22 @@
+[project]
+name = "status-sync-agent"
+version = "0.1.0"
+description = "Read-only Sync-Agent für Sovaia-Reference operational-status (ADR-088)"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "kubernetes>=29.0",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.5", "pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

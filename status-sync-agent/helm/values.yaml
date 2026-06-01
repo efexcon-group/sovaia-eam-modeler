@@ -1,0 +1,30 @@
+namespace: platform
+
+image:
+  repository: ghcr.io/efexcon-group/status-sync-agent
+  tag: latest
+  pullPolicy: Always
+
+schedule: "*/15 * * * *"           # alle 15 Minuten
+
+env:
+  SSA_MODELER_API_URL: "http://architecture-modeler-api.platform:8000"
+  SSA_MODELER_TENANT: sovaia-internal
+  SSA_ARGOCD_SERVER: "https://argocd-server.argocd:443"
+  SSA_ARGOCD_INSECURE: "true"
+  SSA_DRY_RUN: "false"
+
+# ArgoCD-Token kommt aus K8s-Secret (User legt manuell an).
+argocdSecret:
+  name: status-sync-agent-argocd-token
+  key: token
+
+# Reference-Quelle: mount aus architecture-modeler-api-Pod (gleicher Image-Path).
+# Alternative: ConfigMap. V1 = wir trauen darauf dass api-Image im selben Cluster
+# mit gleicher Reference-Snapshot baked ist.
+reference:
+  source: api-image-mirror          # nur informativ — Init-Container holt das per HTTP
+
+resources:
+  requests: { cpu: 50m, memory: 64Mi }
+  limits:   { cpu: 200m, memory: 128Mi }
