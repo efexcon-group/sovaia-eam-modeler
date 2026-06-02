@@ -55,12 +55,23 @@ export async function getHealth(): Promise<HealthResponse> {
 // ── /v1/me und License (Iteration 1d-5 / C5) ────────────────────────────
 
 export type LicenseMode = "open" | "strict" | "preview";
+export type LeaseMode = "full" | "demo";
+export type LeaseStatus = "ACTIVE" | "GRACE" | "EXPIRED" | "SUSPENDED" | "PENDING" | "NONE";
 
 export interface License {
   version: string;
   mode: LicenseMode;
   "allowed-layers": string[];
   "allowed-paths": string[];
+  // Resolved-License-Felder aus license-core (ADR-090). Optional — bei
+  // EAM_LICENSE_SOURCE=overlay (Default) nicht gesetzt.
+  "lease-mode"?: LeaseMode;
+  "lease-status"?: LeaseStatus;
+  "renewal-reminder"?: boolean;
+  tier?: string | null;
+  "valid-until"?: string | null;
+  /** Herkunft des resolved Blocks: open | license-groups | overlay-paths | license-core | overlay-fallback. */
+  source?: string;
 }
 
 export interface MeResponse {

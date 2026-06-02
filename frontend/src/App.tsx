@@ -3,6 +3,7 @@ import { ThemeProvider } from "@sovaia/app-shell-theming/react";
 import { SOVAIA_THEME } from "@sovaia/app-shell-theming";
 import CanvasPage from "./canvas/CanvasPage";
 import NavigatorPage from "./navigator/NavigatorPage";
+import SettingsPage from "./settings/SettingsPage";
 import ModelerShell from "./shell/ModelerShell";
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/navigator" replace />} />
             <Route path="/canvas" element={<CanvasPage />} />
             <Route path="/navigator/*" element={<NavigatorPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/navigator" replace />} />
           </Routes>
         </ModelerShell>

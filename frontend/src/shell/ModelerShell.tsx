@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AppShell, type SidebarRoute, type UserInfo, type LicenseInfo } from "@sovaia/app-shell-react";
 import { getLicense, getMe, type License, type MeResponse } from "../api-client";
 import { licenseToInfo, meToUser } from "./adapters";
+import { LicenseReminderBanner } from "./LicenseReminderBanner";
 
 /**
  * ModelerShell — verkabelt @sovaia/app-shell-react AppShell mit dem
@@ -23,6 +24,7 @@ import { licenseToInfo, meToUser } from "./adapters";
 const SIDEBAR_ROUTES: SidebarRoute[] = [
   { path: "#/navigator", label: "Navigator" },
   { path: "#/canvas", label: "Canvas" },
+  { path: "#/settings", label: "Einstellungen" },
 ];
 
 const APP_VERSION = "0.1.0";
@@ -38,22 +40,28 @@ export default function ModelerShell({ children }: ModelerShellProps) {
 
   const [user, setUser] = useState<UserInfo | undefined>();
   const [license, setLicense] = useState<LicenseInfo | undefined>();
+  // Resolved License aus /v1/me (mit Lease-Feldern, ADR-090) — Quelle fürs
+  // Reminder/Demo-Band. /v1/edit/license ist die rohe editierbare License
+  // (ohne Lease-Status) und nur Fallback fürs Badge.
+  const [resolvedLicense, setResolvedLicense] = useState<License | null>(null);
 
   useEffect(() => {
     let mounted = true;
     Promise.allSettled([getMe(), getLicense()]).then(([meRes, licRes]) => {
       if (!mounted) return;
+      let haveMeLicense = false;
       if (meRes.status === "fulfilled") {
         const me: MeResponse = meRes.value;
         setUser(meToUser(me));
-        // Falls /v1/me eine inline-License hat, ist die schon im Adapter.
         if (me.license) {
+          haveMeLicense = true;
+          setResolvedLicense(me.license);
           setLicense(licenseToInfo(me.license));
         }
       }
-      if (licRes.status === "fulfilled") {
-        const lic: License = licRes.value;
-        setLicense(licenseToInfo(lic));
+      // Nur als Fallback fürs Badge, wenn /v1/me keine License lieferte.
+      if (!haveMeLicense && licRes.status === "fulfilled") {
+        setLicense(licenseToInfo(licRes.value));
       }
     });
     return () => {
@@ -72,6 +80,7 @@ export default function ModelerShell({ children }: ModelerShellProps) {
       license={license}
       // Profile + Mode noch nicht verkabelt — Modeler-Phase-2.
     >
+      <LicenseReminderBanner license={resolvedLicense} />
       {children}
     </AppShell>
   );

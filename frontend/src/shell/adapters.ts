@@ -29,10 +29,16 @@ import type { License, MeResponse } from "../api-client";
  */
 export function licenseToInfo(license: License | null): LicenseInfo | undefined {
   if (!license) return undefined;
+  // license-core liefert den echten Lease-Status (ADR-090); bei Overlay-Source
+  // fehlt er → wir treten als "ACTIVE" auf, solange eine License da ist.
+  // "NONE" hat das AppShell-Badge nicht → auf "SUSPENDED" (rot) abbilden.
+  const raw = license["lease-status"];
+  const leaseStatus =
+    raw === "NONE" ? "SUSPENDED" : raw ?? "ACTIVE";
   return {
     mode: license.mode,
-    leaseStatus: "ACTIVE",
-    tier: "Modeler",
+    leaseStatus,
+    tier: license.tier ?? "Modeler",
   };
 }
 
