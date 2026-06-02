@@ -61,6 +61,9 @@ class SovaiaNodePatch(BaseModel):
     label_de: str | None = Field(default=None, alias="label-de")
     summary_de: str | None = Field(default=None, alias="summary-de")
     impact: ImpactPatch | None = None
+    # Freie tags (z.B. status + Audit-Metadaten vom status-sync-agent, ADR-088).
+    # Werden ins Overlay deep-merged — analog zu tags an Classic-Nodes.
+    tags: dict[str, Any] | None = None
 
 
 class CostBlock(BaseModel):
@@ -143,6 +146,8 @@ def _sovaia_patch_to_node(patch: SovaiaNodePatch) -> dict:
             impact_dict["evidence"] = patch.impact.evidence
         if impact_dict:
             d["impact"] = impact_dict
+    if patch.tags is not None:
+        d["tags"] = patch.tags
     return d
 
 
