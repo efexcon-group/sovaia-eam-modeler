@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
-import { ThemeProvider } from "@sovaia/app-shell-theming/react";
-import { SOVAIA_THEME } from "@sovaia/app-shell-theming";
+import { ThemeProvider } from "@efexcon-group/app-shell-theming/react";
+import { SOVAIA_THEME } from "@efexcon-group/app-shell-theming";
 import CanvasPage from "./canvas/CanvasPage";
 import NavigatorPage from "./navigator/NavigatorPage";
 import SettingsPage from "./settings/SettingsPage";

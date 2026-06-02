@@ -44,6 +44,8 @@ jobs:
           push: true
           build-args: |
             VITE_AUTH_ENABLED=true
+          secrets: |
+            node_auth_token=${{ secrets.GITHUB_TOKEN }}
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

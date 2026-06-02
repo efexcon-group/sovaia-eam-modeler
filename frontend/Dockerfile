@@ -5,9 +5,14 @@ RUN corepack enable
 
 # Erst Dep-Manifeste — für Layer-Cache. pnpm-workspace.yaml ist nötig
 # damit allowBuilds (esbuild, @tailwindcss/oxide) greift.
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 
-RUN pnpm install --frozen-lockfile
+# GHCR-npm-Auth für @efexcon-group/app-shell-* via BuildKit-Secret — der Token
+# landet NICHT in einem Image-Layer. .npmrc referenziert nur ${NODE_AUTH_TOKEN}.
+# --no-frozen-lockfile, bis der Lock mit den versionierten Deps neu erzeugt ist.
+RUN --mount=type=secret,id=node_auth_token \
+    NODE_AUTH_TOKEN="$(cat /run/secrets/node_auth_token)" \
+    pnpm install --no-frozen-lockfile
 
 # Source + Build
 COPY . .

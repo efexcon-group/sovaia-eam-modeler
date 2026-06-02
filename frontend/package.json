@@ -12,9 +12,9 @@
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.4",
-    "@sovaia/app-shell-react": "file:../../sovaia-app-shell-core/packages/app-shell-react",
-    "@sovaia/app-shell-theming": "file:../../sovaia-app-shell-core/packages/app-shell-theming",
-    "@sovaia/license-client": "file:../../sovaia-app-shell-core/packages/license-client",
+    "@efexcon-group/app-shell-react": "^0.1.0",
+    "@efexcon-group/app-shell-theming": "^0.1.0",
+    "@efexcon-group/license-client": "^0.1.0",
     "@xyflow/react": "^12.3.0",
     "js-yaml": "^4.1.0",
     "keycloak-js": "^26.2.4",

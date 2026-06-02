@@ -1,13 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppShell, type SidebarRoute, type UserInfo, type LicenseInfo } from "@sovaia/app-shell-react";
+import { AppShell, type SidebarRoute, type UserInfo, type LicenseInfo } from "@efexcon-group/app-shell-react";
 import { getLicense, getMe, type License, type MeResponse } from "../api-client";
 import { licenseToInfo, meToUser } from "./adapters";
 import { LicenseReminderBanner } from "./LicenseReminderBanner";
 import { AUTH_ENABLED, getAuthUser } from "../auth/keycloak";
 
 /**
- * ModelerShell — verkabelt @sovaia/app-shell-react AppShell mit dem
+ * ModelerShell — verkabelt @efexcon-group/app-shell-react AppShell mit dem
  * Modeler-Backend.
  *
  * Iteration 0:

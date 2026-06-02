@@ -1,6 +1,6 @@
-// Adapter zwischen Modeler-eigenen API-Typen und @sovaia/app-shell-react-Typen.
+// Adapter zwischen Modeler-eigenen API-Typen und @efexcon-group/app-shell-react-Typen.
 //
-// Hintergrund: @sovaia/app-shell-react ist die kanonische Cross-App-Library (ADR-087).
+// Hintergrund: @efexcon-group/app-shell-react ist die kanonische Cross-App-Library (ADR-087).
 // Sie verwendet ein generisches Vokabular (LicenseInfo.mode = "open"|"strict"|"preview",
 // kein Lease-Lifecycle), während der Modeler eine eigene License-Form hat
 // (mode = "open"|"strict"|"preview", allowed-layers/paths).
@@ -8,7 +8,7 @@
 // Diese Mapping-Schicht ist bewusst dünn: sie verheiratet die zwei Modelle
 // pragmatisch, ohne den App-Shell-Vertrag aufzuweichen.
 
-import type { LicenseInfo, UserInfo } from "@sovaia/app-shell-react";
+import type { LicenseInfo, UserInfo } from "@efexcon-group/app-shell-react";
 import type { License, MeResponse } from "../api-client";
 
 /**

@@ -10,7 +10,7 @@ import type { License } from "../api-client";
  *   weiter, Bitte um Verlängerung.
  * - sonst (ACTIVE / Overlay-Source ohne Lease-Felder) → kein Band.
  *
- * Langfristig gehört dieses Band in @sovaia/app-shell-react (ADR-087), damit
+ * Langfristig gehört dieses Band in @efexcon-group/app-shell-react (ADR-087), damit
  * alle Apps denselben Reminder zeigen. Hier bewusst dünn im Modeler gehalten.
  */
 export function LicenseReminderBanner({ license }: { license: License | null }): JSX.Element | null {
