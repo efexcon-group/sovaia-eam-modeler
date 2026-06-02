@@ -23,13 +23,16 @@ class SourceState:
     deployments: dict[str, dict]    # "ns/name" → status
 
 
-def load_argocd_apps(server: str, token: str, insecure: bool) -> dict[str, dict]:
+def load_argocd_apps(server: str, token: str, insecure: bool, ca_cert: str = "") -> dict[str, dict]:
     if not token:
-        log.warning("ARGOCD_TOKEN nicht gesetzt — ArgoCD-Apps werden übersprungen")
+        log.warning("SSA_ARGOCD_TOKEN nicht gesetzt — ArgoCD-Apps werden übersprungen")
         return {}
     try:
         url = server.rstrip("/") + "/api/v1/applications"
-        with httpx.Client(verify=not insecure, timeout=30.0) as client:
+        # CA-Bundle hat Vorrang (production); sonst System-CA bzw. — nur wenn
+        # explizit gewünscht — kein Verify.
+        verify = ca_cert if ca_cert else (not insecure)
+        with httpx.Client(verify=verify, timeout=30.0) as client:
             r = client.get(url, headers={"Authorization": f"Bearer {token}"})
             r.raise_for_status()
             data = r.json()
@@ -78,6 +81,9 @@ def load_deployments() -> dict[str, dict]:
 
 def collect_state(settings: Any) -> SourceState:
     """Lädt alle Quellen parallel — heute sequentiell, später async."""
-    argocd = load_argocd_apps(settings.argocd_server, settings.argocd_token, settings.argocd_insecure)
+    argocd = load_argocd_apps(
+        settings.argocd_server, settings.argocd_token,
+        settings.argocd_insecure, settings.argocd_ca_cert,
+    )
     deployments = load_deployments()
     return SourceState(argocd_apps=argocd, deployments=deployments)

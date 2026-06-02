@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'status-sync-agent/**'
+      - 'backend/reference/**'
       - '.github/workflows/build-status-sync-agent.yml'
   workflow_dispatch:
 
@@ -20,6 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Sovaia-Reference (mit source-bindings) ins Agent-Build-Context vendoren —
+      # gleiche Quelle wie das architecture-modeler-api-Image.
+      - name: Vendor Sovaia-Reference into build context
+        run: cp -r backend/reference status-sync-agent/reference
 
       - uses: docker/setup-buildx-action@v3
 

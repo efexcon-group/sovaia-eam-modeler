@@ -18,7 +18,11 @@ class Settings(BaseSettings):
     # ArgoCD-Server (intern erreichbar). Token wird über Secret gemountet.
     argocd_server: str = Field(default="https://argocd-server.argocd:443")
     argocd_token: str = Field(default="")  # via Secret
-    argocd_insecure: bool = Field(default=True)  # internal cluster, self-signed
+    # Pfad zu einem CA-Bundle für den internen argocd-server (self-signed Cert).
+    # Gesetzt → TLS wird gegen dieses CA verifiziert (production-grade).
+    # Leer → System-CA-Bundle.
+    argocd_ca_cert: str = Field(default="")
+    argocd_insecure: bool = Field(default=False)  # production: TLS immer verifizieren
 
     # Run-Modus
     dry_run: bool = Field(default=False)

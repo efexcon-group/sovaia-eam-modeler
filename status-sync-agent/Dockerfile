@@ -7,7 +7,10 @@ RUN uv pip install --system -r pyproject.toml
 
 COPY app /app/app
 
-# Mountpoint für Sovaia-Reference (ConfigMap oder Image-Bind).
+# Baked-in Sovaia-Reference (analog architecture-modeler-api, ADR-088).
+# CI vendored vor `docker build`:  backend/reference/  →  status-sync-agent/reference/
+# Lokal: `cp -r ../backend/reference ./reference` vor dem Build.
+COPY reference /etc/sovaia-reference
 ENV SSA_REFERENCE_REPO_PATH=/etc/sovaia-reference
 
 CMD ["python", "-m", "app.sync"]

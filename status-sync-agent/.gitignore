@@ -1,0 +1,9 @@
+# CI vendored die Sovaia-Reference aus backend/reference/ hierher vor dem
+# docker build (siehe Dockerfile + build-status-sync-agent.yml). Nicht committen
+# — Source-of-Truth ist backend/reference/.
+/reference/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
