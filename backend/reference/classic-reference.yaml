@@ -13,6 +13,36 @@ view-profile-default: c-level
 
 nodes:
 
+  # ── T2 Classic-Katalog · Heim/Pflege CH — reale Marktprodukte (ADR-091) ──
+  # Kuratierte, branded Produkte mit hoher Branchen-Durchdringung. Werden über
+  # das Preset "heim-pflege-ch" als Vorschlag in die Kunden-Instanz übernommen.
+
+  - id: cls-polypoint-pep
+    type: anwendung
+    label-de: PolyPoint PEP
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/mitarbeiter"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    vendor: PolyPoint AG
+    product: PEP
+    category: Personaleinsatzplanung
+    summary-de: Etablierte Schweizer Lösung für Personaleinsatz- und Dienstplanung in Heimen und Spitälern — Schichtplanung, Sollzeiten, Qualifikations- und Bedarfsabgleich.
+
+  - id: cls-raisoft
+    type: anwendung
+    label-de: RAISoft
+    tags:
+      ownership: classic
+      taxonomy-paths: "business/healthcare/heim-pflege/pflege"
+      operational-status: in-use-everywhere
+      seeded-by: human-architect
+    vendor: Vitec Raisoft Oy
+    product: RAISoft (RAI-Assessment)
+    category: Pflegebedarfserfassung / Assessment
+    summary-de: RAI-basiertes Assessment- und Pflegebedarfserfassungs-System (Resident Assessment Instrument) — strukturierte Bedarfsabklärung und Qualitätskennzahlen in der Langzeitpflege.
+
   # ── Heim & Pflege → Pflege (gesetzt zur Demonstration) ──────────────
 
   - id: cls-excel-schichtplan

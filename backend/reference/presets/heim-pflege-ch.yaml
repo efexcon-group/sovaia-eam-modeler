@@ -1,0 +1,27 @@
+# Branchen-Preset "Heim/Pflege CH" (ADR-091, T2 → T3).
+#
+# Bündelt T2-Katalog-Knoten (reale Marktprodukte aus classic-reference.yaml) zu
+# einer typischen Branchen-Landschaft. Beim Onboarding als Vorschlag in die
+# Kunden-Instanz (Overlay classic.added) übernehmbar.
+#
+# Hinweis: presets/ wird vom Node-Scanner NICHT als Reference geladen — es ist
+# reine Preset-Definition. Die "Preset anwenden"-Aktion (Backend + UI) folgt
+# (ADR-091, offener Punkt).
+
+id: heim-pflege-ch
+label-de: Heim & Pflege (Schweiz)
+industry: business/healthcare/heim-pflege
+
+# Bereits als branded T2-Knoten angelegt:
+classic-node-ids:
+  - cls-polypoint-pep
+  - cls-raisoft
+
+# Weitere hochdurchdringende Kandidaten — noch nicht als T2-Knoten angelegt,
+# folgen iterativ:
+candidates:
+  - { vendor: "NEXUS AG",            product: "NEXUS / Heim" }
+  - { vendor: "NEXUS AG",            product: "NEXUS / EasyDOK" }
+  - { vendor: "Syseca",              product: "asebis" }
+  - { vendor: "Lobos Informatik AG", product: "Lobos" }
+  - { vendor: "topCare GmbH",        product: "careCoach" }
