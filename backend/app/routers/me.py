@@ -23,7 +23,7 @@ async def me(
     tenant = (x_eam_tenant or settings.tenant_default).strip().lower() or settings.tenant_default
     overlay = overlay_store.load_overlay(Path(settings.overlay_dir).resolve(), tenant)
     raw_license = overlay.get("license") or {}
-    resolved = license_resolver.resolve_license(raw_license, settings.reference_repo_path)
+    resolved = license_resolver.resolve_effective(raw_license, settings)
     return {
         "tenant": tenant,
         "license-raw": raw_license,        # was im Overlay steht (Group-IDs + Legacy-Pfade)

@@ -24,6 +24,12 @@ class Settings(BaseSettings):
         description="Timeout (Sekunden) für Calls an eam-llm-bridge. Muss länger sein als der DGX-Timeout der Bridge.",
     )
     license_core_url: str = Field(default="http://license-core:8080")
+    license_source: str = Field(
+        default="overlay",
+        description="License-Quelle (ADR-090): 'overlay' (Default, Group-IDs aus dem "
+        "Tenant-Overlay) | 'license-core' (effective/{orgId}-Endpoint). 'lease' folgt "
+        "additiv für single-tenant-Kunden.",
+    )
 
     oidc_issuer: str = Field(default="https://keycloak.int.efexcon.com/realms/efexcon-group")
     oidc_audience: str = Field(default="architecture-modeler-api")

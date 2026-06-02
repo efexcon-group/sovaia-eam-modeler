@@ -169,9 +169,10 @@ async def navigator(
     # Tenant-Overlay anwenden — Classic UND Sovaia.
     tenant = (x_eam_tenant or settings.tenant_default).strip().lower() or settings.tenant_default
     overlay = overlay_store.load_overlay(Path(settings.overlay_dir).resolve(), tenant)
-    # ADR-083: Resolver resolved license-groups → allowed-paths/layers.
-    license_block = license_resolver.resolve_license(
-        overlay.get("license") or {}, settings.reference_repo_path
+    # ADR-083/090: Resolver resolved license-groups → allowed-paths/layers,
+    # Quelle je nach EAM_LICENSE_SOURCE (overlay | license-core).
+    license_block = license_resolver.resolve_effective(
+        overlay.get("license") or {}, settings
     )
 
     # License-Guard: 403 wenn Pfad nicht erlaubt.

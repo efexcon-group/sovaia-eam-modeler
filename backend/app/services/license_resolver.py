@@ -17,10 +17,13 @@ Pfaden ist Modeler-Domäne.
 """
 from __future__ import annotations
 
+import logging
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
+
+log = logging.getLogger(__name__)
 
 # License-Group → granted Modeler-Pfade.
 # Wird hier gepflegt, weil license-core nur die Group-IDs kennt + zur
@@ -131,4 +134,73 @@ def _open() -> dict:
         "allowed-paths": [],
         "ui-capabilities": [],
         "source": "open",
+    }
+
+
+def resolve_effective(overlay_license: dict, settings) -> dict:
+    """Resolved den License-Block über die konfigurierte Quelle (ADR-090).
+
+    - EAM_LICENSE_SOURCE=overlay (Default): Group-IDs aus dem Overlay (wie bisher).
+    - EAM_LICENSE_SOURCE=license-core: effective/{orgId}-Endpoint; BLM-Consumer-
+      Semantik (leaseStatus→lease-mode full|demo, resolved→license-groups), fail-soft.
+
+    Tenants ohne `license.org-id` (z.B. sovaia-internal) bleiben auf der Overlay-
+    Logik — der Endpoint wird nicht gerufen. Damit ist der Toggle gefahrlos global.
+    Das `lease-mode`-Feld ist informativ fürs Frontend; die Sichtbarkeits-Gate
+    läuft weiterhin über mode/allowed-paths/allowed-layers.
+    """
+    overlay_license = overlay_license or {}
+    ref_path = settings.reference_repo_path
+    source = getattr(settings, "license_source", "overlay")
+
+    if source != "license-core":
+        return resolve_license(overlay_license, ref_path)
+
+    org_id = overlay_license.get("org-id")
+    if not org_id:
+        # Kein Org-Bezug → Overlay-Verhalten (sovaia-internal etc. → open).
+        return resolve_license(overlay_license, ref_path)
+
+    # Lazy-Import vermeidet httpx-Import-Kosten wenn Source=overlay.
+    from app.services import license_client
+
+    eff = license_client.fetch_effective(settings.license_core_url, org_id)
+    if eff is None:
+        # Fail-soft (ADR-090): fall-open auf Overlay-Groups.
+        log.warning("license-core unerreichbar — Overlay-Fallback für org=%s", org_id)
+        out = resolve_license(overlay_license, ref_path)
+        out["lease-mode"] = "full"
+        out["source"] = "overlay-fallback"
+        return out
+
+    lease_status = (eff.get("leaseStatus") or "NONE").upper()
+
+    # Weiche Durchsetzung (ADR-090): Ablauf schaltet NICHT hart ab — Karenz +
+    # Verlängerungs-Erinnerung, Instanz bleibt funktional. Nur der explizite
+    # Kill-Switch am Lizenzserver (SUSPENDED) oder eine nie lizenzierte Org
+    # (NONE) deaktiviert.
+    if lease_status in ("ACTIVE", "GRACE", "EXPIRED"):
+        groups = eff.get("resolved") or []
+        out = resolve_license({"mode": "strict", "license-groups": groups}, ref_path)
+        out["lease-mode"] = "full"
+        out["lease-status"] = lease_status
+        out["renewal-reminder"] = lease_status in ("GRACE", "EXPIRED")
+        out["tier"] = eff.get("tier")
+        out["valid-until"] = eff.get("validUntil")
+        out["source"] = "license-core"
+        return out
+
+    # SUSPENDED (Kill-Switch) / NONE → deaktiviert: read-only, leere Sichtbarkeit
+    # (mode=strict + leere Listen blockt via is_layer_allowed alles). Frontend
+    # zeigt Upgrade-/Kontakt-CTA.
+    return {
+        "mode": "strict",
+        "lease-mode": "demo",
+        "lease-status": lease_status,
+        "tier": eff.get("tier"),
+        "allowed-layers": [],
+        "allowed-paths": [],
+        "ui-capabilities": [],
+        "renewal-reminder": lease_status == "SUSPENDED",
+        "source": "license-core",
     }

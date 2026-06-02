@@ -22,9 +22,7 @@ def _tenant_license(x_eam_tenant: str | None, settings: Settings) -> dict | None
     """Returnt den RESOLVED License-Block — Group-IDs sind bereits aufgelöst."""
     tenant = (x_eam_tenant or settings.tenant_default).strip().lower() or settings.tenant_default
     overlay = overlay_store.load_overlay(Path(settings.overlay_dir).resolve(), tenant)
-    return license_resolver.resolve_license(
-        overlay.get("license") or {}, settings.reference_repo_path
-    )
+    return license_resolver.resolve_effective(overlay.get("license") or {}, settings)
 
 
 @router.get("/schichten")
