@@ -9,7 +9,6 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-import httpx
 from kubernetes import client as k8s_client
 from kubernetes import config as k8s_config
 
@@ -23,41 +22,47 @@ class SourceState:
     deployments: dict[str, dict]    # "ns/name" → status
 
 
-def load_argocd_apps(server: str, token: str, insecure: bool, ca_cert: str = "") -> dict[str, dict]:
-    if not token:
-        log.warning("SSA_ARGOCD_TOKEN nicht gesetzt — ArgoCD-Apps werden übersprungen")
-        return {}
+def _load_k8s_config() -> None:
     try:
-        url = server.rstrip("/") + "/api/v1/applications"
-        # CA-Bundle hat Vorrang (production); sonst System-CA bzw. — nur wenn
-        # explizit gewünscht — kein Verify.
-        verify = ca_cert if ca_cert else (not insecure)
-        with httpx.Client(verify=verify, timeout=30.0) as client:
-            r = client.get(url, headers={"Authorization": f"Bearer {token}"})
-            r.raise_for_status()
-            data = r.json()
-        out: dict[str, dict] = {}
-        for item in data.get("items", []):
-            name = item.get("metadata", {}).get("name")
-            if not name:
-                continue
-            out[name] = {
-                "health": item.get("status", {}).get("health", {}).get("status"),
-                "sync": item.get("status", {}).get("sync", {}).get("status"),
-            }
-        log.info("ArgoCD: %d apps geladen", len(out))
-        return out
+        k8s_config.load_incluster_config()
+    except k8s_config.ConfigException:
+        k8s_config.load_kube_config()
+
+
+def load_argocd_apps(namespace: str = "argocd") -> dict[str, dict]:
+    """Liest ArgoCD-Application-CRDs direkt über die K8s-API (via ServiceAccount-RBAC).
+
+    Kein REST-Token nötig — Health/Sync-Status stehen auf .status der CR,
+    exakt wie sie auch /api/v1/applications liefern würde.
+    """
+    try:
+        _load_k8s_config()
+        api = k8s_client.CustomObjectsApi()
+        resp = api.list_namespaced_custom_object(
+            group="argoproj.io", version="v1alpha1",
+            namespace=namespace, plural="applications",
+        )
     except Exception as e:  # noqa: BLE001
-        log.error("ArgoCD-Fetch fehlgeschlagen: %s", e)
+        log.error("ArgoCD-Applications-Fetch (CRD) fehlgeschlagen: %s", e)
         return {}
+
+    out: dict[str, dict] = {}
+    for item in resp.get("items", []):
+        name = item.get("metadata", {}).get("name")
+        if not name:
+            continue
+        status = item.get("status", {})
+        out[name] = {
+            "health": (status.get("health") or {}).get("status"),
+            "sync": (status.get("sync") or {}).get("status"),
+        }
+    log.info("ArgoCD: %d Applications (CRD) geladen", len(out))
+    return out
 
 
 def load_deployments() -> dict[str, dict]:
     try:
-        try:
-            k8s_config.load_incluster_config()
-        except k8s_config.ConfigException:
-            k8s_config.load_kube_config()
+        _load_k8s_config()
         api = k8s_client.AppsV1Api()
         deployments = api.list_deployment_for_all_namespaces(timeout_seconds=30).items
     except Exception as e:  # noqa: BLE001
@@ -81,9 +86,6 @@ def load_deployments() -> dict[str, dict]:
 
 def collect_state(settings: Any) -> SourceState:
     """Lädt alle Quellen parallel — heute sequentiell, später async."""
-    argocd = load_argocd_apps(
-        settings.argocd_server, settings.argocd_token,
-        settings.argocd_insecure, settings.argocd_ca_cert,
-    )
+    argocd = load_argocd_apps(settings.argocd_namespace)
     deployments = load_deployments()
     return SourceState(argocd_apps=argocd, deployments=deployments)
