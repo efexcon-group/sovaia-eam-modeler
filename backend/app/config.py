@@ -31,7 +31,7 @@ class Settings(BaseSettings):
         "additiv für single-tenant-Kunden.",
     )
 
-    oidc_issuer: str = Field(default="https://keycloak.int.efexcon.com/realms/efexcon-group")
+    oidc_issuer: str = Field(default="https://keycloak.int.efexcon.com/auth/realms/efexcon-group")
     oidc_audience: str = Field(default="architecture-modeler-api")
     oidc_tenant_claim: str = Field(
         default="tenant",

@@ -13,7 +13,7 @@ import Keycloak from "keycloak-js";
 export const AUTH_ENABLED = (import.meta.env.VITE_AUTH_ENABLED ?? "false") === "true";
 
 const keycloak = new Keycloak({
-  url: import.meta.env.VITE_KEYCLOAK_URL ?? "https://keycloak.int.efexcon.com",
+  url: import.meta.env.VITE_KEYCLOAK_URL ?? "https://keycloak.int.efexcon.com/auth",
   realm: import.meta.env.VITE_KEYCLOAK_REALM ?? "efexcon-group",
   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "architecture-modeler",
 });
