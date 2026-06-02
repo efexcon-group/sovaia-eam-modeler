@@ -144,12 +144,20 @@ edge-types:
   - { id: ersetzt,         label-de: ersetzt,         label-en: replaces,        description-de: Sovaia-Modul übernimmt Funktion von Customer-IST-Modul (SOLL-Annotation). }
   - { id: integriert-mit,  label-de: integriert mit,  label-en: integrates-with, description-de: A und B bleiben getrennt, sind aber verbunden. }
   - { id: erfuellt,        label-de: erfüllt,         label-en: fulfills,        description-de: Anwendung/Service erfüllt eine Fähigkeit oder Compliance-Anker. }
+  - { id: voraussetzt,     label-de: setzt voraus,    label-en: requires,        description-de: "A setzt B voraus — B muss vorhanden/entschieden sein, bevor A adoptiert werden kann (harte Adoptions-Voraussetzung, ADR-096). Distinkt von 'nutzt' (Laufzeit-Abhängigkeit)." }
 
 # ── Tag-Achsen für Knoten ───────────────────────────────────────────────
 node-tags:
   status:
     values: [planned, released, live, deprecated]
     description-de: Lifecycle-Stadium (zeigt sich als Badge).
+  dimension:
+    values: [data, technology, operations, infrastructure, governance]
+    multi-value: true
+    description-de: |
+      Architektur-Dimension(en) des Knotens (ADR-096). Knoten-lokale Klassifikation
+      für Szenario-Reasoning ("welche Dimensionen berührt Szenario X?"). Ergänzt die
+      Taxonomie-Bäume (ADR-089), ersetzt sie nicht.
   layer:
     values: [L0, L1, L2, L3, L4, L5, L6]
     description-de: Plattform-Layer (siehe ADR-067).
@@ -208,6 +216,17 @@ optional-node-fields:
       operational-status: enum [planned, beta, live]
       available-from: string         # "immediately" | "YYYY-Q1" | "YYYY-Q3"
       evidence: string               # Pilot-Referenz, Customer-Case
+
+  sovereignty:
+    description-de: |
+      Souveränitäts-/Betriebs-Attribute für Szenario-Reasoning (ADR-096) —
+      beantwortet "KI souverän ohne eigene Infra?" + "Pilot/Trial möglich?".
+    fields:
+      deployment-modes: list<enum>   # [multi-tenant, self-hosted]
+      needs-own-ai-infra: bool       # braucht der Knoten eigene AI-Infrastruktur beim Kunden?
+      data-residency: enum [ch, eu, customer-controlled, any]
+      trial-available: bool          # "Lab"-Gedanke — ausprobieren ohne Commitment
+      pilot-available: bool          # Pilotuser-Gedanke
 
 # ── View-Profile (Granularitätsstufen, Use Case 1) ──────────────────────
 view-profiles:
@@ -272,10 +291,10 @@ story-schema:
         zoom: float
         pan: { x: float, y: float }
       overlay: enum? [data-flow, agent-glow, document-flow, none]
-      prototype-embed: optional   # ADR-041 prototype-postmessage-Pattern
+      prototype-embed:             # optional — ADR-041 prototype-postmessage-Pattern
         stage: enum [A, B, C]
         key: string                # Prototype-Key in sovaia-prototypes
         version: string
-      cta: optional
+      cta:                         # optional
         type: enum [next-beat, external-link, start-trial, contact-sales]
         target: string
