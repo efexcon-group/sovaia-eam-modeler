@@ -52,6 +52,23 @@ def _all_sovaia_nodes_with_binding(base: Path) -> list[dict]:
     return out
 
 
+def _fetch_effective_status(api_url: str, tenant: str) -> dict | None:
+    """Effektiver Status (Baseline+Overlay) pro Knoten vom Modeler.
+
+    Returnt None bei Fehler → Caller fällt auf die Baseline-Datei zurück
+    (z.B. älterer Modeler ohne /sovaia-status-Endpoint).
+    """
+    try:
+        url = api_url.rstrip("/") + "/v1/navigator/sovaia-status"
+        with httpx.Client(timeout=30.0) as client:
+            r = client.get(url, headers={"X-EAM-Tenant": tenant})
+            r.raise_for_status()
+            return r.json()
+    except Exception as e:  # noqa: BLE001
+        log.warning("Effektiv-Status-Fetch fehlgeschlagen (%s) — vergleiche gegen Baseline", e)
+        return None
+
+
 def _patch_modeler(api_url: str, tenant: str, node_id: str, status: str, source: str, dry: bool) -> bool:
     patch_body = {
         "tags": {
@@ -88,6 +105,9 @@ def run() -> int:
     log.info("Reference: %d Sovaia-Knoten mit source-binding gefunden", len(nodes))
 
     state = collect_state(settings)
+    # Effektiver Ist-Status (Baseline+Overlay) — damit wir nur bei echtem
+    # Wechsel patchen und nicht jede Runde gegen die statische Baseline.
+    effective = _fetch_effective_status(settings.modeler_api_url, settings.modeler_tenant)
 
     ok = 0
     fail = 0
@@ -102,8 +122,11 @@ def run() -> int:
             log.debug("Skip %s — %s", node_id, reason)
             skipped += 1
             continue
-        # Heutiger Status (aus Baseline) — wir patchen nur bei Wechsel
-        current = (node.get("tags") or {}).get("status")
+        # Ist-Status: effektiv (Overlay) wenn verfügbar, sonst Baseline-Fallback.
+        if effective is not None:
+            current = effective.get(node_id)
+        else:
+            current = (node.get("tags") or {}).get("status")
         if current == new_status:
             log.debug("Skip %s — already %s", node_id, current)
             skipped += 1

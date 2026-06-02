@@ -279,3 +279,25 @@ def _shape_child(child: dict, parent_path: str) -> dict:
         "path": f"{parent_path}/{cid}",
         "has-children": bool(child.get("children")),
     }
+
+
+@router.get("/sovaia-status")
+async def sovaia_status(
+    x_eam_tenant: str | None = Header(default=None),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Effektiver Status (Baseline + Tenant-Overlay) pro Sovaia-Knoten als id→status-Map.
+
+    Genutzt vom status-sync-agent (ADR-088), damit er nur bei echtem
+    Status-Wechsel patcht und nicht gegen die statische Baseline vergleicht.
+    """
+    base = Path(settings.reference_repo_path)
+    sovaia_baseline = [n for n in _scan_reference_files(base) if not _is_classic(n)]
+    tenant = (x_eam_tenant or settings.tenant_default).strip().lower() or settings.tenant_default
+    overlay = overlay_store.load_overlay(Path(settings.overlay_dir).resolve(), tenant)
+    effective = overlay_store.apply_overlay_to_sovaia(sovaia_baseline, overlay)
+    return {
+        n["id"]: (n.get("tags") or {}).get("status")
+        for n in effective
+        if n.get("id")
+    }
