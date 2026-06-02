@@ -4,6 +4,7 @@ import { AppShell, type SidebarRoute, type UserInfo, type LicenseInfo } from "@s
 import { getLicense, getMe, type License, type MeResponse } from "../api-client";
 import { licenseToInfo, meToUser } from "./adapters";
 import { LicenseReminderBanner } from "./LicenseReminderBanner";
+import { AUTH_ENABLED, getAuthUser } from "../auth/keycloak";
 
 /**
  * ModelerShell — verkabelt @sovaia/app-shell-react AppShell mit dem
@@ -24,7 +25,7 @@ import { LicenseReminderBanner } from "./LicenseReminderBanner";
 const SIDEBAR_ROUTES: SidebarRoute[] = [
   { path: "#/navigator", label: "Navigator" },
   { path: "#/canvas", label: "Canvas" },
-  { path: "#/settings", label: "Einstellungen" },
+  { path: "#/settings", label: "Einstellungen", footer: true },
 ];
 
 const APP_VERSION = "0.1.0";
@@ -52,7 +53,9 @@ export default function ModelerShell({ children }: ModelerShellProps) {
       let haveMeLicense = false;
       if (meRes.status === "fulfilled") {
         const me: MeResponse = meRes.value;
-        setUser(meToUser(me));
+        // Bei aktivem Login: echte Identität aus dem Token; sonst Tenant-Slug.
+        const authUser = AUTH_ENABLED ? getAuthUser() : undefined;
+        setUser(authUser ?? meToUser(me));
         if (me.license) {
           haveMeLicense = true;
           setResolvedLicense(me.license);

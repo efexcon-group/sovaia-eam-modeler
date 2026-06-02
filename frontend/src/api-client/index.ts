@@ -1,6 +1,8 @@
 // Typisierter Wrapper um /v1/* der architecture-modeler-api.
 // Iteration 0: nur Read-Operationen auf Sovaia-Reference + Stories.
 
+import { getToken } from "../auth/keycloak";
+
 export interface ReferenceNode {
   id: string;
   type: string;
@@ -46,8 +48,17 @@ export interface HealthResponse {
 
 const API = "/v1";
 
+/** fetch-Wrapper, der den OIDC-Bearer anhängt (wenn Login aktiv, ADR-091). */
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  const token = getToken();
+  if (!token) return fetch(input, init);
+  const headers = new Headers(init?.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+  return fetch(input, { ...init, headers });
+}
+
 export async function getHealth(): Promise<HealthResponse> {
-  const r = await fetch(`${API}/health`);
+  const r = await apiFetch(`${API}/health`);
   if (!r.ok) throw new Error(`/v1/health failed: ${r.status}`);
   return r.json();
 }
@@ -80,19 +91,19 @@ export interface MeResponse {
 }
 
 export async function getMe(): Promise<MeResponse> {
-  const r = await fetch(`${API}/me`);
+  const r = await apiFetch(`${API}/me`);
   if (!r.ok) throw new Error(`/v1/me failed: ${r.status}`);
   return r.json();
 }
 
 export async function getLicense(): Promise<License> {
-  const r = await fetch(`${API}/edit/license`);
+  const r = await apiFetch(`${API}/edit/license`);
   if (!r.ok) throw new Error(`getLicense failed: ${r.status}`);
   return r.json();
 }
 
 export async function putLicense(license: Partial<License>): Promise<License> {
-  const r = await fetch(`${API}/edit/license`, {
+  const r = await apiFetch(`${API}/edit/license`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(license),
@@ -102,20 +113,20 @@ export async function putLicense(license: Partial<License>): Promise<License> {
 }
 
 export async function getSovaiaReference(): Promise<ReferenceModel> {
-  const r = await fetch(`${API}/reference/sovaia`);
+  const r = await apiFetch(`${API}/reference/sovaia`);
   if (!r.ok) throw new Error(`reference/sovaia failed: ${r.status}`);
   return r.json();
 }
 
 export async function getClusterDetail(refPath: string): Promise<ReferenceModel> {
   const safe = refPath.replace(/^\/+/, "");
-  const r = await fetch(`${API}/reference/sovaia/${safe}`);
+  const r = await apiFetch(`${API}/reference/sovaia/${safe}`);
   if (!r.ok) throw new Error(`cluster ${refPath} failed: ${r.status}`);
   return r.json();
 }
 
 export async function listStories(): Promise<StoryListItem[]> {
-  const r = await fetch(`${API}/reference/stories`);
+  const r = await apiFetch(`${API}/reference/stories`);
   if (!r.ok) throw new Error(`stories failed: ${r.status}`);
   return r.json();
 }
@@ -202,13 +213,13 @@ export interface NavigatorResponse {
 }
 
 export async function getSchichten(): Promise<SchichtenResponse> {
-  const r = await fetch(`${API}/taxonomy/schichten`);
+  const r = await apiFetch(`${API}/taxonomy/schichten`);
   if (!r.ok) throw new Error(`taxonomy/schichten failed: ${r.status}`);
   return r.json();
 }
 
 export async function getNavigator(path: string): Promise<NavigatorResponse> {
-  const r = await fetch(`${API}/navigator?path=${encodeURIComponent(path)}`);
+  const r = await apiFetch(`${API}/navigator?path=${encodeURIComponent(path)}`);
   if (!r.ok) throw new Error(`navigator failed: ${r.status} ${await r.text()}`);
   return r.json();
 }
@@ -234,7 +245,7 @@ export interface ClassicPatchPayload {
 }
 
 export async function createClassic(payload: ClassicCreatePayload): Promise<NavigatorNode> {
-  const r = await fetch(`${API}/edit/classic`, {
+  const r = await apiFetch(`${API}/edit/classic`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -244,7 +255,7 @@ export async function createClassic(payload: ClassicCreatePayload): Promise<Navi
 }
 
 export async function patchClassic(nodeId: string, payload: ClassicPatchPayload): Promise<void> {
-  const r = await fetch(`${API}/edit/classic/${encodeURIComponent(nodeId)}`, {
+  const r = await apiFetch(`${API}/edit/classic/${encodeURIComponent(nodeId)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -253,7 +264,7 @@ export async function patchClassic(nodeId: string, payload: ClassicPatchPayload)
 }
 
 export async function deleteClassic(nodeId: string): Promise<void> {
-  const r = await fetch(`${API}/edit/classic/${encodeURIComponent(nodeId)}`, {
+  const r = await apiFetch(`${API}/edit/classic/${encodeURIComponent(nodeId)}`, {
     method: "DELETE",
   });
   if (!r.ok && r.status !== 204) {
@@ -270,7 +281,7 @@ export async function generateClassic(
   path: string,
   limit = 5,
 ): Promise<GenerateClassicResponse> {
-  const r = await fetch(`${API}/intake/generate-classic`, {
+  const r = await apiFetch(`${API}/intake/generate-classic`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ path, limit }),
@@ -298,7 +309,7 @@ export interface SovaiaPatchPayload {
 }
 
 export async function patchSovaia(nodeId: string, payload: SovaiaPatchPayload): Promise<void> {
-  const r = await fetch(`${API}/edit/sovaia/${encodeURIComponent(nodeId)}`, {
+  const r = await apiFetch(`${API}/edit/sovaia/${encodeURIComponent(nodeId)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -307,7 +318,7 @@ export async function patchSovaia(nodeId: string, payload: SovaiaPatchPayload): 
 }
 
 export async function revertSovaia(nodeId: string): Promise<void> {
-  const r = await fetch(`${API}/edit/sovaia/${encodeURIComponent(nodeId)}`, {
+  const r = await apiFetch(`${API}/edit/sovaia/${encodeURIComponent(nodeId)}`, {
     method: "DELETE",
   });
   if (!r.ok && r.status !== 204) {
@@ -335,7 +346,7 @@ export interface RefineResponse {
 }
 
 export async function refineDescription(req: RefineRequest): Promise<RefineResponse> {
-  const r = await fetch(`${API}/intake/refine-description`, {
+  const r = await apiFetch(`${API}/intake/refine-description`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),
@@ -358,7 +369,7 @@ export interface MappingCreatePayload {
 export interface MappingPatchPayload extends Partial<MappingCreatePayload> {}
 
 export async function createMapping(payload: MappingCreatePayload): Promise<NavigatorMapping> {
-  const r = await fetch(`${API}/edit/mappings`, {
+  const r = await apiFetch(`${API}/edit/mappings`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -368,7 +379,7 @@ export async function createMapping(payload: MappingCreatePayload): Promise<Navi
 }
 
 export async function patchMapping(id: string, payload: MappingPatchPayload): Promise<NavigatorMapping> {
-  const r = await fetch(`${API}/edit/mappings/${encodeURIComponent(id)}`, {
+  const r = await apiFetch(`${API}/edit/mappings/${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -378,7 +389,7 @@ export async function patchMapping(id: string, payload: MappingPatchPayload): Pr
 }
 
 export async function deleteMapping(id: string): Promise<void> {
-  const r = await fetch(`${API}/edit/mappings/${encodeURIComponent(id)}`, {
+  const r = await apiFetch(`${API}/edit/mappings/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
   if (!r.ok && r.status !== 204) {
