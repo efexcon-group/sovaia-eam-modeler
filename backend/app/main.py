@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.routers import edit, health, intake, me, navigator, reference, taxonomy
+from app.security.auth import AuthMiddleware
 
 
 @asynccontextmanager
@@ -21,6 +22,10 @@ def create_app() -> FastAPI:
         description="L3-Service für Architektur-Modellierung, IST/SOLL und Storyteller (ADR-082).",
         lifespan=lifespan,
     )
+
+    # Auth zuerst registrieren → CORS (danach hinzugefügt) liegt außen und
+    # behandelt Preflight/OPTIONS vor der Auth-Prüfung.
+    app.add_middleware(AuthMiddleware, settings=get_settings())
 
     app.add_middleware(
         CORSMiddleware,

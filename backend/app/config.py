@@ -33,6 +33,16 @@ class Settings(BaseSettings):
 
     oidc_issuer: str = Field(default="https://keycloak.int.efexcon.com/realms/efexcon-group")
     oidc_audience: str = Field(default="architecture-modeler-api")
+    oidc_tenant_claim: str = Field(
+        default="tenant",
+        description="Token-Claim, aus dem der Tenant abgeleitet wird (ADR-091 Login-Block).",
+    )
+    auth_required: bool = Field(
+        default=False,
+        description="Wenn true: unauthentifizierte Requests (außer Health/Docs) → 401. "
+        "Default false → additiv: Token wird validiert WENN vorhanden, sonst Header/Default "
+        "(bricht internen Betrieb + status-sync-agent nicht).",
+    )
 
     tenant_default: str = Field(default="sovaia-internal")
 
