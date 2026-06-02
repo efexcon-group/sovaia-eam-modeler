@@ -18,6 +18,10 @@ const keycloak = new Keycloak({
   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "architecture-modeler",
 });
 
+// Optionaler IdP-Hint: leitet direkt zum genannten Identity-Provider (z.B. Entra)
+// und überspringt den Keycloak-IdP-Auswahl-Dialog. Wert = Alias des IdP im Realm.
+const IDP_HINT = import.meta.env.VITE_KEYCLOAK_IDP_HINT ?? "";
+
 let started = false;
 
 /** Initialisiert den Login-Flow. No-op (returnt false) wenn AUTH_ENABLED aus. */
@@ -25,17 +29,21 @@ export async function initAuth(): Promise<boolean> {
   if (!AUTH_ENABLED) return false;
   if (started) return keycloak.authenticated ?? false;
   started = true;
+  // check-sso (statt login-required), damit wir den Login mit idpHint selbst
+  // auslösen können → Direkt-Sprung zum IdP ohne Auswahl-Dialog.
   const ok = await keycloak.init({
-    onLoad: "login-required",
+    onLoad: "check-sso",
     pkceMethod: "S256",
     checkLoginIframe: false,
   });
-  if (ok) {
-    // Token regelmäßig erneuern; bei Fehlschlag erneut anmelden.
-    setInterval(() => {
-      keycloak.updateToken(60).catch(() => keycloak.login());
-    }, 30_000);
+  if (!ok) {
+    await keycloak.login(IDP_HINT ? { idpHint: IDP_HINT } : undefined);
+    return false; // Redirect läuft — Seite navigiert weg.
   }
+  // Token regelmäßig erneuern; bei Fehlschlag erneut anmelden.
+  setInterval(() => {
+    keycloak.updateToken(60).catch(() => keycloak.login(IDP_HINT ? { idpHint: IDP_HINT } : undefined));
+  }, 30_000);
   return ok;
 }
 

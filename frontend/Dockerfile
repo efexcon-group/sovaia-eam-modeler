@@ -23,6 +23,9 @@ COPY . .
 # leere ENVs würden die ??-Fallbacks im Code überschreiben — daher hier nicht.
 ARG VITE_AUTH_ENABLED=false
 ENV VITE_AUTH_ENABLED=$VITE_AUTH_ENABLED
+# Optionaler IdP-Hint (Alias des Entra-IdP im Realm) → Direkt-Login ohne Dialog.
+ARG VITE_KEYCLOAK_IDP_HINT=
+ENV VITE_KEYCLOAK_IDP_HINT=$VITE_KEYCLOAK_IDP_HINT
 
 RUN pnpm build
 

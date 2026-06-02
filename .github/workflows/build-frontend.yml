@@ -44,6 +44,7 @@ jobs:
           push: true
           build-args: |
             VITE_AUTH_ENABLED=true
+            VITE_KEYCLOAK_IDP_HINT=${{ vars.VITE_KEYCLOAK_IDP_HINT }}
           secrets: |
             node_auth_token=${{ secrets.GITHUB_TOKEN }}
           platforms: linux/amd64
