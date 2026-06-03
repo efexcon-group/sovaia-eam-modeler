@@ -8,7 +8,10 @@
     "build": "tsc -b && vite build",
     "build:public-player": "tsc -b && vite build --mode public-player",
     "preview": "vite preview",
-    "lint": "eslint src --ext ts,tsx"
+    "lint": "eslint src --ext ts,tsx",
+    "e2e": "playwright test",
+    "e2e:update": "playwright test --update-snapshots",
+    "e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.4",
@@ -24,6 +27,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^18.3.12",

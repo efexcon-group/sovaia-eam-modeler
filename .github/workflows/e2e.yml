@@ -1,0 +1,44 @@
+name: e2e
+
+# Playwright E2E/Visual/Responsive gegen das gebaute Frontend (vite preview).
+# Manuell (workflow_dispatch) + auf Frontend-PRs. Nicht auf jedem main-Push,
+# um Kosten/Rauschen zu vermeiden. Erster Lauf: Visual-Baselines via
+# `pnpm e2e:update` lokal/Dispatch erzeugen + committen.
+
+on:
+  workflow_dispatch: {}
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/e2e.yml"
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@efexcon-group"
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium webkit
+      - run: pnpm e2e
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7
