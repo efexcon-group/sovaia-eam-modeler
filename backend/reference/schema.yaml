@@ -158,6 +158,16 @@ node-tags:
       Architektur-Dimension(en) des Knotens (ADR-096). Knoten-lokale Klassifikation
       für Szenario-Reasoning ("welche Dimensionen berührt Szenario X?"). Ergänzt die
       Taxonomie-Bäume (ADR-089), ersetzt sie nicht.
+  fulfilled-by:
+    values: [sovaia-module, kiinno-datacenter, kiinno-implementation, efexcon-ag]
+    multi-value: true
+    description-de: |
+      Wer die Capability/den Knoten liefert (ADR-098, EFEXCON-Group-Liefermodell):
+      sovaia-module = Sovaia-Produkt · kiinno-datacenter = KIINNO Datacenter-Ops
+      (Data Fabric + buchbare GPU) · kiinno-implementation = KIINNO Data-Fabric-/AI-
+      Implementierung · efexcon-ag = EFEXCON-AG Strategie-/EA-Beratung. Trägt das
+      Readiness-Acceleration-Mapping (welcher Provider füllt den Gap). Multi-value
+      für Ko-Lieferung (z.B. Managed-RAG = sovaia-module + kiinno-datacenter).
   layer:
     values: [L0, L1, L2, L3, L4, L5, L6]
     description-de: Plattform-Layer (siehe ADR-067).
