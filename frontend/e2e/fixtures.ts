@@ -16,6 +16,8 @@ export async function mockApi(page: Page) {
   // Reference/Navigator: leere, aber wohlgeformte Antworten → Seiten hängen nicht.
   await page.route("**/v1/reference/sovaia", (r) => r.fulfill({ json: { nodes: [], edges: [] } }));
   await page.route("**/v1/navigator/sovaia-status", (r) => r.fulfill({ json: {} }));
+  await page.route("**/v1/taxonomy/**", (r) => r.fulfill({ json: { schichten: [] } }));
+  await page.route("**/v1/navigator**", (r) => r.fulfill({ json: { children: [], nodes: [] } }));
 }
 
 /** test-Fixture mit automatisch gemocktem API. */
