@@ -95,7 +95,143 @@ nodes:
     tags: { status: live, layer: L1, perspective: governance, cluster: core-ai-stack, ownership: sovaia-baseline }
     summary-de: Pre-Write- und Pre-Read-Sicherheits- / Governance-Assessment als Grundlage für sichere Agent-/MCP-/LLM-Capabilities.
 
+  # ════════════════════════════════════════════════════════════════════
+  # Sovereign-AI-Readiness (ADR-098) — Workload-Targets, Prereq-Capabilities,
+  # RAG-Pipeline. seeded-by: llm-generated → faktisch durch EFEXCON/KIINNO zu
+  # validieren (insb. fulfilled-by + sovereignty).
+  # ════════════════════════════════════════════════════════════════════
+
+  # ── AI-Workload-Targets (Adoptions-Stufen) ──────────────────────────
+  - id: wl-llm-chat-rag
+    type: ai-use-case
+    label-de: "Stufe 1 — LLM-Chat mit RAG auf eigenen Daten"
+    tags: { status: released, layer: L3, perspective: ai-use-case, cluster: sovereign-ai-readiness, dimension: [data, technology], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Souveräner LLM-Chat, der auf den eigenen Unternehmensdaten via RAG antwortet — der typische Einstieg.
+
+  - id: wl-agents-automation
+    type: ai-use-case
+    label-de: "Stufe 2 — Automation & Data-Integration (Agents)"
+    tags: { status: planned, layer: L3, perspective: ai-use-case, cluster: sovereign-ai-readiness, dimension: [operations, data], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Agentische Automation + Anbindung weiterer Systeme/Datenquellen. Agents werden als Bestandteile der Sovaia-Apps ausgeliefert, nicht generisch.
+
+  - id: wl-ai-features
+    type: ai-use-case
+    label-de: "Stufe 3 — AI-Features (Translation, Transcription, App-Intelligence)"
+    tags: { status: planned, layer: L3, perspective: ai-use-case, cluster: sovereign-ai-readiness, dimension: [technology, operations], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: LLM-gestützte Features auf der etablierten Basis — Übersetzung, Transkription, App-Intelligence.
+
+  # ── Prereq-Capabilities (fulfilled-by + sovereignty) ────────────────
+  - id: cap-sovereign-inference
+    type: service
+    label-de: Souveräne LLM-/Embedding-Inference (GPU)
+    tags: { status: released, layer: L0, perspective: multi-tenancy, cluster: sovereign-ai-readiness, dimension: [infrastructure, technology], fulfilled-by: [kiinno-datacenter], ownership: sovaia-baseline, seeded-by: llm-generated }
+    sovereignty: { deployment-modes: [multi-tenant, self-hosted], needs-own-ai-infra: false, data-residency: ch, trial-available: true, pilot-available: true }
+    summary-de: GPU-gestützte Inferenz (LLM + Embeddings) im KIINNO-Datacenter (CH), pro Tenant buchbar — kein eigenes GPU nötig. (DGX ist nur Sovaias Testumgebung.)
+
+  - id: cap-vector-store
+    type: datenraum
+    label-de: Embedding-/Vector-Store
+    tags: { status: live, layer: L0, perspective: architektur, cluster: sovereign-ai-readiness, dimension: [data, infrastructure], fulfilled-by: [kiinno-datacenter, sovaia-module], ownership: sovaia-baseline, seeded-by: llm-generated }
+    sovereignty: { deployment-modes: [multi-tenant, self-hosted], needs-own-ai-infra: false, data-residency: ch, trial-available: true, pilot-available: true }
+    summary-de: pgvector-basierter Vektorspeicher für RAG — Teil der buchbaren KIINNO-Capacity bzw. der Sovaia-Plattform.
+
+  - id: cap-data-fabric
+    type: faehigkeit
+    label-de: Data Fabric & Quell-Anbindung
+    tags: { status: released, layer: L0, perspective: integration, cluster: sovereign-ai-readiness, dimension: [data, infrastructure], fulfilled-by: [kiinno-datacenter, kiinno-implementation], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Semantik-/Governance-fähige Anbindung heterogener (oft API-loser) Quellen — KIINNO führt die Data Fabric ein und betreibt sie tenant-bezogen.
+
+  - id: cap-rag-pipeline
+    type: prozess
+    label-de: RAG-Verarbeitungs-Pipeline
+    tags: { status: released, layer: L1, perspective: architektur, cluster: sovereign-ai-readiness, dimension: [data, operations], fulfilled-by: [kiinno-implementation, sovaia-module], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Verarbeitungs-Kette von der Rohquelle zur abrufbaren Wissensbasis (Details siehe pipe-*-Knoten) — KIINNO implementiert, Sovaia liefert die Bausteine.
+
+  - id: cap-governance-metadata
+    type: faehigkeit
+    label-de: Governance- & Semantik-Anreicherung
+    tags: { status: released, layer: L1, perspective: governance, cluster: sovereign-ai-readiness, dimension: [governance, data], fulfilled-by: [kiinno-implementation, sovaia-module], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Anreichern von Roh-Chunks um Semantik + Governance-Metadaten — schließt die Lücke "Systemdaten tragen keine Semantik/Governance".
+
+  - id: cap-ea-transformation
+    type: faehigkeit
+    label-de: Transformations- & EA-Begleitung
+    tags: { status: live, layer: L1, perspective: architektur, cluster: sovereign-ai-readiness, dimension: [operations], fulfilled-by: [efexcon-ag], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Strategie-/Enterprise-Architektur-Begleitung durch EFEXCON AG — deckt Organisation, RAG-/Pipeline-Verständnis und Skills.
+
+  # ── RAG-Pipeline-Stufen (Prozess-Kette, didaktisch) ─────────────────
+  - id: pipe-chunking
+    type: prozess
+    label-de: "RAG 1 — Chunking"
+    tags: { status: live, layer: L1, perspective: architektur, cluster: rag-pipeline, dimension: [data], fulfilled-by: [sovaia-module], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Zerlegen der Quelldokumente in retrievable Einheiten.
+  - id: pipe-enrichment
+    type: prozess
+    label-de: "RAG 2 — Enrichment"
+    tags: { status: released, layer: L1, perspective: architektur, cluster: rag-pipeline, dimension: [data], fulfilled-by: [kiinno-implementation], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Anreichern um Kontext/Metadaten — der oft unterschätzte Schritt.
+  - id: pipe-classification
+    type: prozess
+    label-de: "RAG 3 — Classification"
+    tags: { status: released, layer: L1, perspective: governance, cluster: rag-pipeline, dimension: [governance, data], fulfilled-by: [kiinno-implementation], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Klassifikation + Governance-Tagging (Vertraulichkeit, Zugriff, Herkunft).
+  - id: pipe-embedding
+    type: prozess
+    label-de: "RAG 4 — Embedding"
+    tags: { status: live, layer: L1, perspective: architektur, cluster: rag-pipeline, dimension: [data, technology], fulfilled-by: [kiinno-datacenter, sovaia-module], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Vektorisieren der Chunks via souveränem Embedding-Modell.
+  - id: pipe-filtering
+    type: prozess
+    label-de: "RAG 5 — Filtering"
+    tags: { status: live, layer: L1, perspective: governance, cluster: rag-pipeline, dimension: [governance], fulfilled-by: [sovaia-module], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Governance-/Berechtigungs-Filter beim Abruf (wer darf was sehen).
+  - id: pipe-retrieval
+    type: prozess
+    label-de: "RAG 6 — Retrieval"
+    tags: { status: live, layer: L1, perspective: architektur, cluster: rag-pipeline, dimension: [data], fulfilled-by: [sovaia-module], ownership: sovaia-baseline, seeded-by: llm-generated }
+    summary-de: Kontext-Abruf für den LLM-Prompt (semantische Suche + Re-Ranking).
+
+  # ── Cloud-Act / Souveränitäts-Anker ─────────────────────────────────
+  - id: compliance-cloud-act
+    type: compliance-anker
+    label-de: US-Cloud-Act-Exposure
+    tags: { status: live, layer: L1, perspective: governance, cluster: sovereign-ai-readiness, dimension: [governance], fulfilled-by: [efexcon-ag, kiinno-datacenter], ownership: sovaia-baseline, seeded-by: llm-generated }
+    sovereignty: { deployment-modes: [multi-tenant, self-hosted], needs-own-ai-infra: false, data-residency: ch, trial-available: true, pilot-available: true }
+    summary-de: Bewertet die Cloud-Act-Aussetzung eines Verarbeitungspfads (Zone, Betreiber-Jurisdiktion). CH-Zone via KIINNO-Datacenter minimiert die Exposure. Aussage durch EFEXCON AG zu attestieren.
+
 edges:
+
+  # ── Sovereign-AI-Readiness (ADR-098): Targets → Prereqs ─────────────
+  - { from: wl-llm-chat-rag,         to: cap-data-fabric,         type: voraussetzt }
+  - { from: wl-llm-chat-rag,         to: cap-rag-pipeline,        type: voraussetzt }
+  - { from: wl-llm-chat-rag,         to: cap-vector-store,        type: voraussetzt }
+  - { from: wl-llm-chat-rag,         to: cap-sovereign-inference, type: voraussetzt }
+  - { from: wl-llm-chat-rag,         to: cap-governance-metadata, type: voraussetzt }
+  - { from: wl-llm-chat-rag,         to: cap-ea-transformation,   type: voraussetzt }
+  - { from: wl-llm-chat-rag,         to: ai-chat,                 type: nutzt }
+  - { from: wl-agents-automation,    to: wl-llm-chat-rag,         type: voraussetzt }
+  - { from: wl-agents-automation,    to: ai-agent-runtime,        type: nutzt }
+  - { from: wl-ai-features,          to: wl-llm-chat-rag,         type: voraussetzt }
+  - { from: wl-ai-features,          to: ai-translation,          type: nutzt }
+  - { from: wl-ai-features,          to: ai-transcription,        type: nutzt }
+  # RAG-Pipeline-Kette + Zugehörigkeit zur cap-rag-pipeline
+  - { from: pipe-chunking,           to: pipe-enrichment,         type: fliesst-zu }
+  - { from: pipe-enrichment,         to: pipe-classification,     type: fliesst-zu }
+  - { from: pipe-classification,     to: pipe-embedding,          type: fliesst-zu }
+  - { from: pipe-embedding,          to: pipe-filtering,          type: fliesst-zu }
+  - { from: pipe-filtering,          to: pipe-retrieval,          type: fliesst-zu }
+  - { from: pipe-chunking,           to: cap-rag-pipeline,        type: gehoert-zu }
+  - { from: pipe-enrichment,         to: cap-rag-pipeline,        type: gehoert-zu }
+  - { from: pipe-classification,     to: cap-rag-pipeline,        type: gehoert-zu }
+  - { from: pipe-embedding,          to: cap-rag-pipeline,        type: gehoert-zu }
+  - { from: pipe-filtering,          to: cap-rag-pipeline,        type: gehoert-zu }
+  - { from: pipe-retrieval,          to: cap-rag-pipeline,        type: gehoert-zu }
+  # Prereqs nutzen Infra / erfüllen Governance
+  - { from: cap-rag-pipeline,        to: cap-vector-store,        type: nutzt }
+  - { from: cap-rag-pipeline,        to: cap-sovereign-inference, type: nutzt }
+  - { from: cap-rag-pipeline,        to: cap-data-fabric,         type: nutzt }
+  - { from: cap-governance-metadata, to: ai-governance,           type: erfuellt }
+  - { from: compliance-cloud-act,    to: cap-sovereign-inference, type: integriert-mit }
 
   # Alle End-User-Anwendungen nutzen Agent-Runtime
   - { from: ai-chat,                to: ai-agent-runtime,   type: nutzt }

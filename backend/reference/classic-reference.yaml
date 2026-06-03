@@ -639,4 +639,39 @@ nodes:
       seeded-by: human-architect
     summary-de: Touren-Pläne in Excel, Fahrer melden Stati telefonisch — keine Realtime-Sicht für Disponent.
 
+  # ── T2 Kunden-IST-Archetyp "typisches KMU" (ADR-098, seeded-by llm-generated) ──
+  # Ausgangspunkt jeder Readiness-Gap-Analyse — was der Kunde heute typisch hat.
+  - id: cls-ist-m365
+    type: anwendung
+    label-de: Microsoft 365 (Exchange, SharePoint, Teams)
+    tags: { ownership: classic, cluster: kunde-ist-archetyp, dimension: [operations, data], operational-status: in-use-everywhere, seeded-by: llm-generated }
+    summary-de: Office-/Collaboration-Suite — Hauptquelle unstrukturierter Daten (Mail, Dokumente, Teams).
+  - id: cls-ist-azure
+    type: service
+    label-de: Microsoft Azure (IaaS/PaaS)
+    tags: { ownership: classic, cluster: kunde-ist-archetyp, dimension: [infrastructure], operational-status: in-use-everywhere, seeded-by: llm-generated }
+    summary-de: Bestehende Azure-Subscription — Compute/Storage, aber keine souveräne AI-Infra (GPU/Vector).
+  - id: cls-ist-azure-vm-legacy
+    type: anwendung
+    label-de: Azure-VMs mit Legacy-Apps
+    tags: { ownership: classic, cluster: kunde-ist-archetyp, dimension: [technology, infrastructure], operational-status: in-use-everywhere, seeded-by: llm-generated }
+    summary-de: Gehostete Legacy-Anwendungen — Datenquellen oft ohne nutzbare API.
+  - id: cls-ist-avd
+    type: anwendung
+    label-de: Azure Virtual Desktop
+    tags: { ownership: classic, cluster: kunde-ist-archetyp, dimension: [technology], operational-status: in-use-everywhere, seeded-by: llm-generated }
+    summary-de: Virtualisierte Arbeitsplätze — Zugang, aber kein AI-Mehrwert.
+  - id: cls-ist-fileshares
+    type: datenraum
+    label-de: Datei-/SharePoint-Ablagen
+    tags: { ownership: classic, cluster: kunde-ist-archetyp, dimension: [data, governance], operational-status: in-use-everywhere, seeded-by: llm-generated }
+    data-readiness: { interface-available: false, interface-limitations: "Zugriff oft nur per UI/SMB; keine semantische API", semantic-richness: none, governance-readiness: none }
+    summary-de: Gewachsene Datei-/Dokumentenablagen — der Blind-Spot — keine API, keine Semantik, keine Governance-Information.
+  - id: cls-ist-lob-app
+    type: anwendung
+    label-de: Legacy-Line-of-Business-App
+    tags: { ownership: classic, cluster: kunde-ist-archetyp, dimension: [technology, data], operational-status: in-use-everywhere, seeded-by: llm-generated }
+    data-readiness: { interface-available: false, interface-limitations: "proprietär; Export nur als Report/CSV", semantic-richness: low, governance-readiness: none }
+    summary-de: Branchen-/ERP-Altsystem — Daten vorhanden, aber schwer integrierbar (keine/eingeschränkte Schnittstelle).
+
 edges: []

@@ -238,6 +238,16 @@ optional-node-fields:
       trial-available: bool          # "Lab"-Gedanke — ausprobieren ohne Commitment
       pilot-available: bool          # Pilotuser-Gedanke
 
+  data-readiness:
+    description-de: |
+      Quell-/Schnittstellen-Reife (ADR-098) — macht den Kunden-Blind-Spot sichtbar
+      (Daten ohne API/Semantik/Governance). Primär auf datenraum/schnittstelle-Knoten.
+    fields:
+      interface-available: bool
+      interface-limitations: string         # Freitext: bekannte Einschränkungen
+      semantic-richness: enum [none, low, medium, high]
+      governance-readiness: enum [none, low, medium, high]
+
 # ── View-Profile (Granularitätsstufen, Use Case 1) ──────────────────────
 view-profiles:
 
