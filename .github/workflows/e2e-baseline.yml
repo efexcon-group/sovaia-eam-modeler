@@ -1,0 +1,45 @@
+name: e2e-baseline
+
+# Erzeugt die Playwright-Visual-Baselines (pnpm e2e:update) und lädt sie als
+# Artefakt hoch — kein lokaler GHCR-Token nötig. Ablauf:
+#   1. Workflow manuell starten (Run workflow).
+#   2. Artefakt "playwright-baselines" herunterladen, nach frontend/e2e/__snapshots__/
+#      entpacken und committen.
+#   3. Danach vergleicht e2e.yml gegen diese Baselines (Visual-Regression grün).
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@efexcon-group"
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium webkit
+      # Baselines erzeugen. --update-snapshots schreibt Snapshots + lässt die Suite "grün" enden.
+      - run: pnpm e2e:update
+      - uses: actions/upload-artifact@v4
+        with:
+          name: playwright-baselines
+          path: frontend/e2e/__snapshots__
+          retention-days: 14
+          if-no-files-found: error
