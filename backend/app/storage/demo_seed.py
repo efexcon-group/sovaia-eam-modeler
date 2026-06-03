@@ -22,6 +22,18 @@ DEMO_PERSONAS: dict[str, dict] = {
         "label": "Demo: Heim & Pflege (CH)",
         "license-groups": ["modeler-foundation", "modeler-business-healthcare"],
     },
+    "demo-logistik": {
+        "label": "Demo: Logistik",
+        "license-groups": ["modeler-foundation", "modeler-business-logistik"],
+    },
+    "demo-field-service": {
+        "label": "Demo: Field-Service / Services",
+        "license-groups": ["modeler-foundation", "modeler-business-services"],
+    },
+    "demo-energie": {
+        "label": "Demo: Energie & Umwelt",
+        "license-groups": ["modeler-foundation", "modeler-business-energie"],
+    },
 }
 
 

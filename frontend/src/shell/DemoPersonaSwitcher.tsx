@@ -12,6 +12,9 @@ import { getDemoPersona, setDemoPersona } from "../api-client";
 const PERSONAS: { value: string; label: string }[] = [
   { value: "", label: "Intern (Admin) — voller Zugriff" },
   { value: "demo-heim-pflege", label: "Demo: Heim & Pflege (CH)" },
+  { value: "demo-logistik", label: "Demo: Logistik" },
+  { value: "demo-field-service", label: "Demo: Field-Service / Services" },
+  { value: "demo-energie", label: "Demo: Energie & Umwelt" },
 ];
 
 export function DemoPersonaSwitcher() {
