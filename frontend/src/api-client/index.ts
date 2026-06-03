@@ -48,12 +48,36 @@ export interface HealthResponse {
 
 const API = "/v1";
 
-/** fetch-Wrapper, der den OIDC-Bearer anhängt (wenn Login aktiv, ADR-091). */
+// ── Demo-Persona-Switcher (ADR-100) ─────────────────────────────────────
+// Admin kann „als Kunde" demonstrieren: setzt einen demo-*-Tenant, den das
+// Backend (AuthMiddleware, demo-Guardrail) als Sicht übernimmt.
+const PERSONA_KEY = "eam-demo-persona";
+
+export function getDemoPersona(): string {
+  try {
+    return localStorage.getItem(PERSONA_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setDemoPersona(persona: string): void {
+  try {
+    if (persona) localStorage.setItem(PERSONA_KEY, persona);
+    else localStorage.removeItem(PERSONA_KEY);
+  } catch {
+    /* localStorage nicht verfügbar — ignorieren */
+  }
+}
+
+/** fetch-Wrapper: OIDC-Bearer (ADR-091) + Demo-Persona-Header (ADR-100). */
 async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   const token = getToken();
-  if (!token) return fetch(input, init);
+  const persona = getDemoPersona();
+  if (!token && !persona) return fetch(input, init);
   const headers = new Headers(init?.headers);
-  headers.set("Authorization", `Bearer ${token}`);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (persona) headers.set("X-EAM-Demo-Persona", persona);
   return fetch(input, { ...init, headers });
 }
 

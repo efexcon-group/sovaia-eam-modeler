@@ -6,12 +6,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import edit, health, intake, me, navigator, reference, taxonomy
 from app.security.auth import AuthMiddleware
+from app.storage.demo_seed import ensure_demo_overlays
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
     app.state.settings = settings
+    # Demo-Persona-Overlays (ADR-100) idempotent sicherstellen.
+    ensure_demo_overlays(settings.overlay_dir)
     yield
 
 

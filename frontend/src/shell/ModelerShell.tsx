@@ -4,6 +4,7 @@ import { AppShell, type SidebarRoute, type UserInfo, type LicenseInfo } from "@e
 import { getLicense, getMe, type License, type MeResponse } from "../api-client";
 import { licenseToInfo, meToUser } from "./adapters";
 import { LicenseReminderBanner } from "./LicenseReminderBanner";
+import { DemoPersonaSwitcher } from "./DemoPersonaSwitcher";
 import { AUTH_ENABLED, getAuthUser } from "../auth/keycloak";
 
 /**
@@ -83,6 +84,7 @@ export default function ModelerShell({ children }: ModelerShellProps) {
       license={license}
       // Profile + Mode noch nicht verkabelt — Modeler-Phase-2.
     >
+      <DemoPersonaSwitcher />
       <LicenseReminderBanner license={resolvedLicense} />
       {children}
     </AppShell>

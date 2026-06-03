@@ -120,4 +120,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
             if self.settings.auth_required and not exempt:
                 return JSONResponse({"detail": "authentication required"}, status_code=401)
 
+        # Demo-Persona-Override (Persona-Switcher, ADR-100): nur `demo-`-Tenants
+        # (sandboxed Demo-Daten) — kann KEINE echten Kunden-Tenants impersonieren.
+        # Hat Vorrang vor dem Token-Tenant, damit ein Admin "als Kunde" demonstrieren kann.
+        persona = request.headers.get("x-eam-demo-persona", "").strip().lower()
+        if persona.startswith("demo-"):
+            _override_tenant_header(request, persona)
+
         return await call_next(request)
