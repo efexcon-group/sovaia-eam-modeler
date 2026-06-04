@@ -282,6 +282,30 @@ def _shape_child(child: dict, parent_path: str) -> dict:
     }
 
 
+@router.get("/classic")
+async def classic_view(
+    mode: str = Query("library", description="library | instance (ADR-103)"),
+    x_eam_tenant: str | None = Header(default=None),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Classic-Bausteine als Bibliothek oder Kunden-Instanz (ADR-103).
+
+    - mode=library  → Baseline-Katalog + promotete Custom, je mit `_adopted`/`_custom`-Status.
+    - mode=instance → adoptierte Baseline + alle Custom-Bausteine (die „echte" Kundensicht).
+    """
+    base = Path(settings.reference_repo_path)
+    classic_baseline = [_strip_internal(n) for n in _scan_reference_files(base) if _is_classic(n)]
+    tenant = (x_eam_tenant or settings.tenant_default).strip().lower() or settings.tenant_default
+    overlay = overlay_store.load_overlay(Path(settings.overlay_dir).resolve(), tenant)
+    effective = overlay_store.apply_overlay_to_classic(classic_baseline, overlay)
+    nodes = (
+        overlay_store.instance_classic(effective, overlay)
+        if mode == "instance"
+        else overlay_store.library_classic(effective, overlay)
+    )
+    return {"mode": mode, "nodes": nodes, "count": len(nodes)}
+
+
 @router.get("/sovaia-status")
 async def sovaia_status(
     x_eam_tenant: str | None = Header(default=None),

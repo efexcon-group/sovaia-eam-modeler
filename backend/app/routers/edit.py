@@ -94,6 +94,11 @@ class MappingPatch(BaseModel):
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
+class AdoptRequest(BaseModel):
+    """Bibliothek → Instanz: Bausteine übernehmen/entfernen (ADR-103)."""
+    ids: list[str]
+
+
 # ── Helpers ─────────────────────────────────────────────────────────────
 
 def _tenant_from(header: str | None, settings: Settings) -> str:
@@ -203,6 +208,53 @@ async def create_classic(
     overlay_store.add_classic(overlay, node)
     overlay_store.save_overlay(_overlay_dir(settings), overlay)
     return node
+
+
+# ── Classic-Bibliothek / Adoption (ADR-103) ─────────────────────────────
+
+@router.post("/classic/adopt")
+async def adopt_classic_blocks(
+    body: AdoptRequest,
+    x_eam_tenant: str | None = Header(default=None),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Bibliotheks-Bausteine in die Kunden-Instanz übernehmen."""
+    tenant = _tenant_from(x_eam_tenant, settings)
+    overlay = overlay_store.load_overlay(_overlay_dir(settings), tenant)
+    adopted = overlay_store.adopt_classic(overlay, body.ids)
+    overlay_store.save_overlay(_overlay_dir(settings), overlay)
+    return {"adopted": adopted, "count": len(adopted)}
+
+
+@router.post("/classic/unadopt")
+async def unadopt_classic_blocks(
+    body: AdoptRequest,
+    x_eam_tenant: str | None = Header(default=None),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Bausteine aus der Instanz entfernen (Baseline bleibt in der Bibliothek)."""
+    tenant = _tenant_from(x_eam_tenant, settings)
+    overlay = overlay_store.load_overlay(_overlay_dir(settings), tenant)
+    adopted = overlay_store.unadopt_classic(overlay, body.ids)
+    overlay_store.save_overlay(_overlay_dir(settings), overlay)
+    return {"adopted": adopted, "count": len(adopted)}
+
+
+@router.post("/classic/{node_id}/promote")
+async def promote_classic_block(
+    node_id: str,
+    x_eam_tenant: str | None = Header(default=None),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Custom-Baustein als bibliotheks-wiederverwendbar markieren (Tenant-lokal)."""
+    tenant = _tenant_from(x_eam_tenant, settings)
+    overlay = overlay_store.load_overlay(_overlay_dir(settings), tenant)
+    try:
+        overlay_store.promote_classic(overlay, node_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"custom classic node {node_id} not found")
+    overlay_store.save_overlay(_overlay_dir(settings), overlay)
+    return {"id": node_id, "promoted": True}
 
 
 @router.patch("/classic/{node_id}")

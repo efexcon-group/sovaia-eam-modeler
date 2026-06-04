@@ -37,7 +37,7 @@ def _empty_overlay(tenant: str) -> dict:
     return {
         "version": OVERLAY_VERSION,
         "tenant": tenant,
-        "classic": {"overrides": {}, "added": [], "deleted": []},
+        "classic": {"overrides": {}, "added": [], "deleted": [], "adopted": []},
         "sovaia": {"overrides": {}},
         "mappings": [],
         "license": _default_license(),
@@ -257,6 +257,65 @@ def delete_classic(overlay: dict, node_id: str) -> None:
         classic["added"] = [n for n in classic["added"] if n.get("id") != node_id]
         if len(classic["added"]) == before:
             raise KeyError(node_id)
+
+
+# ── Classic-Bibliothek / Adoption (ADR-103) ─────────────────────────────
+
+def adopt_classic(overlay: dict, ids: list[str]) -> list[str]:
+    """Übernimmt Bibliotheks-Bausteine in die Kunden-Instanz (`adopted`)."""
+    adopted = overlay["classic"].setdefault("adopted", [])
+    for nid in ids:
+        if nid and nid not in adopted:
+            adopted.append(nid)
+    return adopted
+
+
+def unadopt_classic(overlay: dict, ids: list[str]) -> list[str]:
+    """Entfernt Bausteine aus der Instanz (Baseline bleibt in der Bibliothek)."""
+    classic = overlay["classic"]
+    drop = set(ids)
+    classic["adopted"] = [a for a in (classic.get("adopted") or []) if a not in drop]
+    return classic["adopted"]
+
+
+def promote_classic(overlay: dict, node_id: str) -> None:
+    """Markiert einen Custom-Baustein als bibliotheks-wiederverwendbar (`_promoted`)."""
+    for n in overlay["classic"].get("added") or []:
+        if n.get("id") == node_id:
+            n["_promoted"] = True
+            return
+    raise KeyError(node_id)
+
+
+def _classic_membership(overlay: dict) -> tuple[set, set, set]:
+    classic = overlay.get("classic") or {}
+    adopted = set(classic.get("adopted") or [])
+    added = classic.get("added") or []
+    added_ids = {n.get("id") for n in added if n.get("id")}
+    promoted = {n.get("id") for n in added if n.get("_promoted")}
+    return adopted, added_ids, promoted
+
+
+def library_classic(effective_nodes: list[dict], overlay: dict) -> list[dict]:
+    """Bibliotheks-Sicht: Baseline-Katalog + promotete Custom, je mit Adopted-Status."""
+    adopted, added_ids, promoted = _classic_membership(overlay)
+    out: list[dict] = []
+    for n in effective_nodes:
+        nid = n.get("id")
+        is_custom = nid in added_ids
+        if is_custom and nid not in promoted:
+            continue  # Custom erscheint in der Bibliothek nur, wenn promotet
+        m = dict(n)
+        m["_adopted"] = (nid in adopted) or is_custom
+        m["_custom"] = is_custom
+        out.append(m)
+    return out
+
+
+def instance_classic(effective_nodes: list[dict], overlay: dict) -> list[dict]:
+    """Instanz-Sicht: adoptierte Baseline + alle Custom-Bausteine."""
+    adopted, added_ids, _ = _classic_membership(overlay)
+    return [n for n in effective_nodes if (n.get("id") in adopted) or (n.get("id") in added_ids)]
 
 
 # ── Sovaia-Mutationen ───────────────────────────────────────────────────
