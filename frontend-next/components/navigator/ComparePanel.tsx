@@ -1,9 +1,4 @@
-import type {
-  CostAggregate,
-  NavigatorImpact,
-  NavigatorMapping,
-  NavigatorNode,
-} from "@/lib/modeler-types";
+import type { NavigatorMapping, NavigatorNode } from "@/lib/modeler-types";
 
 // Read-only-Port der Vite-ComparePanel (Phase B). Edit/Drag&Drop/LLM-Drawer
 // folgen mit der Edit-Iteration (Phase B.2) als Client-Components.
@@ -97,49 +92,6 @@ function NodeCard({
         </div>
       )}
       {availableFrom && <div className="mt-1 text-[10px] text-slate-400">verfügbar ab {availableFrom}</div>}
-    </div>
-  );
-}
-
-function ImpactFooter({ impact, cost }: { impact: NavigatorImpact; cost?: CostAggregate }) {
-  const hasImpact = impact && impact["sample-size"];
-  const hasCost = cost && cost["mapping-count"];
-  if (!hasImpact && !hasCost) return null;
-  const fmtPct = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v * 100)}%`);
-  const fmtChf = (v: number | null | undefined) => (v == null ? "—" : `CHF ${v.toLocaleString("de-CH")}`);
-
-  return (
-    <div className="mt-3 space-y-2">
-      {hasImpact && (
-        <div className="rounded-md bg-emerald-50 border border-emerald-100 px-3 py-2 text-xs text-emerald-900 flex flex-wrap gap-4">
-          <div>
-            <span className="text-emerald-700 font-medium">Automations-Grad ø</span>{" "}
-            {impact["automation-grade"] != null ? `${impact["automation-grade"]}%` : "—"}
-          </div>
-          <div><span className="text-emerald-700 font-medium">Personal ø</span> {fmtPct(impact["headcount-delta"])}</div>
-          <div><span className="text-emerald-700 font-medium">Cost ø</span> {fmtPct(impact["cost-delta"])}</div>
-          <div className="text-emerald-700/70">{impact["sample-size"]} Sovaia-Module</div>
-        </div>
-      )}
-      {hasCost && (
-        <div className="rounded-md bg-indigo-50 border border-indigo-100 px-3 py-2 text-xs text-indigo-900">
-          <div className="font-medium mb-1">Vorher / Nachher (Summe über {cost["mapping-count"]} Mapping(s))</div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-            <div className="text-slate-700">
-              <span className="text-slate-500">vorher CAPEX:</span> {fmtChf(cost.vorher?.capex)}
-            </div>
-            <div className="text-emerald-700">
-              <span className="text-slate-500">nachher CAPEX:</span> {fmtChf(cost.nachher?.capex)}
-            </div>
-            <div className="text-slate-700">
-              <span className="text-slate-500">vorher OPEX/Mt:</span> {fmtChf(cost.vorher?.["opex-monatlich"])}
-            </div>
-            <div className="text-emerald-700">
-              <span className="text-slate-500">nachher OPEX/Mt:</span> {fmtChf(cost.nachher?.["opex-monatlich"])}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -332,12 +284,10 @@ function TimelinePanel({ sovaia, mappings }: { sovaia: NavigatorNode[]; mappings
 interface Props {
   classic: NavigatorNode[];
   sovaia: NavigatorNode[];
-  impact: NavigatorImpact;
   mappings?: NavigatorMapping[];
-  costAggregate?: CostAggregate;
 }
 
-export function ComparePanel({ classic, sovaia, impact, mappings = [], costAggregate }: Props) {
+export function ComparePanel({ classic, sovaia, mappings = [] }: Props) {
   const classicById = new Map(classic.map((n) => [n.id, n]));
   const sovaiaById = new Map(sovaia.map((n) => [n.id, n]));
   const classicMapCount = new Map<string, number>();
@@ -403,7 +353,6 @@ export function ComparePanel({ classic, sovaia, impact, mappings = [], costAggre
         </div>
       </div>
 
-      <ImpactFooter impact={impact} cost={costAggregate} />
       <TimelinePanel sovaia={sovaia} mappings={mappings} />
       <MappingsList mappings={mappings} classicById={classicById} sovaiaById={sovaiaById} />
     </section>

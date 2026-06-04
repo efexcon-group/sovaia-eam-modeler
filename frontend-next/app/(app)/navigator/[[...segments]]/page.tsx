@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { getMe, getNavigator, getSchichten } from "@/lib/api-client";
-import type { NavigatorResponse, Schicht } from "@/lib/modeler-types";
+import type { NavigatorResponse } from "@/lib/modeler-types";
 import { LayerTabs } from "@/components/navigator/LayerTabs";
 import { Breadcrumb } from "@/components/navigator/Breadcrumb";
 import { TaxonomyTiles } from "@/components/navigator/TaxonomyTiles";
 import { ComparePanel } from "@/components/navigator/ComparePanel";
+import { MetricsBar } from "@/components/navigator/MetricsBar";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +61,7 @@ export default async function NavigatorPage({ params }: PageProps) {
 
   return (
     <div className="min-h-full bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="flex items-center justify-between px-4 pt-3">
           <div>
             <div className="text-base font-semibold text-slate-900">Stakeholder-Navigator</div>
@@ -85,9 +86,11 @@ export default async function NavigatorPage({ params }: PageProps) {
             Schichten konnten nicht geladen werden.
           </div>
         )}
+        <Breadcrumb segments={breadcrumbSegments} />
+        {navData && (
+          <MetricsBar impact={navData["impact-aggregate"]} cost={navData["cost-aggregate"]} />
+        )}
       </header>
-
-      <Breadcrumb segments={breadcrumbSegments} />
 
       {segments.length === 0 && (
         <div className="px-4 py-8 max-w-2xl">
@@ -120,9 +123,7 @@ export default async function NavigatorPage({ params }: PageProps) {
               <ComparePanel
                 classic={navData.classic}
                 sovaia={navData.sovaia}
-                impact={navData["impact-aggregate"]}
                 mappings={navData.mappings}
-                costAggregate={navData["cost-aggregate"]}
               />
             </>
           )}
