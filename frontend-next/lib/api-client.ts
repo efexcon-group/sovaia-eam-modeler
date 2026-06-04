@@ -3,6 +3,8 @@ import type {
   ClassicLibraryResponse,
   MeResponse,
   NavigatorResponse,
+  ScenarioGapResponse,
+  ScenarioTarget,
   SchichtenResponse,
 } from "./modeler-types";
 
@@ -53,4 +55,14 @@ export function getMe(): Promise<MeResponse> {
 /** Classic-Bausteine als Bibliothek (Katalog) oder Instanz (Kundensicht). */
 export function getClassicLibrary(mode: "library" | "instance" = "library"): Promise<ClassicLibraryResponse> {
   return modelerFetch<ClassicLibraryResponse>(`/navigator/classic?mode=${mode}`);
+}
+
+/** Wählbare Szenario-Ziele (Workload-Targets mit voraussetzt-Kanten). */
+export function getScenarioTargets(): Promise<{ targets: ScenarioTarget[]; count: number }> {
+  return modelerFetch("/scenario/targets");
+}
+
+/** Sovereign-AI-Readiness-Gap für ein Target (voraussetzt-Closure). */
+export function getScenarioGap(target: string): Promise<ScenarioGapResponse> {
+  return modelerFetch<ScenarioGapResponse>(`/scenario/gap?target=${encodeURIComponent(target)}`);
 }

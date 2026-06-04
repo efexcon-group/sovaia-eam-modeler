@@ -172,6 +172,40 @@ export interface ClassicLibraryResponse {
   count: number;
 }
 
+// ── Szenario-Advisor / Gap (ADR-096/098) ─────────────────────────────────
+
+export interface ScenarioTarget {
+  id: string;
+  "label-de": string;
+  "summary-de"?: string;
+}
+
+export interface GapCapability {
+  id: string;
+  "label-de": string;
+  "summary-de"?: string;
+  type?: string;
+  status?: string;
+  dimension: string[];
+  "fulfilled-by": string[];
+  sovereignty?: {
+    "deployment-modes"?: string[];
+    "needs-own-ai-infra"?: boolean;
+    "data-residency"?: string;
+    "trial-available"?: boolean;
+    "pilot-available"?: boolean;
+  } | null;
+}
+
+export interface ScenarioGapResponse {
+  target: ScenarioTarget;
+  required: GapCapability[];
+  "by-dimension": Record<string, string[]>;
+  "by-provider": Record<string, string[]>;
+  summary: { "required-count": number; "by-status": Record<string, number> };
+  tenant: string;
+}
+
 // ── Reference-Modell (Canvas) ────────────────────────────────────────────
 
 export interface ReferenceNode {
