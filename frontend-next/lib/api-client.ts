@@ -1,4 +1,9 @@
 import { auth } from "./auth";
+import type {
+  MeResponse,
+  NavigatorResponse,
+  SchichtenResponse,
+} from "./modeler-types";
 
 const MODELER_API = process.env.MODELER_API_URL ?? "http://architecture-modeler-api.platform:8000";
 
@@ -22,4 +27,21 @@ export async function modelerFetch<T>(path: string, opts: RequestInit = {}): Pro
     throw Object.assign(new Error(`modeler-api ${r.status} on ${path}`), { status: r.status });
   }
   return r.json() as Promise<T>;
+}
+
+// ── Typisierte Read-Helfer (Navigator) ──────────────────────────────────
+
+/** Schichten/Layer der Taxonomie (LayerTabs-Quelle). */
+export function getSchichten(): Promise<SchichtenResponse> {
+  return modelerFetch<SchichtenResponse>("/taxonomy/schichten");
+}
+
+/** Navigator-Drill-Down auf einem Pfad (z.B. "business/healthcare/heim-pflege"). */
+export function getNavigator(path: string): Promise<NavigatorResponse> {
+  return modelerFetch<NavigatorResponse>(`/navigator?path=${encodeURIComponent(path)}`);
+}
+
+/** Aktueller Tenant + effektive Lizenz. */
+export function getMe(): Promise<MeResponse> {
+  return modelerFetch<MeResponse>("/me");
 }
