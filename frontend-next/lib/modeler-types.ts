@@ -90,6 +90,21 @@ export interface CostAggregate {
   "mapping-count"?: number;
 }
 
+// ── Classic-Bibliothek (ADR-103) ─────────────────────────────────────────
+
+export interface ClassicLibNode extends NavigatorNode {
+  /** True, wenn der Baustein in der Kunden-Instanz übernommen ist. */
+  _adopted?: boolean;
+  /** True, wenn der Baustein kundeneigen (custom) ist. */
+  _custom?: boolean;
+}
+
+export interface ClassicLibraryResponse {
+  mode: "library" | "instance";
+  nodes: ClassicLibNode[];
+  count: number;
+}
+
 // ── Reference-Modell (Canvas) ────────────────────────────────────────────
 
 export interface ReferenceNode {

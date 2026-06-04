@@ -1,5 +1,6 @@
 import { auth } from "./auth";
 import type {
+  ClassicLibraryResponse,
   MeResponse,
   NavigatorResponse,
   SchichtenResponse,
@@ -44,4 +45,9 @@ export function getNavigator(path: string): Promise<NavigatorResponse> {
 /** Aktueller Tenant + effektive Lizenz. */
 export function getMe(): Promise<MeResponse> {
   return modelerFetch<MeResponse>("/me");
+}
+
+/** Classic-Bausteine als Bibliothek (Katalog) oder Instanz (Kundensicht). */
+export function getClassicLibrary(mode: "library" | "instance" = "library"): Promise<ClassicLibraryResponse> {
+  return modelerFetch<ClassicLibraryResponse>(`/navigator/classic?mode=${mode}`);
 }
