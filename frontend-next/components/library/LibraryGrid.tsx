@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import type { ClassicLibNode } from "@/lib/modeler-types";
+import { adoptClassic, unadoptClassic } from "@/app/(app)/bibliothek/actions";
 
 interface Props {
   nodes: ClassicLibNode[];
@@ -12,11 +13,14 @@ interface Props {
 type AdoptedFilter = "all" | "adopted" | "library-only";
 
 /** Filterbare Karten-Bibliothek der Classic-Bausteine (ADR-103, Google-Photos-
- *  Muster). Read-only — Multi-Select „Übernehmen" folgt mit der Edit-Iteration. */
+ *  Muster) mit Multi-Select „Übernehmen / Aus Instanz entfernen" (Phase B.2). */
 export function LibraryGrid({ nodes, mode }: Props) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("");
   const [adopted, setAdopted] = useState<AdoptedFilter>("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   const types = useMemo(
     () => Array.from(new Set(nodes.map((n) => n.type).filter(Boolean) as string[])).sort(),
@@ -37,8 +41,29 @@ export function LibraryGrid({ nodes, mode }: Props) {
     });
   }, [nodes, query, type, adopted, mode]);
 
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const runAction = (fn: (ids: string[]) => Promise<void>) => {
+    const ids = Array.from(selected);
+    setError(null);
+    startTransition(async () => {
+      try {
+        await fn(ids);
+        setSelected(new Set());
+      } catch (e) {
+        setError(String(e));
+      }
+    });
+  };
+
   return (
-    <div className="px-4 py-4">
+    <div className="px-4 py-4 pb-20">
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <input
           type="search"
@@ -78,20 +103,86 @@ export function LibraryGrid({ nodes, mode }: Props) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filtered.map((n) => (
-            <LibraryCard key={n.id} node={n} mode={mode} />
+            <LibraryCard
+              key={n.id}
+              node={n}
+              mode={mode}
+              selected={selected.has(n.id)}
+              onToggle={() => toggle(n.id)}
+            />
           ))}
+        </div>
+      )}
+
+      {selected.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 sm:left-60 z-20 bg-white border-t border-slate-200 shadow-[0_-2px_8px_rgba(0,0,0,0.04)] px-4 py-2.5 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-slate-700 font-medium">{selected.size} ausgewählt</span>
+          {error && <span className="text-xs text-rose-600">{error}</span>}
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              disabled={pending}
+              className="text-xs px-3 py-1.5 rounded border border-slate-300 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Abwählen
+            </button>
+            {mode === "library" && (
+              <button
+                type="button"
+                onClick={() => runAction(adoptClassic)}
+                disabled={pending}
+                className="text-xs px-3 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {pending ? "…" : "In Instanz übernehmen"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => runAction(unadoptClassic)}
+              disabled={pending}
+              className="text-xs px-3 py-1.5 rounded border border-rose-300 text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+            >
+              {pending ? "…" : "Aus Instanz entfernen"}
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-function LibraryCard({ node, mode }: { node: ClassicLibNode; mode: "library" | "instance" }) {
+function LibraryCard({
+  node,
+  mode,
+  selected,
+  onToggle,
+}: {
+  node: ClassicLibNode;
+  mode: "library" | "instance";
+  selected: boolean;
+  onToggle: () => void;
+}) {
   const status = node.tags?.["operational-status"];
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 flex flex-col">
+    <div
+      onClick={onToggle}
+      className={[
+        "rounded-lg border bg-white p-3 flex flex-col cursor-pointer transition-colors",
+        selected ? "border-emerald-500 ring-2 ring-emerald-200" : "border-slate-200 hover:border-slate-300",
+      ].join(" ")}
+    >
       <div className="flex items-start justify-between gap-2">
-        <div className="font-medium text-sm text-slate-900 leading-snug">{node["label-de"]}</div>
+        <div className="flex items-start gap-2 min-w-0">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggle}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-0.5 accent-emerald-600"
+          />
+          <div className="font-medium text-sm text-slate-900 leading-snug">{node["label-de"]}</div>
+        </div>
         {node._custom && (
           <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-800">eigen</span>
         )}
