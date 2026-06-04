@@ -1,6 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppShell, type SidebarRoute, type UserInfo, type LicenseInfo } from "@efexcon-group/app-shell-react";
+import {
+  AppShell,
+  LicenseBadge,
+  DefaultUserMenuSlot,
+  type SidebarRoute,
+  type UserInfo,
+  type LicenseInfo,
+} from "@efexcon-group/app-shell-react";
 import { getLicense, getMe, type License, type MeResponse } from "../api-client";
 import { licenseToInfo, meToUser } from "./adapters";
 import { LicenseReminderBanner } from "./LicenseReminderBanner";
@@ -73,6 +80,14 @@ export default function ModelerShell({ children }: ModelerShellProps) {
     };
   }, []);
 
+  // Welle 8 (sovaia-app-shell-core 6b47c63 + 088ffa6): Migration auf Slot-API.
+  // Migriert sind die Topbar-Slots (brand + topbar-right mit LicenseBadge +
+  // DefaultUserMenuSlot). Sidebar-Footer bleibt absichtlich nicht ueberschrieben,
+  // damit die Backward-Compat-Default-Render der Library (footerRoutes wie
+  // "Einstellungen" + appVersion) erhalten bleibt — Slot-Override wuerde
+  // footerRoutes verstecken (DefaultSidebarFooterSlot rendert sie nicht).
+  // brand-Prop bleibt aktiv (speist AppShellContext). Profile + Mode noch nicht
+  // verkabelt — Modeler-Phase-2.
   return (
     <AppShell
       brand="sovaia"
@@ -80,9 +95,13 @@ export default function ModelerShell({ children }: ModelerShellProps) {
       appLabel="Architecture Modeler"
       appVersion={APP_VERSION}
       sidebarRoutes={SIDEBAR_ROUTES}
-      user={user}
-      license={license}
-      // Profile + Mode noch nicht verkabelt — Modeler-Phase-2.
+      brandSlot={<div style={{ fontWeight: 600 }}>Architecture Modeler</div>}
+      topbarRightSlot={
+        <>
+          {license && <LicenseBadge license={license} />}
+          {user && <DefaultUserMenuSlot user={user} />}
+        </>
+      }
     >
       <DemoPersonaSwitcher />
       <LicenseReminderBanner license={resolvedLicense} />
