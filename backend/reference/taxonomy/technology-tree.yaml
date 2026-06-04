@@ -59,3 +59,41 @@ roots:
       - { id: github-act,   label-de: GitHub Actions,          summary-de: CI für Image-Builds, Tests, Releases. }
       - { id: prometheus,   label-de: Prometheus + Grafana,    summary-de: Metriken, Dashboards, Alerting. }
       - { id: cloudflared,  label-de: Cloudflared,             summary-de: Zero-Trust-Tunnel für extern-erreichbare Ingresses. }
+
+  # ── Hyperscaler / SaaS-Plattformen (T2-Katalog) — Drill: Provider → Kategorie ──
+  # Die konkreten Technologien hängen als Classic-Knoten (ownership: classic) an
+  # den Kategorie-Pfaden (technology/<provider>/<kategorie>) und erscheinen beim
+  # Drill auf die Kategorie im Classic-vs-Sovaia-Vergleich + in der Bibliothek.
+
+  - id: azure
+    label-de: Microsoft Azure
+    summary-de: Microsofts Public-Cloud-Plattform — Compute, Storage, Datenbanken, AI, Identity.
+    children:
+      - { id: compute,    label-de: Compute,            summary-de: VMs, Container, Serverless. }
+      - { id: storage,    label-de: Storage,            summary-de: Objekt-, Datei- und Block-Speicher. }
+      - { id: databases,  label-de: Datenbanken,        summary-de: Relational, NoSQL, Cache. }
+      - { id: networking, label-de: Netzwerk,           summary-de: Virtuelle Netze, Load-Balancing, Edge. }
+      - { id: ai-ml,      label-de: AI + Machine Learning, summary-de: Azure OpenAI, AI Search, ML. }
+      - { id: identity,   label-de: Identity & Security, summary-de: Entra ID, Key Vault, Defender, Sentinel. }
+
+  - id: aws
+    label-de: Amazon Web Services
+    summary-de: Amazons Public-Cloud-Plattform — breitestes Service-Portfolio am Markt.
+    children:
+      - { id: compute,    label-de: Compute,            summary-de: EC2, EKS, Lambda, Fargate. }
+      - { id: storage,    label-de: Storage,            summary-de: S3, EBS, EFS, Glacier. }
+      - { id: databases,  label-de: Datenbanken,        summary-de: RDS, Aurora, DynamoDB, ElastiCache. }
+      - { id: networking, label-de: Netzwerk,           summary-de: VPC, ELB, CloudFront, Route 53. }
+      - { id: ai-ml,      label-de: AI + Machine Learning, summary-de: Bedrock, SageMaker, Comprehend, Textract. }
+      - { id: identity,   label-de: Identity & Security, summary-de: IAM, Cognito, KMS, GuardDuty. }
+
+  - id: m365
+    label-de: Microsoft 365
+    summary-de: Microsofts Produktivitäts- und Collaboration-Suite (SaaS).
+    children:
+      - { id: productivity,     label-de: Produktivität,        summary-de: Word, Excel, PowerPoint, OneNote. }
+      - { id: collaboration,    label-de: Zusammenarbeit,       summary-de: Teams, Loop, Viva Engage, Whiteboard. }
+      - { id: mail-calendar,    label-de: Mail & Kalender,      summary-de: Exchange Online, Outlook. }
+      - { id: files-content,    label-de: Dateien & Content,    summary-de: SharePoint, OneDrive, Stream. }
+      - { id: identity-devices, label-de: Identität & Geräte,   summary-de: Entra ID, Intune, Purview. }
+      - { id: power-platform,   label-de: Power Platform,       summary-de: Power Apps, Automate, BI, Copilot Studio. }

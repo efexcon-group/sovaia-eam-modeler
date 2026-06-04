@@ -674,4 +674,114 @@ nodes:
     data-readiness: { interface-available: false, interface-limitations: "proprietär; Export nur als Report/CSV", semantic-richness: low, governance-readiness: none }
     summary-de: Branchen-/ERP-Altsystem — Daten vorhanden, aber schwer integrierbar (keine/eingeschränkte Schnittstelle).
 
+  # ════════════════════════════════════════════════════════════════════
+  # T2-Katalog · Hyperscaler / SaaS-Plattformen (Technology-Layer)
+  # Drill: technology/<provider>/<kategorie>. Repräsentativer Kern je
+  # Kategorie — erweiterbar über die Navigator-Edit-UI.
+  # ════════════════════════════════════════════════════════════════════
+
+  # ── Microsoft Azure · Compute ──────────────────────────────────────────
+  - { id: cls-azure-vm,        type: service,   label-de: Azure Virtual Machines, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/compute", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "IaaS-Compute — frei konfigurierbare Windows-/Linux-VMs mit Skalierungsgruppen." }
+  - { id: cls-azure-aks,       type: service,   label-de: Azure Kubernetes Service (AKS), vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/compute", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Managed Kubernetes für Container-Workloads." }
+  - { id: cls-azure-appservice, type: service,  label-de: Azure App Service, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/compute", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "PaaS-Hosting für Web-Apps und APIs." }
+  - { id: cls-azure-functions, type: service,   label-de: Azure Functions, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/compute", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Serverless-Event-Funktionen (FaaS)." }
+
+  # ── Microsoft Azure · Storage ──────────────────────────────────────────
+  - { id: cls-azure-blob,      type: datenraum, label-de: Azure Blob Storage, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/storage", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Objektspeicher für unstrukturierte Daten." }
+  - { id: cls-azure-files,     type: datenraum, label-de: Azure Files, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/storage", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Managed SMB-/NFS-Dateifreigaben." }
+  - { id: cls-azure-disks,     type: datenraum, label-de: Azure Managed Disks, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/storage", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Block-Speicher für VMs." }
+  - { id: cls-azure-datalake,  type: datenraum, label-de: Azure Data Lake Storage Gen2, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/storage", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Hierarchischer Speicher für Analytics/Big-Data." }
+
+  # ── Microsoft Azure · Datenbanken ──────────────────────────────────────
+  - { id: cls-azure-sql,       type: datenraum, label-de: Azure SQL Database, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/databases", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Managed relationale DB (SQL-Server-Engine)." }
+  - { id: cls-azure-cosmos,    type: datenraum, label-de: Azure Cosmos DB, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/databases", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Global verteilte NoSQL-DB (Multi-Model)." }
+  - { id: cls-azure-postgres,  type: datenraum, label-de: Azure Database for PostgreSQL, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/databases", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Managed PostgreSQL (Flexible Server)." }
+  - { id: cls-azure-redis,     type: datenraum, label-de: Azure Cache for Redis, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/databases", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Managed In-Memory-Cache." }
+
+  # ── Microsoft Azure · Netzwerk ─────────────────────────────────────────
+  - { id: cls-azure-vnet,      type: schnittstelle, label-de: Azure Virtual Network, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/networking", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Isolierte virtuelle Netze (VNet)." }
+  - { id: cls-azure-appgw,     type: schnittstelle, label-de: Azure Application Gateway, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/networking", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "L7-Load-Balancer mit Web Application Firewall." }
+  - { id: cls-azure-frontdoor, type: schnittstelle, label-de: Azure Front Door, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/networking", operational-status: niche, seeded-by: human-architect }, summary-de: "Globales CDN + Edge-Routing." }
+  - { id: cls-azure-privatelink, type: schnittstelle, label-de: Azure Private Link, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/networking", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Privater Zugriff auf PaaS-Dienste." }
+
+  # ── Microsoft Azure · AI + Machine Learning ────────────────────────────
+  - { id: cls-azure-openai,    type: ki-agent,  label-de: Azure OpenAI Service, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/ai-ml", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "GPT-/Embedding-Modelle als Managed-Endpoint." }
+  - { id: cls-azure-aisearch,  type: service,   label-de: Azure AI Search, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/ai-ml", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Vektor-/Volltextsuche als RAG-Retriever." }
+  - { id: cls-azure-ml,        type: service,   label-de: Azure Machine Learning, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/ai-ml", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "ML-Training/-Deployment-Plattform." }
+  - { id: cls-azure-docintel,  type: service,   label-de: Azure AI Document Intelligence, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/ai-ml", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Dokumenten-Extraktion (OCR/Layout/Felder)." }
+
+  # ── Microsoft Azure · Identity & Security ──────────────────────────────
+  - { id: cls-azure-entra,     type: service,   label-de: Microsoft Entra ID, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/identity", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Cloud-Identity & SSO (vormals Azure AD)." }
+  - { id: cls-azure-keyvault,  type: sicherheits-zone, label-de: Azure Key Vault, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/identity", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Secrets-, Zertifikats- und Schlüsselverwaltung." }
+  - { id: cls-azure-defender,  type: sicherheits-zone, label-de: Microsoft Defender for Cloud, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/identity", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Cloud-Security-Posture & Workload-Schutz." }
+  - { id: cls-azure-sentinel,  type: sicherheits-zone, label-de: Microsoft Sentinel, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/azure/identity", operational-status: niche, seeded-by: human-architect }, summary-de: "Cloud-natives SIEM/SOAR." }
+
+  # ── AWS · Compute ──────────────────────────────────────────────────────
+  - { id: cls-aws-ec2,         type: service,   label-de: Amazon EC2, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/compute", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "IaaS-Compute — virtuelle Server (Instances)." }
+  - { id: cls-aws-eks,         type: service,   label-de: Amazon EKS, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/compute", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Managed Kubernetes." }
+  - { id: cls-aws-lambda,      type: service,   label-de: AWS Lambda, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/compute", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Serverless-Funktionen (FaaS)." }
+  - { id: cls-aws-fargate,     type: service,   label-de: AWS Fargate (ECS), vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/compute", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Serverless-Container ohne Server-Verwaltung." }
+
+  # ── AWS · Storage ──────────────────────────────────────────────────────
+  - { id: cls-aws-s3,          type: datenraum, label-de: Amazon S3, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/storage", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Objektspeicher — De-facto-Branchenstandard." }
+  - { id: cls-aws-ebs,         type: datenraum, label-de: Amazon EBS, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/storage", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Block-Speicher für EC2." }
+  - { id: cls-aws-efs,         type: datenraum, label-de: Amazon EFS, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/storage", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Managed NFS-Dateispeicher." }
+  - { id: cls-aws-glacier,     type: datenraum, label-de: Amazon S3 Glacier, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/storage", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Archiv-/Kaltspeicher." }
+
+  # ── AWS · Datenbanken ──────────────────────────────────────────────────
+  - { id: cls-aws-rds,         type: datenraum, label-de: Amazon RDS, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/databases", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Managed relationale DB (mehrere Engines)." }
+  - { id: cls-aws-aurora,      type: datenraum, label-de: Amazon Aurora, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/databases", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "MySQL-/PostgreSQL-kompatible Cloud-DB." }
+  - { id: cls-aws-dynamodb,    type: datenraum, label-de: Amazon DynamoDB, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/databases", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Serverless NoSQL-Key-Value-DB." }
+  - { id: cls-aws-elasticache, type: datenraum, label-de: Amazon ElastiCache, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/databases", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Managed Redis/Memcached." }
+
+  # ── AWS · Netzwerk ─────────────────────────────────────────────────────
+  - { id: cls-aws-vpc,         type: schnittstelle, label-de: Amazon VPC, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/networking", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Isolierte virtuelle Netze." }
+  - { id: cls-aws-elb,         type: schnittstelle, label-de: Elastic Load Balancing, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/networking", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "L4-/L7-Load-Balancer." }
+  - { id: cls-aws-cloudfront,  type: schnittstelle, label-de: Amazon CloudFront, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/networking", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "CDN / Edge-Delivery." }
+  - { id: cls-aws-route53,     type: schnittstelle, label-de: Amazon Route 53, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/networking", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "DNS & Traffic-Routing." }
+
+  # ── AWS · AI + Machine Learning ────────────────────────────────────────
+  - { id: cls-aws-bedrock,     type: ki-agent,  label-de: Amazon Bedrock, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/ai-ml", operational-status: niche, seeded-by: human-architect }, summary-de: "Managed-Zugriff auf Foundation-Models." }
+  - { id: cls-aws-sagemaker,   type: service,   label-de: Amazon SageMaker, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/ai-ml", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "ML-Plattform (Build/Train/Deploy)." }
+  - { id: cls-aws-comprehend,  type: service,   label-de: Amazon Comprehend, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/ai-ml", operational-status: niche, seeded-by: human-architect }, summary-de: "NLP-Service (Entitäten, Sentiment)." }
+  - { id: cls-aws-textract,    type: service,   label-de: Amazon Textract, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/ai-ml", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Dokumenten-/OCR-Extraktion." }
+
+  # ── AWS · Identity & Security ──────────────────────────────────────────
+  - { id: cls-aws-iam,         type: service,   label-de: AWS IAM, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/identity", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Zugriffs-/Rechteverwaltung." }
+  - { id: cls-aws-cognito,     type: service,   label-de: Amazon Cognito, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/identity", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Customer-Identity & User-Pools." }
+  - { id: cls-aws-kms,         type: sicherheits-zone, label-de: AWS KMS, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/identity", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Schlüsselverwaltung & Verschlüsselung." }
+  - { id: cls-aws-guardduty,   type: sicherheits-zone, label-de: Amazon GuardDuty, vendor: Amazon Web Services, tags: { ownership: classic, taxonomy-paths: "technology/aws/identity", operational-status: niche, seeded-by: human-architect }, summary-de: "Threat-Detection / Anomalie-Erkennung." }
+
+  # ── Microsoft 365 · Produktivität ──────────────────────────────────────
+  - { id: cls-m365-word,       type: anwendung, label-de: Microsoft Word, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/productivity", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Textverarbeitung." }
+  - { id: cls-m365-excel,      type: anwendung, label-de: Microsoft Excel, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/productivity", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Tabellenkalkulation — oft faktische Schatten-IT-Datenhaltung." }
+  - { id: cls-m365-powerpoint, type: anwendung, label-de: Microsoft PowerPoint, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/productivity", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Präsentationen." }
+  - { id: cls-m365-onenote,    type: anwendung, label-de: Microsoft OneNote, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/productivity", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Notiz-/Wissenssammlung." }
+
+  # ── Microsoft 365 · Zusammenarbeit ─────────────────────────────────────
+  - { id: cls-m365-teams,      type: anwendung, label-de: Microsoft Teams, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/collaboration", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Chat, Meetings, Telefonie, Kanäle." }
+  - { id: cls-m365-loop,       type: anwendung, label-de: Microsoft Loop, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/collaboration", operational-status: niche, seeded-by: human-architect }, summary-de: "Kollaborative Komponenten/Workspaces." }
+  - { id: cls-m365-viva-engage, type: anwendung, label-de: Viva Engage, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/collaboration", operational-status: niche, seeded-by: human-architect }, summary-de: "Enterprise-Social (vormals Yammer)." }
+  - { id: cls-m365-whiteboard, type: anwendung, label-de: Microsoft Whiteboard, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/collaboration", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Digitale Whiteboards." }
+
+  # ── Microsoft 365 · Mail & Kalender ────────────────────────────────────
+  - { id: cls-m365-exchange,   type: service,   label-de: Exchange Online, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/mail-calendar", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Mail-/Kalender-Backend." }
+  - { id: cls-m365-outlook,    type: anwendung, label-de: Microsoft Outlook, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/mail-calendar", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Mail-/Kalender-Client." }
+
+  # ── Microsoft 365 · Dateien & Content ──────────────────────────────────
+  - { id: cls-m365-sharepoint, type: datenraum, label-de: SharePoint Online, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/files-content", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Intranet & Dokumenten-Management." }
+  - { id: cls-m365-onedrive,   type: datenraum, label-de: OneDrive for Business, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/files-content", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Persönlicher Cloud-Speicher." }
+  - { id: cls-m365-stream,     type: datenraum, label-de: Microsoft Stream, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/files-content", operational-status: niche, seeded-by: human-architect }, summary-de: "Video-Content im Tenant." }
+
+  # ── Microsoft 365 · Identität & Geräte ─────────────────────────────────
+  - { id: cls-m365-entra,      type: service,   label-de: Microsoft Entra ID, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/identity-devices", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Identity & SSO für M365 und angebundene Apps." }
+  - { id: cls-m365-intune,     type: service,   label-de: Microsoft Intune, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/identity-devices", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Geräte-/MDM-Management." }
+  - { id: cls-m365-purview,    type: compliance-anker, label-de: Microsoft Purview, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/identity-devices", operational-status: niche, seeded-by: human-architect }, summary-de: "Compliance, DLP, Information-Protection." }
+
+  # ── Microsoft 365 · Power Platform ─────────────────────────────────────
+  - { id: cls-m365-powerapps,     type: anwendung, label-de: Power Apps, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/power-platform", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Low-Code-Geschäftsanwendungen." }
+  - { id: cls-m365-powerautomate, type: prozess,   label-de: Power Automate, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/power-platform", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Workflow-Automatisierung (RPA/Flows)." }
+  - { id: cls-m365-powerbi,       type: anwendung, label-de: Power BI, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/power-platform", operational-status: in-use-everywhere, seeded-by: human-architect }, summary-de: "Business-Intelligence & Reporting." }
+  - { id: cls-m365-copilot-studio, type: ki-agent, label-de: Copilot Studio, vendor: Microsoft, tags: { ownership: classic, taxonomy-paths: "technology/m365/power-platform", operational-status: niche, seeded-by: human-architect }, summary-de: "Custom-Copilots / Agenten (Low-Code)." }
+
 edges: []
