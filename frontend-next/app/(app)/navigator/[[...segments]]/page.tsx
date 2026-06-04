@@ -121,6 +121,7 @@ export default async function NavigatorPage({ params }: PageProps) {
                 }
               />
               <ComparePanel
+                path={path}
                 classic={navData.classic}
                 sovaia={navData.sovaia}
                 mappings={navData.mappings}

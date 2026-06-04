@@ -90,6 +90,73 @@ export interface CostAggregate {
   "mapping-count"?: number;
 }
 
+// ── Edit-Payloads (Mutationen, Phase B.2) ────────────────────────────────
+
+export interface ClassicCreatePayload {
+  type: string;
+  "label-de": string;
+  "summary-de"?: string;
+  "taxonomy-paths": string;
+  "operational-status"?: string;
+  "typical-tools"?: string[];
+}
+
+export interface ClassicPatchPayload {
+  "label-de"?: string;
+  "summary-de"?: string;
+  "taxonomy-paths"?: string;
+  "operational-status"?: string;
+  "available-from"?: string;
+  "typical-tools"?: string[];
+}
+
+export interface SovaiaImpactPatch {
+  "automation-grade"?: number;
+  "headcount-delta"?: number;
+  "cost-delta"?: number;
+  "time-to-value"?: string;
+  "operational-status"?: string;
+  "available-from"?: string;
+  evidence?: string;
+}
+
+export interface SovaiaPatchPayload {
+  "label-de"?: string;
+  "summary-de"?: string;
+  impact?: SovaiaImpactPatch;
+}
+
+export interface MappingCreatePayload {
+  "classic-node-ids": string[];
+  "sovaia-node-ids": string[];
+  "narrative-de": string;
+  vorher?: { capex?: number; "opex-monatlich"?: number; annahmen?: string };
+  nachher?: { capex?: number; "opex-monatlich"?: number; annahmen?: string };
+  confidence?: number;
+}
+
+export interface GenerateClassicResponse {
+  added: NavigatorNode[];
+  count: number;
+}
+
+export type RefineIntent = "improve" | "expand" | "shorten" | "from-keywords";
+export type RefinePersona = "decision-maker" | "architect" | "functional";
+
+export interface RefineRequest {
+  "label-de": string;
+  "summary-de"?: string;
+  intent: RefineIntent;
+  persona: RefinePersona;
+  "extra-hint"?: string;
+}
+
+export interface RefineResponse {
+  "label-de": string;
+  "summary-de": string;
+  model: string;
+}
+
 // ── Classic-Bibliothek (ADR-103) ─────────────────────────────────────────
 
 export interface ClassicLibNode extends NavigatorNode {

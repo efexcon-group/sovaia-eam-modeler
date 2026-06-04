@@ -27,7 +27,10 @@ export async function modelerFetch<T>(path: string, opts: RequestInit = {}): Pro
   if (!r.ok) {
     throw Object.assign(new Error(`modeler-api ${r.status} on ${path}`), { status: r.status });
   }
-  return r.json() as Promise<T>;
+  // 204 / leerer Body (DELETE-Endpoints) → undefined statt JSON-Parse-Fehler.
+  if (r.status === 204) return undefined as T;
+  const text = await r.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 // ── Typisierte Read-Helfer (Navigator) ──────────────────────────────────
