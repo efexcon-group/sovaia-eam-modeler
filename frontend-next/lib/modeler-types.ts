@@ -90,6 +90,37 @@ export interface CostAggregate {
   "mapping-count"?: number;
 }
 
+// ── Reference-Modell (Canvas) ────────────────────────────────────────────
+
+export interface ReferenceNode {
+  id: string;
+  type: string;
+  "label-de": string;
+  "label-en"?: string;
+  "summary-de"?: string;
+  tags?: Record<string, string>;
+  /** Bei Cluster-Anchors: relativer Pfad auf das Detail-File. */
+  "detail-ref"?: string;
+}
+
+export interface ReferenceEdge {
+  from: string;
+  to: string;
+  type: string;
+  label?: string;
+}
+
+export interface ReferenceModel {
+  "reference-version"?: string;
+  "cluster-id"?: string;
+  "cluster-version"?: string;
+  brand?: string;
+  industry?: string;
+  "view-profile-default"?: string;
+  nodes: ReferenceNode[];
+  edges: ReferenceEdge[];
+}
+
 export interface NavigatorResponse {
   path: string;
   layer: string;
