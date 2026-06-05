@@ -206,6 +206,45 @@ export interface ScenarioGapResponse {
   tenant: string;
 }
 
+// ── Szenario-Ablaufdiagramm (Pipeline + Infra-Demand) ────────────────────
+
+export type InfraLevel = "low" | "medium" | "high";
+export type InfraDimension = "gpu" | "memory" | "throughput" | "persistence" | "pipeline" | "realtime";
+export type InfraDemand = Partial<Record<InfraDimension, InfraLevel>>;
+
+export type FlowStepKind = "source" | "process" | "model" | "store" | "query" | "output";
+
+export interface FlowStep {
+  id: string;
+  kind: FlowStepKind;
+  "label-de": string;
+  "summary-de"?: string;
+  "infra-demand"?: InfraDemand;
+  "note-de"?: string;
+}
+
+export interface FlowPhase {
+  id: string;
+  "label-de": string;
+  steps: FlowStep[];
+}
+
+export interface ScenarioFlow {
+  id: string;
+  "label-de": string;
+  "summary-de"?: string;
+  target?: string;
+  phases: FlowPhase[];
+}
+
+export interface FlowListItem {
+  id: string;
+  "label-de": string;
+  "summary-de"?: string;
+  target?: string;
+  "step-count": number;
+}
+
 // ── Reference-Modell (Canvas) ────────────────────────────────────────────
 
 export interface ReferenceNode {

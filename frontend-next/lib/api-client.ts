@@ -1,8 +1,10 @@
 import { auth } from "./auth";
 import type {
   ClassicLibraryResponse,
+  FlowListItem,
   MeResponse,
   NavigatorResponse,
+  ScenarioFlow,
   ScenarioGapResponse,
   ScenarioTarget,
   SchichtenResponse,
@@ -65,4 +67,14 @@ export function getScenarioTargets(): Promise<{ targets: ScenarioTarget[]; count
 /** Sovereign-AI-Readiness-Gap für ein Target (voraussetzt-Closure). */
 export function getScenarioGap(target: string): Promise<ScenarioGapResponse> {
   return modelerFetch<ScenarioGapResponse>(`/scenario/gap?target=${encodeURIComponent(target)}`);
+}
+
+/** Verfügbare Szenario-Ablaufdiagramme. */
+export function getScenarioFlows(): Promise<{ flows: FlowListItem[]; count: number }> {
+  return modelerFetch("/scenario/flows");
+}
+
+/** Vollständiges Ablaufdiagramm (Phasen → Schritte + Infra-Demand). */
+export function getScenarioFlow(id: string): Promise<ScenarioFlow> {
+  return modelerFetch<ScenarioFlow>(`/scenario/flow?id=${encodeURIComponent(id)}`);
 }
