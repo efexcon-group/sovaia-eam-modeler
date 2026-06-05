@@ -1,0 +1,31 @@
+# Layer-Schemata für den Canvas-Layered-Stack (ADR-096/099).
+# Umschaltbare Schichtung derselben Blöcke: TOGAF ↔ ISO/OSI.
+# Jede Schema-Ebene aggregiert eine oder mehrere Taxonomie-Schichten (schichten.yaml).
+# Reihenfolge = von oben (nah am Nutzer) nach unten (Infrastruktur).
+
+schemes:
+
+  togaf:
+    label-de: TOGAF-Schichten
+    layers:
+      - { id: business,       label-de: Business,                       schichten: [business] }
+      - { id: application,    label-de: Application,                    schichten: [application] }
+      - { id: data,           label-de: Data,                           schichten: [data] }
+      - { id: technology,     label-de: Technology,                     schichten: [technology] }
+      - { id: operations,     label-de: Operations,                     schichten: [operations] }
+      - { id: infrastructure, label-de: Infrastructure,                 schichten: [infrastructure] }
+      - { id: governance,     label-de: Governance / Compliance / Security, schichten: [governance-compliance-security] }
+
+  osi:
+    label-de: ISO/OSI-Layer
+    # Annäherung: AI-/Software-Bausteine auf das 7-Schichten-Modell projiziert.
+    # Bewusst grob — als alternative Lesart, nicht als exakte Netzwerk-Taxonomie.
+    layers:
+      - { id: l7-application,  label-de: "L7 · Application",  schichten: [business, application] }
+      - { id: l6-presentation, label-de: "L6 · Presentation", schichten: [data] }
+      - { id: l5-session,      label-de: "L5 · Session",      schichten: [operations] }
+      - { id: l4-transport,    label-de: "L4 · Transport",    schichten: [technology] }
+      - { id: l3-network,      label-de: "L3 · Network",      schichten: [] }
+      - { id: l2-datalink,     label-de: "L2 · Data Link",    schichten: [] }
+      - { id: l1-physical,     label-de: "L1 · Physical",     schichten: [infrastructure] }
+      - { id: cross-governance, label-de: "Cross · Governance/Security", schichten: [governance-compliance-security] }

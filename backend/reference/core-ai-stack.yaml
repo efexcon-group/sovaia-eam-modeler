@@ -126,6 +126,7 @@ nodes:
     label-de: Souveräne LLM-/Embedding-Inference (GPU)
     tags: { status: released, layer: L0, perspective: multi-tenancy, cluster: sovereign-ai-readiness, dimension: [infrastructure, technology], fulfilled-by: [kiinno-datacenter], ownership: sovaia-baseline, seeded-by: llm-generated }
     sovereignty: { deployment-modes: [multi-tenant, self-hosted], needs-own-ai-infra: false, data-residency: ch, trial-available: true, pilot-available: true }
+    infra-demand: { gpu: high, memory: high, realtime: medium }
     summary-de: GPU-gestützte Inferenz (LLM + Embeddings) im KIINNO-Datacenter (CH), pro Tenant buchbar — kein eigenes GPU nötig. (DGX ist nur Sovaias Testumgebung.)
 
   - id: cap-vector-store
@@ -133,18 +134,21 @@ nodes:
     label-de: Embedding-/Vector-Store
     tags: { status: live, layer: L0, perspective: architektur, cluster: sovereign-ai-readiness, dimension: [data, infrastructure], fulfilled-by: [kiinno-datacenter, sovaia-module], ownership: sovaia-baseline, seeded-by: llm-generated }
     sovereignty: { deployment-modes: [multi-tenant, self-hosted], needs-own-ai-infra: false, data-residency: ch, trial-available: true, pilot-available: true }
+    infra-demand: { persistence: high, memory: medium, throughput: medium }
     summary-de: pgvector-basierter Vektorspeicher für RAG — Teil der buchbaren KIINNO-Capacity bzw. der Sovaia-Plattform.
 
   - id: cap-data-fabric
     type: faehigkeit
     label-de: Data Fabric & Quell-Anbindung
     tags: { status: released, layer: L0, perspective: integration, cluster: sovereign-ai-readiness, dimension: [data, infrastructure], fulfilled-by: [kiinno-datacenter, kiinno-implementation], ownership: sovaia-baseline, seeded-by: llm-generated }
+    infra-demand: { throughput: high, pipeline: high }
     summary-de: Semantik-/Governance-fähige Anbindung heterogener (oft API-loser) Quellen — KIINNO führt die Data Fabric ein und betreibt sie tenant-bezogen.
 
   - id: cap-rag-pipeline
     type: prozess
     label-de: RAG-Verarbeitungs-Pipeline
     tags: { status: released, layer: L1, perspective: architektur, cluster: sovereign-ai-readiness, dimension: [data, operations], fulfilled-by: [kiinno-implementation, sovaia-module], ownership: sovaia-baseline, seeded-by: llm-generated }
+    infra-demand: { gpu: medium, pipeline: high }
     summary-de: Verarbeitungs-Kette von der Rohquelle zur abrufbaren Wissensbasis (Details siehe pipe-*-Knoten) — KIINNO implementiert, Sovaia liefert die Bausteine.
 
   - id: cap-governance-metadata
@@ -179,6 +183,7 @@ nodes:
     type: prozess
     label-de: "RAG 4 — Embedding"
     tags: { status: live, layer: L1, perspective: architektur, cluster: rag-pipeline, dimension: [data, technology], fulfilled-by: [kiinno-datacenter, sovaia-module], ownership: sovaia-baseline, seeded-by: llm-generated }
+    infra-demand: { gpu: high, memory: medium }
     summary-de: Vektorisieren der Chunks via souveränem Embedding-Modell.
   - id: pipe-filtering
     type: prozess

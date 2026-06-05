@@ -23,6 +23,12 @@ defaults:
   core-ai-stack:
     - application/ai-stack
 
+  sovereign-ai-readiness:
+    - application/ai-stack
+
+  rag-pipeline:
+    - application/ai-stack
+
   # Business-Apps (Application-Layer)
   pm-blm-stack:
     - application/business-apps/pm-blm

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import edit, health, intake, me, navigator, reference, scenario, taxonomy
+from app.routers import canvas, edit, health, intake, me, navigator, reference, scenario, taxonomy
 from app.security.auth import AuthMiddleware
 from app.storage.demo_seed import ensure_demo_overlays
 
@@ -46,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(intake.router, prefix="/v1/intake", tags=["intake"])
     app.include_router(me.router, prefix="/v1/me", tags=["me"])
     app.include_router(scenario.router, prefix="/v1/scenario", tags=["scenario"])
+    app.include_router(canvas.router, prefix="/v1/canvas", tags=["canvas"])
 
     return app
 
