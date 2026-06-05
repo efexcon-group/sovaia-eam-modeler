@@ -1,5 +1,6 @@
 import { auth } from "./auth";
 import type {
+  CanvasResponse,
   ClassicLibraryResponse,
   FlowListItem,
   MeResponse,
@@ -77,4 +78,9 @@ export function getScenarioFlows(): Promise<{ flows: FlowListItem[]; count: numb
 /** Vollständiges Ablaufdiagramm (Phasen → Schritte + Infra-Demand). */
 export function getScenarioFlow(id: string): Promise<ScenarioFlow> {
   return modelerFetch<ScenarioFlow>(`/scenario/flow?id=${encodeURIComponent(id)}`);
+}
+
+/** Canvas-Layered-Stack für ein Layer-Schema (togaf | osi). */
+export function getCanvas(scheme: string): Promise<CanvasResponse> {
+  return modelerFetch<CanvasResponse>(`/canvas?scheme=${encodeURIComponent(scheme)}`);
 }

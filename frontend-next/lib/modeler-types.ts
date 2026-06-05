@@ -245,7 +245,38 @@ export interface FlowListItem {
   "step-count": number;
 }
 
-// ── Reference-Modell (Canvas) ────────────────────────────────────────────
+// ── Canvas-Layered-Stack (ADR-099) ───────────────────────────────────────
+
+export type BlockPresence = "used" | "available" | "sovaia";
+
+export interface CanvasBlock {
+  id: string;
+  "label-de": string;
+  "summary-de"?: string;
+  path: string;
+  kind: "category" | "tech";
+  children: CanvasBlock[];
+  "node-count"?: number;
+  "infra-demand"?: InfraDemand;
+  presence?: BlockPresence | null;
+  type?: string;
+  status?: string;
+}
+
+export interface CanvasLayer {
+  id: string;
+  "label-de": string;
+  blocks: CanvasBlock[];
+}
+
+export interface CanvasResponse {
+  scheme: string;
+  schemes: { id: string; "label-de": string }[];
+  tenant: string;
+  layers: CanvasLayer[];
+}
+
+// ── Reference-Modell (alter React-Flow-Canvas, abgelöst) ─────────────────
 
 export interface ReferenceNode {
   id: string;
