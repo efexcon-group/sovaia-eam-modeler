@@ -51,10 +51,25 @@ def test_shape_groups():
     assert s["sovereignty"] == {"data-residency": "ch"}
 
 
+def test_flows_load():
+    flows = sc._load_flows("reference")
+    assert "rag" in flows, list(flows.keys())
+    rag = flows["rag"]
+    assert rag.get("target") == "wl-llm-chat-rag"
+    steps = [s for ph in rag["phases"] for s in ph["steps"]]
+    assert len(steps) >= 8
+    gen = next(s for s in steps if s["id"] == "generate")
+    assert gen["infra-demand"]["gpu"] == "high"
+    # Alle neuen Szenarien vorhanden.
+    for fid in ["document-extraction", "document-generation", "image-extraction", "video-kinematic", "video-generation"]:
+        assert fid in flows, fid
+
+
 if __name__ == "__main__":
     test_closure_direct()
     test_closure_transitive()
     test_closure_empty()
     test_as_list()
     test_shape_groups()
+    test_flows_load()
     print("ALLE TESTS OK")

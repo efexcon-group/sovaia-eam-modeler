@@ -102,6 +102,52 @@ def _prereq_closure(start: str, edges: list[dict]) -> list[str]:
     return order
 
 
+@lru_cache(maxsize=2)
+def _load_flows(base_str: str) -> dict[str, dict]:
+    """Lädt scenario-flows.yaml → {flow_id: flow}. Gecacht pro base."""
+    p = Path(base_str) / "scenario-flows.yaml"
+    if not p.exists():
+        return {}
+    with p.open() as f:
+        data = yaml.safe_load(f) or {}
+    out: dict[str, dict] = {}
+    for flow in data.get("flows", []) or []:
+        fid = flow.get("id")
+        if fid:
+            out[fid] = flow
+    return out
+
+
+@router.get("/flows")
+async def list_flows(settings: Settings = Depends(get_settings)) -> dict:
+    """Verfügbare Szenario-Ablaufdiagramme (Übersicht)."""
+    flows = _load_flows(settings.reference_repo_path)
+    items = [
+        {
+            "id": f["id"],
+            "label-de": f.get("label-de") or f["id"],
+            "summary-de": f.get("summary-de"),
+            "target": f.get("target"),
+            "step-count": sum(len(ph.get("steps") or []) for ph in f.get("phases") or []),
+        }
+        for f in flows.values()
+    ]
+    return {"flows": items, "count": len(items)}
+
+
+@router.get("/flow")
+async def scenario_flow(
+    id: str = Query(..., description="Flow-ID, z.B. rag"),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Vollständiges Ablaufdiagramm eines Szenarios (Phasen → Schritte + Infra-Demand)."""
+    flows = _load_flows(settings.reference_repo_path)
+    flow = flows.get(id)
+    if not flow:
+        raise HTTPException(status_code=404, detail=f"flow '{id}' not found")
+    return flow
+
+
 @router.get("/targets")
 async def list_targets(settings: Settings = Depends(get_settings)) -> dict:
     """Wählbare Szenario-Ziele: Knoten vom Typ ai-use-case, die `voraussetzt`-

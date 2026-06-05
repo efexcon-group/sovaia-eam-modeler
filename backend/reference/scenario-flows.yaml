@@ -1,0 +1,117 @@
+# Szenario-Ablaufdiagramme (ADR-096/098) — Prozessketten für AI-Workloads.
+#
+# Zweck: sichtbar machen, WO im Ablauf welche Infrastruktur (GPU, High-Speed-
+# Memory, Durchsatz, AI-Persistenz, Pipeline, Realtime) verbraucht wird — und
+# damit die Investition erklären. Der Chat ist meist nur der letzte Schritt.
+#
+# Infra-Demand-Vokabular (level: low | medium | high; fehlende Dimension = none):
+#   gpu         — GPU-Rechenleistung (Inferenz/Vision/Generierung)
+#   memory      — High-Speed-Memory (VRAM/HBM) für große Modelle / Batches
+#   throughput  — Daten-Durchsatz (NVMe/Bandbreite) für Pipelines/Medien
+#   persistence — AI-Persistenz (Vektor-/Objekt-Store)
+#   pipeline    — Pipeline-/Orchestrierungs-Last (batch | streaming | orchestrated → high/medium)
+#   realtime    — Echtzeit-/Latenz-Anforderung
+#
+# step.kind (für Icon/Stil): source | process | model | store | query | output
+# flow.target verknüpft optional einen Workload-Target-Knoten (→ Gap-Analyse).
+
+flows:
+
+  # ════════════════════════════════════════════════════════════════════
+  - id: rag
+    label-de: RAG — Wissens-Q&A
+    summary-de: Retrieval-Augmented Generation — von der Datenquelle bis zur belegten LLM-Antwort.
+    target: wl-llm-chat-rag
+    phases:
+      - id: indexing
+        label-de: Indexierung (einmalig & laufend)
+        steps:
+          - { id: source,   kind: source,  label-de: Datenquelle,         summary-de: "Dokumente, Datenbanken, APIs — oft heterogen und API-arm.", infra-demand: { throughput: medium, persistence: low } }
+          - { id: extract,  kind: process, label-de: Content-Extraktion,   summary-de: "OCR/Parsing — Rohinhalt aus PDF, Office, Scans, HTML.", infra-demand: { gpu: low, throughput: high, pipeline: medium } }
+          - { id: chunk,    kind: process, label-de: Chunking,             summary-de: "Segmentierung in semantisch sinnvolle Abschnitte.", infra-demand: { pipeline: medium } }
+          - { id: embed,    kind: model,   label-de: Embedding,            summary-de: "Vektorisierung jedes Chunks über ein Embedding-Modell.", infra-demand: { gpu: high, memory: medium, pipeline: high }, note-de: "GPU-Dauerlast bei Erst-Indexierung großer Bestände — skaliert mit Datenvolumen." }
+          - { id: store,    kind: store,   label-de: Vektor-Store,         summary-de: "pgvector/Index — durchsuchbare Wissensbasis.", infra-demand: { persistence: high, throughput: medium }, note-de: "AI-Persistenz wächst mit dem Korpus; schnelle ANN-Suche braucht Memory + I/O." }
+      - id: query
+        label-de: Abfrage (pro Anfrage)
+        steps:
+          - { id: query,    kind: query,   label-de: Nutzer-Query,         summary-de: "Die eigentliche Frage des Nutzers." }
+          - { id: qembed,   kind: model,   label-de: Query-Embedding,      summary-de: "Frage in denselben Vektorraum übersetzen.", infra-demand: { gpu: medium } }
+          - { id: retrieve, kind: store,   label-de: Retrieval (ANN),      summary-de: "Ähnlichste Chunks aus dem Vektor-Store holen.", infra-demand: { persistence: high, throughput: medium } }
+          - { id: rerank,   kind: model,   label-de: Rerank,               summary-de: "Treffer nach Relevanz feinsortieren.", infra-demand: { gpu: medium, memory: low } }
+          - { id: generate, kind: model,   label-de: LLM-Inferenz,         summary-de: "Antwort aus Kontext + Frage generieren.", infra-demand: { gpu: high, memory: high, realtime: high }, note-de: "Hier sitzt der teuerste Schritt: großes Modell, niedrige Latenz, viel VRAM." }
+          - { id: response, kind: output,  label-de: Antwort (Chat),       summary-de: "Der sichtbare Teil — gefühlt 'die Magie', faktisch ~5 % des Aufwands.", infra-demand: { realtime: medium } }
+
+  # ════════════════════════════════════════════════════════════════════
+  - id: document-extraction
+    label-de: Document Extraction
+    summary-de: Strukturierte Daten aus unstrukturierten Dokumenten gewinnen.
+    phases:
+      - id: main
+        label-de: Verarbeitung
+        steps:
+          - { id: source,   kind: source,  label-de: Dokument (PDF/Scan/Bild), summary-de: "Eingang aus Mail, Portal, Scanner.", infra-demand: { throughput: medium } }
+          - { id: ocr,      kind: model,   label-de: OCR & Layout-Analyse, summary-de: "Text + Layout erkennen (auch handschriftlich/tabellarisch).", infra-demand: { gpu: high, throughput: high }, note-de: "Vision-Modelle für Layout/Handschrift sind GPU-intensiv." }
+          - { id: fields,   kind: model,   label-de: Feld-/Struktur-Erkennung, summary-de: "Entitäten und Felder extrahieren (Beträge, Daten, Parteien).", infra-demand: { gpu: medium, memory: low } }
+          - { id: validate, kind: process, label-de: Validierung & Normalisierung, summary-de: "Plausibilität, Stammdaten-Abgleich, Format.", infra-demand: { pipeline: medium } }
+          - { id: persist,  kind: store,   label-de: Strukturierte Persistenz, summary-de: "Ergebnis in DB/ERP übergeben.", infra-demand: { persistence: medium } }
+          - { id: output,   kind: output,  label-de: Strukturierte Daten,  summary-de: "Maschinenlesbar weiterverwendbar." }
+
+  # ════════════════════════════════════════════════════════════════════
+  - id: document-generation
+    label-de: Document Generation
+    summary-de: Aus Kontext + Vorlage belegte Dokumente erzeugen.
+    phases:
+      - id: main
+        label-de: Erzeugung
+        steps:
+          - { id: intent,   kind: query,   label-de: Anfrage & Vorlage,    summary-de: "Was soll erzeugt werden — Template + Parameter." }
+          - { id: retrieve, kind: store,   label-de: Kontext-Retrieval,    summary-de: "Relevante Fakten/Quellen beschaffen (RAG).", infra-demand: { persistence: high } }
+          - { id: generate, kind: model,   label-de: LLM-Textgenerierung,  summary-de: "Inhalt formulieren — quellenbelegt, persona-gerecht.", infra-demand: { gpu: high, memory: high }, note-de: "Lange, strukturierte Generierung bindet GPU + VRAM." }
+          - { id: compose,  kind: process, label-de: Layout & Komposition, summary-de: "Bausteine, Anlagen, Signatur zusammenführen.", infra-demand: { pipeline: medium } }
+          - { id: render,   kind: process, label-de: Render & Signatur,    summary-de: "Finales PDF, Signatur, Versand-Vorbereitung.", infra-demand: { throughput: medium } }
+          - { id: output,   kind: output,  label-de: Fertiges Dokument,    summary-de: "Auslieferbar (Mail/Teams/Portal)." }
+
+  # ════════════════════════════════════════════════════════════════════
+  - id: image-extraction
+    label-de: Image Extraction
+    summary-de: Strukturierte Insights aus Bildern (Vision).
+    phases:
+      - id: main
+        label-de: Verarbeitung
+        steps:
+          - { id: source,     kind: source,  label-de: Bild / Frame,        summary-de: "Foto, Scan, Kamera-Standbild.", infra-demand: { throughput: medium } }
+          - { id: preprocess, kind: process, label-de: Vorverarbeitung,     summary-de: "Resize, Normalisierung, Tiling.", infra-demand: { gpu: low, throughput: high } }
+          - { id: detect,     kind: model,   label-de: Objekt-/Szenen-Erkennung, summary-de: "Erkennen, was im Bild ist (Detection/Segmentation).", infra-demand: { gpu: high, memory: medium }, note-de: "Vision-Modelle laufen auf GPU; Batch-Durchsatz bindet Memory." }
+          - { id: caption,    kind: model,   label-de: Vision-LLM / Beschreibung, summary-de: "Semantische Beschreibung & Interpretation.", infra-demand: { gpu: high, memory: high } }
+          - { id: embed,      kind: model,   label-de: Bild-Embedding,      summary-de: "Vektor für Bildsuche/Abgleich.", infra-demand: { gpu: high, persistence: medium } }
+          - { id: output,     kind: output,  label-de: Bild-Insights,       summary-de: "Strukturierte, durchsuchbare Ergebnisse." }
+
+  # ════════════════════════════════════════════════════════════════════
+  - id: video-kinematic
+    label-de: Realtime-Video-Kinematik (Pflege)
+    summary-de: Aus anonymisierten Live-Videos kinematische Modelle und Ereignisse ableiten.
+    phases:
+      - id: main
+        label-de: Echtzeit-Verarbeitung
+        steps:
+          - { id: stream,    kind: source,  label-de: Live-Video-Stream,   summary-de: "Kontinuierlicher Kamerastrom (Pflegezimmer/Bereich).", infra-demand: { throughput: high, realtime: high } }
+          - { id: anonymize, kind: model,   label-de: PII-/Gesichts-Anonymisierung, summary-de: "Gesichter/Identität unkenntlich machen — VOR jeder Analyse.", infra-demand: { gpu: high, throughput: high, realtime: high }, note-de: "Datenschutz-Pflicht: läuft kontinuierlich pro Frame — GPU-Dauerlast, nicht optional." }
+          - { id: pose,      kind: model,   label-de: Pose-/Bewegungs-Erkennung, summary-de: "Skelett-/Bewegungspunkte je Frame.", infra-demand: { gpu: high, memory: medium, realtime: high } }
+          - { id: kinematic, kind: model,   label-de: Kinematik-Modell,    summary-de: "Bewegungssequenzen zu kinematischen Mustern abstrahieren.", infra-demand: { gpu: high, memory: high, realtime: medium } }
+          - { id: detect,    kind: model,   label-de: Ereignis-/Sturz-Erkennung, summary-de: "Kritische Muster (Sturz, Immobilität) erkennen.", infra-demand: { gpu: medium, realtime: high } }
+          - { id: alert,     kind: output,  label-de: Alarm & Doku,        summary-de: "Echtzeit-Alarm + revisionssichere Dokumentation.", infra-demand: { pipeline: high, realtime: high }, note-de: "Kontinuierlicher GPU-Bedarf + niedrige Latenz = zwingend lokale/souveräne GPU-Infra." }
+
+  # ════════════════════════════════════════════════════════════════════
+  - id: video-generation
+    label-de: LLM-based Video-Generation
+    summary-de: Aus Prompt/Storyboard generierte Videos (Diffusion).
+    phases:
+      - id: main
+        label-de: Generierung
+        steps:
+          - { id: prompt,   kind: query,   label-de: Prompt / Storyboard,  summary-de: "Beschreibung des gewünschten Videos." }
+          - { id: plan,     kind: model,   label-de: Szenen-Planung (LLM), summary-de: "Storyboard, Shots, Konsistenz-Vorgaben.", infra-demand: { gpu: high, memory: high } }
+          - { id: generate, kind: model,   label-de: Video-Diffusion,      summary-de: "Frame-Generierung über Diffusionsmodelle.", infra-demand: { gpu: high, memory: high, throughput: high }, note-de: "Extrem GPU-/VRAM-intensiv — die mit Abstand teuerste AI-Last." }
+          - { id: upscale,  kind: model,   label-de: Upscaling & Postproc, summary-de: "Auflösung, Glättung, Konsistenz.", infra-demand: { gpu: high, throughput: high } }
+          - { id: encode,   kind: process, label-de: Encoding & Delivery,  summary-de: "Kodierung, Speicherung, Auslieferung.", infra-demand: { throughput: high, persistence: medium } }
+          - { id: output,   kind: output,  label-de: Video,                summary-de: "Fertiges Video." }
