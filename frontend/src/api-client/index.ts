@@ -12,6 +12,8 @@ export interface ReferenceNode {
   tags?: Record<string, string>;
   /** Bei Cluster-Anchors: relativer Pfad auf das Detail-File. */
   "detail-ref"?: string;
+  /** Optionaler externer Link (ADR, Doku) — öffnet bei Klick auf das Link-Icon. */
+  "external-url"?: string;
 }
 
 export interface ReferenceEdge {

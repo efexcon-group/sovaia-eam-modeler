@@ -7,6 +7,7 @@ export interface ArchNodeData extends Record<string, unknown> {
   summary?: string;
   status?: string;
   hasDetail: boolean;
+  externalUrl?: string;
   expanded: boolean;
 }
 
@@ -26,9 +27,23 @@ export function ArchNode({ data }: NodeProps) {
             <div className="font-medium text-sm text-slate-900 leading-snug truncate" title={d.labelDe}>
               {d.labelDe}
             </div>
-            <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-full ${s.bg} ${s.text}`}>
-              {s.label}
-            </span>
+            <div className="shrink-0 flex items-center gap-1">
+              {d.externalUrl && (
+                <a
+                  href={d.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  title="Dokumentation / ADR öffnen"
+                  className="text-[11px] leading-none px-1 py-0.5 rounded text-sky-700 hover:bg-sky-100"
+                >
+                  ↗
+                </a>
+              )}
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${s.bg} ${s.text}`}>
+                {s.label}
+              </span>
+            </div>
           </div>
 
           {d.summary && (

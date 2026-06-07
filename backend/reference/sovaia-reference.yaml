@@ -165,6 +165,23 @@ nodes:
     tags: { status: live, layer: L1, perspective: governance, ownership: sovaia-baseline }
     summary-de: Daten und Inferenz on-prem in der Schweiz.
 
+  # ── Plattform-Infrastruktur (L1) — Cluster-Anchors ──────────────────
+  - id: platform-foundation-cluster
+    type: service
+    label-de: Plattform-Foundation (L1)
+    tags: { status: live, layer: L1, perspective: integration, cluster: platform-foundation, ownership: sovaia-baseline }
+    detail-ref: platform-foundation.yaml
+    summary-de: K3S/ArgoCD, PostgreSQL+pgvector, Redis, MinIO, Keycloak, Cloudflared/ingress/Tailscale — die L1-Infrastruktur.
+
+  - id: platform-event-bus-cluster
+    type: service
+    label-de: Event-Bus (Redis Hub & Spoke)
+    tags: { status: live, layer: L1, perspective: integration, cluster: platform-event-bus, ownership: sovaia-baseline }
+    detail-ref: platform-event-bus.yaml
+    source-binding:
+      argocd-app: platform-redis
+    summary-de: Message-stream-basierter Eventbus (ADR-105). Producer-Module → Redis-Streams → Consumer. Klick öffnet Hub & Spoke.
+
 edges:
 
   # Identität ist Grundvoraussetzung für alle End-User-Anwendungen
@@ -190,3 +207,11 @@ edges:
   # Touchpoints liefern UX an Brand-Anwendungen
   - { from: chat-widget,           to: web-core,          type: liefert }
   - { from: self-service-portal,   to: web-core,          type: liefert }
+
+  # Plattform-Foundation (L1) trägt die ganze Plattform
+  - { from: platform-foundation-cluster,  to: sovaia-platform,            type: gehoert-zu }
+  - { from: platform-event-bus-cluster,   to: platform-foundation-cluster, type: gehoert-zu }
+  - { from: efx-erp,                       to: platform-foundation-cluster, type: voraussetzt }
+  - { from: efx-erp,                       to: platform-event-bus-cluster,  type: nutzt }
+  - { from: identity-layer,                to: platform-foundation-cluster, type: voraussetzt }
+  - { from: dgx-stack,                     to: platform-foundation-cluster, type: voraussetzt }

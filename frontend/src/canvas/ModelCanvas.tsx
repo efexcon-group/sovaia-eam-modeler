@@ -33,6 +33,7 @@ function toFlowNode(n: ReferenceNode, expanded: boolean): Node<ArchNodeData> {
       summary: n["summary-de"],
       status: n.tags?.status,
       hasDetail: Boolean(n["detail-ref"]),
+      externalUrl: n["external-url"],
       expanded,
     },
   };

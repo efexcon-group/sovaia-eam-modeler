@@ -1,0 +1,110 @@
+# Platform-Foundation (L1) — Infrastruktur-Cluster
+# Detail-File für den Cluster-Anchor `platform-foundation-cluster` in sovaia-reference.yaml.
+# Lazy-geladen bei Klick. Spiegelt die L1-Schicht aus docs/architektur-diagramm.md (sovaia-platform).
+#
+# Live-Status: jeder Knoten bindet via source-binding.argocd-app an die ArgoCD-Application.
+# Der status-sync-agent setzt status=live (Healthy+Synced) bzw. released automatisch.
+
+cluster-id: platform-foundation
+cluster-version: "0.1.0"
+view-profile-default: c-level
+
+nodes:
+
+  - id: k3s-control
+    type: service
+    label-de: K3S + ArgoCD + Helm
+    label-en: K3S + ArgoCD + Helm
+    tags: { status: live, layer: L1, perspective: integration, dimension: infrastructure, ownership: sovaia-baseline }
+    summary-de: GitOps-Steuerebene — ArgoCD reconciled alle Plattform- und Tenant-Apps nach Sync-Waves.
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  - id: pg-platform
+    type: datenraum
+    label-de: PostgreSQL + pgvector
+    label-en: PostgreSQL + pgvector
+    tags: { status: live, layer: L1, perspective: integration, dimension: data, ownership: sovaia-baseline }
+    summary-de: Zentrale relationale Datenhaltung; pgvector-Embeddings (web_core_embeddings / indexer_embeddings, 2560-dim).
+    source-binding:
+      argocd-app: platform-postgresql
+      k8s-deployment: platform/platform-postgresql
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  - id: redis-platform
+    type: datenraum
+    label-de: Redis — Eventbus + Sessions
+    label-en: Redis — Event Bus + Sessions
+    tags: { status: live, layer: L1, perspective: integration, dimension: infrastructure, ownership: sovaia-baseline }
+    summary-de: Redis Streams als message-stream Hub (ERP-Eventbus, Hub & Spoke) plus Session-Cache. Klick öffnet das Hub-&-Spoke-Detail.
+    detail-ref: platform-event-bus.yaml
+    source-binding:
+      argocd-app: platform-redis
+      k8s-deployment: platform/platform-redis-master
+    external-url: https://github.com/efexcon-group/sovaia-contracts/blob/main/architecture/adrs/105-event-driven-integration-and-bus-scope.md
+
+  - id: minio-platform
+    type: datenraum
+    label-de: MinIO — S3 Objektspeicher
+    label-en: MinIO — S3 Object Storage
+    tags: { status: live, layer: L1, perspective: integration, dimension: data, ownership: sovaia-baseline }
+    summary-de: S3-kompatibler Objektspeicher für Content, generierte Dokumente und Backups.
+    source-binding:
+      argocd-app: platform-minio
+      k8s-deployment: platform/platform-minio
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  - id: keycloak-platform
+    type: service
+    label-de: Keycloak — IAM
+    label-en: Keycloak — IAM
+    tags: { status: live, layer: L1, perspective: governance, dimension: governance, ownership: sovaia-baseline }
+    summary-de: Identity-Provider (Realm efexcon-group), OIDC/PKCE, Entra-Federation. Quelle für authentication-core.
+    source-binding:
+      argocd-app: platform-keycloakx
+      k8s-deployment: platform/platform-keycloakx
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  - id: cloudflared-edge
+    type: schnittstelle
+    label-de: Cloudflared Tunnel
+    label-en: Cloudflared Tunnel
+    tags: { status: live, layer: L1, perspective: integration, dimension: infrastructure, ownership: sovaia-baseline }
+    summary-de: Public-Edge — Cloudflare-Tunnel exponiert Brand-Sites auf ingress-nginx (kein offener Port).
+    source-binding:
+      argocd-app: platform-cloudflared
+      k8s-deployment: ingress-nginx/cloudflared
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  - id: ingress-nginx
+    type: schnittstelle
+    label-de: ingress-nginx
+    label-en: ingress-nginx
+    tags: { status: live, layer: L1, perspective: integration, dimension: infrastructure, ownership: sovaia-baseline }
+    summary-de: Reverse-Proxy / Ingress-Controller; routet zu Services, vorgeschaltet oauth2-proxy bei geschützten Routen.
+    source-binding:
+      argocd-app: platform-ingress-nginx
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  - id: tailscale-net
+    type: schnittstelle
+    label-de: Tailscale (interner Zugang)
+    label-en: Tailscale (internal access)
+    tags: { status: live, layer: L1, perspective: integration, dimension: infrastructure, ownership: sovaia-baseline }
+    summary-de: Internes Netz (CGNAT 100.64.0.0/10) für *.int.efexcon.com und DGX-Egress; kein Cloudflare-Pfad.
+    source-binding:
+      argocd-app: platform-tailscale-operator
+      k8s-deployment: tailscale/operator
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+edges:
+
+  # Steuerebene betreibt die Infrastruktur-Bausteine
+  - { from: k3s-control,    to: pg-platform,     type: liefert,  label: deployt }
+  - { from: k3s-control,    to: redis-platform,  type: liefert,  label: deployt }
+  - { from: k3s-control,    to: minio-platform,  type: liefert,  label: deployt }
+  - { from: k3s-control,    to: keycloak-platform, type: liefert, label: deployt }
+
+  # Netzwerk-Edge: außen → innen
+  - { from: cloudflared-edge, to: ingress-nginx,   type: fliesst-zu, label: public }
+  - { from: tailscale-net,    to: ingress-nginx,   type: fliesst-zu, label: intern }
+  - { from: keycloak-platform, to: pg-platform,    type: nutzt,      label: Realm-DB }

@@ -1,0 +1,112 @@
+# Platform Event-Bus (Redis Hub & Spoke) — Detail-Cluster
+# Detail-File für den Cluster-Anchor `platform-event-bus-cluster` (sovaia-reference.yaml)
+# und für den Redis-Knoten in platform-foundation.yaml (detail-ref).
+#
+# Bildet das message-stream-basierte Hub-&-Spoke-Konzept ab (ADR-105):
+# Producer-Module → Redis-Streams (Hub) → Consumer (Spokes). Echte Implementierung im
+# ERP-Eventbus (XADD/XREADGROUP/XACK, Consumer-Group erp-api, domänen-partitionierte Streams).
+# Reifegrad ehrlich: ERP-Producer/Consumer = live; rag-indexer-via-Event = planned (ADR-105 Ziel).
+
+cluster-id: platform-event-bus
+cluster-version: "0.1.0"
+view-profile-default: architect
+
+nodes:
+
+  # ── HUB ──────────────────────────────────────────────────────────────
+  - id: redis-event-hub
+    type: service
+    label-de: Redis Streams — Eventbus-Hub
+    label-en: Redis Streams — Event Bus Hub
+    tags: { status: live, layer: L1, perspective: integration, dimension: infrastructure, ownership: sovaia-baseline }
+    summary-de: Zentraler Hub. XADD MAXLEN ~10000, Consumer-Group erp-api, XREADGROUP BLOCK + XACK (at-least-once).
+    source-binding:
+      argocd-app: platform-redis
+      k8s-deployment: platform/platform-redis-master
+    external-url: https://github.com/efexcon-group/sovaia-contracts/blob/main/architecture/adrs/105-event-driven-integration-and-bus-scope.md
+
+  # ── STREAMS (domänen-partitioniert) ─────────────────────────────────
+  - id: stream-sales
+    type: datenfluss
+    label-de: "Stream: erp:events:sales"
+    tags: { status: live, layer: L1, perspective: integration, dimension: data, ownership: sovaia-baseline }
+    summary-de: quote.* · order.* · opportunity.*
+  - id: stream-finance
+    type: datenfluss
+    label-de: "Stream: erp:events:finance"
+    tags: { status: live, layer: L1, perspective: integration, dimension: data, ownership: sovaia-baseline }
+    summary-de: invoice.* · dunning.*
+  - id: stream-master-data
+    type: datenfluss
+    label-de: "Stream: erp:events:master-data"
+    tags: { status: live, layer: L1, perspective: integration, dimension: data, ownership: sovaia-baseline }
+    summary-de: customer.*
+  - id: stream-portal
+    type: datenfluss
+    label-de: "Stream: erp:events:portal"
+    tags: { status: live, layer: L1, perspective: integration, dimension: data, ownership: sovaia-baseline }
+    summary-de: document.*
+
+  # ── PRODUCER (Spokes, ERP-Module) ───────────────────────────────────
+  - id: prod-sales
+    type: service
+    label-de: ERP Sales-Module
+    tags: { status: live, layer: L5, perspective: integration, ownership: sovaia-baseline }
+    summary-de: quotation / order-management / crm — publiziert quote/order/opportunity-Events.
+  - id: prod-finance
+    type: service
+    label-de: ERP Finance-Module
+    tags: { status: live, layer: L5, perspective: integration, ownership: sovaia-baseline }
+    summary-de: invoicing / dunning / accounting — publiziert invoice/dunning-Events.
+  - id: prod-master-data
+    type: service
+    label-de: ERP Master-Data
+    tags: { status: live, layer: L5, perspective: integration, ownership: sovaia-baseline }
+    summary-de: customer-Registry — publiziert customer-Events.
+
+  # ── CONSUMER (Spokes, Group erp-api) ────────────────────────────────
+  - id: cons-dunning
+    type: ki-agent
+    label-de: dunning-agent
+    tags: { status: live, layer: L5, perspective: integration, ownership: sovaia-baseline }
+    summary-de: Plant Mahn-Follow-ups auf invoice-Events.
+  - id: cons-portal-delivery
+    type: service
+    label-de: portal-delivery
+    tags: { status: live, layer: L5, perspective: integration, ownership: sovaia-baseline }
+    summary-de: Pusht Dokumente ins Portal + Mailversand auf document-Events.
+  - id: cons-rag-indexer
+    type: ki-agent
+    label-de: rag-indexer
+    tags: { status: planned, layer: L3, perspective: ai-use-case, ownership: sovaia-baseline }
+    summary-de: Embedded Dokumente für RAG. ADR-105-Ziel — Event-getrieben statt CronJob/HTTP (noch nicht verdrahtet).
+    external-url: https://github.com/efexcon-group/sovaia-contracts/blob/main/architecture/adrs/105-event-driven-integration-and-bus-scope.md
+
+  # ── PERSISTENZ ──────────────────────────────────────────────────────
+  - id: event-log
+    type: datenraum
+    label-de: EventLog (Append / Replay)
+    tags: { status: live, layer: L1, perspective: integration, dimension: data, ownership: sovaia-baseline }
+    summary-de: EventLogService persistiert jedes Event parallel zum XADD — Audit + Replay.
+
+edges:
+
+  # Producer → Stream (XADD / publish)
+  - { from: prod-sales,       to: stream-sales,        type: fliesst-zu, label: XADD }
+  - { from: prod-finance,     to: stream-finance,      type: fliesst-zu, label: XADD }
+  - { from: prod-master-data, to: stream-master-data,  type: fliesst-zu, label: XADD }
+
+  # Streams gehören zum Hub
+  - { from: stream-sales,       to: redis-event-hub, type: gehoert-zu }
+  - { from: stream-finance,     to: redis-event-hub, type: gehoert-zu }
+  - { from: stream-master-data, to: redis-event-hub, type: gehoert-zu }
+  - { from: stream-portal,      to: redis-event-hub, type: gehoert-zu }
+
+  # Stream → Consumer (XREADGROUP / dispatch)
+  - { from: stream-finance, to: cons-dunning,         type: fliesst-zu, label: XREADGROUP }
+  - { from: stream-portal,  to: cons-portal-delivery, type: fliesst-zu, label: XREADGROUP }
+  - { from: stream-portal,  to: cons-rag-indexer,     type: fliesst-zu, label: "geplant (ADR-105)" }
+  - { from: stream-finance, to: cons-rag-indexer,     type: fliesst-zu, label: "geplant (ADR-105)" }
+
+  # Hub persistiert ins EventLog
+  - { from: redis-event-hub, to: event-log, type: liefert, label: append }
