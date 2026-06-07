@@ -29,8 +29,11 @@ nodes:
   - id: identity-layer
     type: service
     label-de: Identitäts- und Zugriffsschicht
-    tags: { status: live, layer: L2, perspective: integration, ownership: sovaia-baseline }
-    summary-de: Dual-Keycloak (interne Mitarbeiter + Customer-Self-Service), Multi-Brand-Personas.
+    tags: { status: live, layer: L2, perspective: integration, cluster: platform-iam, ownership: sovaia-baseline }
+    detail-ref: platform-iam.yaml
+    source-binding:
+      argocd-app: platform-keycloakx
+    summary-de: Dual-Keycloak (interne Mitarbeiter + Customer-Self-Service), Multi-Brand-Personas. Klick öffnet IAM-Flow + Sicherheits-Zonen.
 
   - id: governance-layer
     type: service

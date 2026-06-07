@@ -77,9 +77,9 @@ nodes:
     summary-de: Pusht Dokumente ins Portal + Mailversand auf document-Events.
   - id: cons-rag-indexer
     type: ki-agent
-    label-de: rag-indexer
+    label-de: rag-indexer (ERP-Event-Pfad)
     tags: { status: planned, layer: L3, perspective: ai-use-case, ownership: sovaia-baseline }
-    summary-de: Embedded Dokumente für RAG. ADR-105-Ziel — Event-getrieben statt CronJob/HTTP (noch nicht verdrahtet).
+    summary-de: rag-indexer ist LIVE (web-core, Outline, BLM, weitere Quellen → Workplace). Nur der ERP-Event-getriebene Pfad (document.* statt CronJob/HTTP) ist ADR-105-Ziel, noch in Progress.
     external-url: https://github.com/efexcon-group/sovaia-contracts/blob/main/architecture/adrs/105-event-driven-integration-and-bus-scope.md
 
   # ── PERSISTENZ ──────────────────────────────────────────────────────

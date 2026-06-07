@@ -204,6 +204,75 @@ nodes:
     sovereignty: { deployment-modes: [multi-tenant, self-hosted], needs-own-ai-infra: false, data-residency: ch, trial-available: true, pilot-available: true }
     summary-de: Bewertet die Cloud-Act-Aussetzung eines Verarbeitungspfads (Zone, Betreiber-Jurisdiktion). CH-Zone via KIINNO-Datacenter minimiert die Exposure. Aussage durch EFEXCON AG zu attestieren.
 
+  # ════════════════════════════════════════════════════════════════════
+  # Embedding-/RAG-Laufzeit (Implementierung) — real deployte Services.
+  # Konkretisiert die obige Capability-/Pipeline-Sicht. Live-Status via
+  # source-binding (ArgoCD). docs/architektur-diagramm.md §3.
+  # ════════════════════════════════════════════════════════════════════
+
+  # ── Quellen (was indiziert wird) ────────────────────────────────────
+  - id: src-web-core
+    type: datenraum
+    label-de: "Quelle: Web-Core-Websites"
+    tags: { status: live, layer: L6, perspective: ai-use-case, cluster: rag-runtime, dimension: data, ownership: sovaia-baseline }
+    summary-de: Brand-Sites / CMS-Content (MinIO content/) — brand- und sprachbewusst indiziert.
+  - id: src-outline
+    type: datenraum
+    label-de: "Quelle: Outline-Wiki"
+    tags: { status: live, layer: L6, perspective: ai-use-case, cluster: rag-runtime, dimension: data, ownership: sovaia-baseline }
+    summary-de: Outline-Doku als Wissensquelle für den Workplace.
+  - id: src-blm
+    type: datenraum
+    label-de: "Quelle: BLM"
+    tags: { status: live, layer: L6, perspective: ai-use-case, cluster: rag-runtime, dimension: data, ownership: sovaia-baseline }
+    summary-de: BLM-Inhalte (Portfolio/Projekte) als Wissensquelle.
+  - id: src-other
+    type: datenraum
+    label-de: "Quelle: weitere Quellen"
+    tags: { status: live, layer: L6, perspective: ai-use-case, cluster: rag-runtime, dimension: data, ownership: sovaia-baseline }
+    summary-de: Weitere angebundene Quellen, die in den Workplace-Index fließen.
+  - id: src-erp
+    type: datenraum
+    label-de: "Quelle: ERP (in Progress)"
+    tags: { status: planned, layer: L5, perspective: ai-use-case, cluster: rag-runtime, dimension: data, ownership: sovaia-baseline }
+    summary-de: ERP-Belege/Records — Indexierung ist in Progress (ERP-Event-Pfad, ADR-105).
+    external-url: https://github.com/efexcon-group/sovaia-contracts/blob/main/architecture/adrs/105-event-driven-integration-and-bus-scope.md
+
+  # ── Laufzeit-Services ───────────────────────────────────────────────
+  - id: rt-indexer
+    type: service
+    label-de: web-core-indexer (RAG-Indexer)
+    tags: { status: live, layer: L3, perspective: ai-use-case, cluster: rag-runtime, dimension: data, ownership: sovaia-baseline }
+    summary-de: Chunkt + embedded Quellen (web-core, Outline, BLM, weitere) → pgvector. ERP-Quelle in Progress.
+    source-binding: { argocd-app: web-core-indexer, k8s-deployment: web-core/web-core-indexer }
+  - id: rt-rag-orchestrator
+    type: service
+    label-de: web-core-rag (Orchestrator + Agents)
+    tags: { status: live, layer: L3, perspective: ai-use-case, cluster: rag-runtime, ownership: sovaia-baseline }
+    summary-de: Guard → Intent-Klassifikation → Agent-Registry; Retrieval mit SQL-Guard vor dem LLM-Call.
+    source-binding: { argocd-app: web-core-rag, k8s-deployment: web-core/web-core-rag }
+  - id: rt-litellm
+    type: service
+    label-de: LiteLLM-Router
+    tags: { status: live, layer: L2, perspective: integration, cluster: rag-runtime, ownership: sovaia-baseline }
+    summary-de: Einheitlicher Router für /v1/chat/completions + /v1/embeddings; Egress zu DGX/Ollama via Tailscale.
+    source-binding: { argocd-app: web-core-litellm, k8s-deployment: web-core/web-core-litellm }
+  - id: rt-dgx-inference
+    type: service
+    label-de: DGX / Ollama-Inferenz
+    tags: { status: live, layer: L0, perspective: ai-use-case, cluster: rag-runtime, dimension: [infrastructure, technology], ownership: sovaia-baseline }
+    summary-de: Souveräne LLM-/Embedding-Inferenz (qwen2.5:7b Chat + qwen3-embedding:4b, 2560-dim). Off-cluster via Tailscale; DGX = Testumgebung, prod via KIINNO.
+  - id: rt-embed-web
+    type: datenraum
+    label-de: "pgvector: web_core_embeddings (2560)"
+    tags: { status: live, layer: L1, perspective: architektur, cluster: rag-runtime, dimension: data, ownership: sovaia-baseline }
+    summary-de: Embeddings-Tabelle (sovaia.web_core_embeddings) inkl. allowed_users/allowed_groups, brand, lang.
+  - id: rt-embed-chatbot
+    type: datenraum
+    label-de: "pgvector: indexer_embeddings (2560)"
+    tags: { status: live, layer: L1, perspective: architektur, cluster: rag-runtime, dimension: data, ownership: sovaia-baseline }
+    summary-de: Embeddings-Tabelle für LibreChat/Sovaia-Chatbot (dgx-indexer).
+
 edges:
 
   # ── Sovereign-AI-Readiness (ADR-098): Targets → Prereqs ─────────────
@@ -259,3 +328,26 @@ edges:
 
   # Governance ist Voraussetzung für jeden AI-Call
   - { from: ai-agent-runtime,       to: ai-governance,      type: erfuellt }
+
+  # ── Embedding-/RAG-Laufzeit ─────────────────────────────────────────
+  # Quellen → Indexer (ERP-Quelle in Progress)
+  - { from: src-web-core, to: rt-indexer, type: fliesst-zu }
+  - { from: src-outline,  to: rt-indexer, type: fliesst-zu }
+  - { from: src-blm,      to: rt-indexer, type: fliesst-zu }
+  - { from: src-other,    to: rt-indexer, type: fliesst-zu }
+  - { from: src-erp,      to: rt-indexer, type: fliesst-zu, label: "in Progress (ADR-105)" }
+  # Indexer schreibt Embeddings; nutzt LiteLLM für Embedding-Calls
+  - { from: rt-indexer,         to: rt-embed-web, type: liefert, label: embed }
+  - { from: rt-indexer,         to: rt-litellm,   type: nutzt,   label: /embeddings }
+  - { from: rt-litellm,         to: rt-dgx-inference, type: nutzt }
+  # Orchestrator: Retrieval + Generierung; liefert an Workplace + Chat
+  - { from: rt-rag-orchestrator, to: rt-embed-web, type: nutzt,   label: Vektorsuche }
+  - { from: rt-rag-orchestrator, to: rt-litellm,   type: nutzt,   label: /chat + /embed }
+  - { from: rt-rag-orchestrator, to: ai-workplace, type: liefert }
+  - { from: rt-rag-orchestrator, to: ai-chat,      type: liefert }
+  - { from: rt-rag-orchestrator, to: ai-agent-runtime, type: nutzt }
+  # Bindung an die Capability-/Pipeline-Sicht
+  - { from: rt-embed-web,       to: cap-vector-store,        type: gehoert-zu }
+  - { from: rt-embed-chatbot,   to: cap-vector-store,        type: gehoert-zu }
+  - { from: rt-dgx-inference,   to: cap-sovereign-inference, type: erfuellt }
+  - { from: rt-indexer,         to: cap-rag-pipeline,        type: erfuellt }

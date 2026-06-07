@@ -1,0 +1,127 @@
+# Platform IAM — Detail-Cluster (Security & Identity)
+# Detail-File für den Cluster-Anchor `identity-layer` in sovaia-reference.yaml.
+# Bildet den Auth-Flow + die Sicherheits-Zonen aus docs/architektur-diagramm.md (§4) ab.
+#
+# Zwei Zonen: PUBLIC (Internet via Cloudflare) und INTERN (Tailscale CGNAT + Cluster-CIDR).
+# Live-Status via source-binding.argocd-app (Keycloak, auth-core, cloudflared, ingress).
+
+cluster-id: platform-iam
+cluster-version: "0.1.0"
+view-profile-default: architect
+
+nodes:
+
+  # ── Sicherheits-Zonen ───────────────────────────────────────────────
+  - id: zone-public
+    type: sicherheits-zone
+    label-de: Öffentliche Zone (Internet)
+    tags: { status: live, layer: L1, perspective: governance, dimension: governance, ownership: sovaia-baseline }
+    summary-de: Externe Besucher → Cloudflare Global Network → cloudflared Tunnel. Kein offener Port am Cluster.
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  - id: zone-internal
+    type: sicherheits-zone
+    label-de: Interne Zone (Tailscale + Cluster)
+    tags: { status: live, layer: L1, perspective: governance, dimension: governance, ownership: sovaia-baseline }
+    summary-de: "*.int.efexcon.com nur über Tailscale CGNAT 100.64.0.0/10 + Cluster-CIDR 10.42/10.43 (IP-Whitelist)."
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  # ── Edge / Netzwerk ─────────────────────────────────────────────────
+  - id: iam-cloudflared
+    type: schnittstelle
+    label-de: Cloudflared Tunnel
+    tags: { status: live, layer: L1, perspective: integration, ownership: sovaia-baseline }
+    summary-de: Public-Edge — exponiert Brand-Sites auf ingress-nginx.
+    source-binding: { argocd-app: platform-cloudflared, k8s-deployment: ingress-nginx/cloudflared }
+
+  - id: iam-ingress
+    type: schnittstelle
+    label-de: ingress-nginx
+    tags: { status: live, layer: L1, perspective: integration, ownership: sovaia-baseline }
+    summary-de: Routing; geschützte Routen über oauth2-proxy (auth_request).
+    source-binding: { argocd-app: platform-ingress-nginx }
+
+  - id: iam-oauth2-proxy
+    type: service
+    label-de: oauth2-proxy (OIDC Edge)
+    tags: { status: live, layer: L1, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Edge-Auth vor sensiblen Ingressen; injiziert X-Auth-Request-*-Header an den Upstream.
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  # ── Identity-Provider (Dual-Keycloak) ───────────────────────────────
+  - id: iam-keycloak
+    type: service
+    label-de: Keycloak (Mitarbeiter, Realm efexcon-group)
+    tags: { status: live, layer: L1, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Interner IdP — OIDC/PKCE, Entra-Federation. keycloak.int.efexcon.com/auth.
+    source-binding: { argocd-app: platform-keycloakx, k8s-deployment: platform/platform-keycloakx }
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  - id: iam-identity-kc
+    type: service
+    label-de: identity-kc (Customer-Self-Service)
+    tags: { status: live, layer: L1, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Externer IdP für Customer-Identities + Brand-Personas (Dual-Keycloak). Bridge via identity-IdP im efexcon-group-Realm.
+    source-binding: { argocd-app: platform-keycloakx-identity }
+
+  - id: iam-auth-core
+    type: service
+    label-de: authentication-core
+    tags: { status: live, layer: L1, perspective: governance, ownership: sovaia-baseline }
+    summary-de: Kapselt OIDC/PKCE-Flows, M2M-Token-Exchange, JWKS-Validierung. Interner Service (platform-authentication).
+    source-binding: { argocd-app: platform-authentication-core, k8s-deployment: platform-authentication/authentication-core }
+    external-url: https://github.com/efexcon-group/sovaia-platform/blob/main/docs/architektur-diagramm.md
+
+  # ── Persistenz ──────────────────────────────────────────────────────
+  - id: iam-session-store
+    type: datenraum
+    label-de: Session-Store (Redis, TTL 8h)
+    tags: { status: live, layer: L1, perspective: integration, dimension: data, ownership: sovaia-baseline }
+    summary-de: authentication-core hält Sessions in Redis (session:{id}, authstate:{state}).
+    source-binding: { argocd-app: platform-redis }
+
+  - id: iam-realm-db
+    type: datenraum
+    label-de: Keycloak-Realm-DB (PostgreSQL)
+    tags: { status: live, layer: L1, perspective: integration, dimension: data, ownership: sovaia-baseline }
+    summary-de: Realm-/User-Persistenz für Keycloak.
+    source-binding: { argocd-app: platform-postgresql-keycloak }
+
+  # ── Externe Federation ──────────────────────────────────────────────
+  - id: iam-entra
+    type: schnittstelle
+    label-de: Microsoft Entra ID
+    tags: { status: live, layer: L1, perspective: integration, ownership: tenant-custom }
+    summary-de: Föderierter externer IdP (Mitarbeiter-SSO) — integriert mit dem internen Keycloak.
+
+  # ── Compliance ──────────────────────────────────────────────────────
+  - id: iam-dsgvo
+    type: compliance-anker
+    label-de: DSGVO / Zugriffs-Governance
+    tags: { status: live, layer: L1, perspective: governance, dimension: governance, ownership: sovaia-baseline }
+    summary-de: Zugriffs- und Datenschutz-Governance — by-design über IAM durchgesetzt.
+
+edges:
+
+  # Zonen-Zugehörigkeit
+  - { from: iam-cloudflared,   to: zone-public,    type: gehoert-zu }
+  - { from: iam-ingress,       to: zone-internal,  type: gehoert-zu }
+  - { from: iam-oauth2-proxy,  to: zone-internal,  type: gehoert-zu }
+  - { from: iam-keycloak,      to: zone-internal,  type: gehoert-zu }
+  - { from: iam-identity-kc,   to: zone-internal,  type: gehoert-zu }
+  - { from: iam-auth-core,     to: zone-internal,  type: gehoert-zu }
+  - { from: iam-session-store, to: zone-internal,  type: gehoert-zu }
+  - { from: iam-realm-db,      to: zone-internal,  type: gehoert-zu }
+
+  # Auth-Flow: außen → innen
+  - { from: zone-public,      to: iam-cloudflared,  type: fliesst-zu, label: public }
+  - { from: iam-cloudflared,  to: iam-ingress,      type: fliesst-zu }
+  - { from: zone-internal,    to: iam-ingress,      type: fliesst-zu, label: Tailscale }
+  - { from: iam-ingress,      to: iam-oauth2-proxy, type: nutzt,      label: auth_request }
+  - { from: iam-oauth2-proxy, to: iam-keycloak,     type: nutzt,      label: OIDC }
+  - { from: iam-auth-core,    to: iam-keycloak,     type: nutzt,      label: OIDC/PKCE + JWKS }
+  - { from: iam-auth-core,    to: iam-session-store, type: liefert,   label: Sessions }
+  - { from: iam-keycloak,     to: iam-realm-db,     type: nutzt }
+  - { from: iam-keycloak,     to: iam-entra,        type: integriert-mit, label: Federation }
+  - { from: iam-identity-kc,  to: iam-keycloak,     type: integriert-mit, label: identity-IdP }
+  - { from: iam-keycloak,     to: iam-dsgvo,        type: erfuellt }
