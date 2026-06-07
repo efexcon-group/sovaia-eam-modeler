@@ -7,11 +7,11 @@ RUN uv pip install --system -r pyproject.toml
 
 COPY app /app/app
 
-# Baked-in Sovaia-Reference. CI kopiert vor `docker build`:
-#   sovaia-contracts/registry/architecture-modeler/. → backend/reference/
-# Lokal docker build: backend/reference/ muss vorher manuell befüllt sein.
-# Dev ohne Docker: uvicorn nutzt EAM_REFERENCE_REPO_PATH (default
-# zeigt aufs Geschwister-Repo) — kein bake nötig.
+# Baked-in Sovaia-Reference. Source-of-Truth ist backend/reference/ in DIESEM Repo
+# (git-getrackt) — wird unverändert ins Image gebacken. KEIN CI-Copy aus sovaia-contracts
+# (sovaia-contracts/registry/architecture-modeler/ ist ein veralteter Parallelstand).
+# Im Container überschreibt EAM_REFERENCE_REPO_PATH=/etc/sovaia-reference den Default.
+# Dev ohne Docker: uvicorn nutzt den Default 'reference' (= backend/reference/).
 COPY reference /etc/sovaia-reference
 
 EXPOSE 8000

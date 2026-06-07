@@ -20,10 +20,10 @@ images:
     pullPolicy: Always
 
 # ── API ─────────────────────────────────────────────────────────────────
-# Sovaia-Reference ist im API-Image gebaked unter /etc/sovaia-reference
-# (CI kopiert vor docker build aus sovaia-contracts). Keine Init-Container,
-# keine K8s-Secrets, keine Runtime-Cloning — alles via Image-Updater
-# + Image-Tag-Bumps versioniert.
+# Sovaia-Reference ist im API-Image gebaked unter /etc/sovaia-reference.
+# Source-of-Truth: backend/reference/ in diesem Repo (kein CI-Copy aus
+# sovaia-contracts). Keine Init-Container, keine K8s-Secrets, kein Runtime-
+# Cloning — alles via Image-Updater + Image-Tag-Bumps versioniert.
 api:
   replicas: 1
   port: 8000

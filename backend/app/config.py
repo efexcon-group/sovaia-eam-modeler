@@ -14,8 +14,11 @@ class Settings(BaseSettings):
     )
 
     reference_repo_path: str = Field(
-        default="../../sovaia-contracts/registry/architecture-modeler",
-        description="Pfad zur Sovaia-Reference (Working-Copy oder geclonter Pfad)",
+        default="reference",
+        description="Pfad zur Sovaia-Reference. Source-of-Truth ist backend/reference/ "
+        "in DIESEM Repo (wird ins Image gebacken nach /etc/sovaia-reference, im Container "
+        "via EAM_REFERENCE_REPO_PATH überschrieben). Default 'reference' gilt für lokalen "
+        "uvicorn-Start aus backend/.",
     )
 
     llm_bridge_url: str = Field(default="http://localhost:8001")
